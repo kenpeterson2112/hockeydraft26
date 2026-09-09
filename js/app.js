@@ -1,0 +1,834 @@
+/* app.js — controller: owns state, derives the board, renders, wires events. */
+(function (global) {
+  'use strict';
+
+  var $ = UI.$, $$ = UI.$$, el = UI.el, num = UI.num, normalize = UI.normalize;
+  var LEAGUE = Draft.LEAGUE;
+
+  var APP_VERSION = '1.0.0';
+
+  var players = [];              // seeded from data/players.json
+  var playersById = {};
+  var searchKeys = {};           // playerId -> normalized name, built once
+
+  var state = Draft.freshState();
+
+  // Transient view state — deliberately not persisted.
+  var view = {
+    tab: 'board',
+    positions: { F: true, D: true, G: true },
+    search: '',
+    sort: 'tier',
+    showDrafted: false,
+    expandedTeams: {},
+    keeperTeam: 0,
+    keeperSearch: ''
+  };
+
+  /* ------------------------------------------------------------ board data */
+
+  var COMPARATORS = {
+    tier: function (a, b) {
+      return (a.tier - b.tier) || (b.vorp - a.vorp) || (b.points - a.points);
+    },
+    vorp: function (a, b) {
+      return (b.vorp - a.vorp) || (a.tier - b.tier) || (b.points - a.points);
+    },
+    points: function (a, b) {
+      return (b.points - a.points) || (a.tier - b.tier) || (b.vorp - a.vorp);
+    }
+  };
+
+  // The full combined board of everyone still available, in the current sort.
+  // Ranks come from here — never from the filtered view — because opponents
+  // can take any position between now and Ken's next turn.
+  function buildBoard() {
+    var owners = Draft.ownerMap(state);
+    var available = players.filter(function (p) { return owners[p.id] == null; });
+    available.sort(COMPARATORS[view.sort] || COMPARATORS.tier);
+
+    var rankById = {};
+    for (var i = 0; i < available.length; i++) rankById[available[i].id] = i;
+
+    return { owners: owners, available: available, rankById: rankById };
+  }
+
+  // A name search is a "jump to this player" action, so it deliberately
+  // overrides both the position filter and the hide-drafted rule — otherwise
+  // looking someone up depends on having the right chips selected.
+  function matchesFilters(p, board) {
+    if (view.search) return searchKeys[p.id].indexOf(view.search) !== -1;
+    if (!view.positions[p.position]) return false;
+    if (!view.showDrafted && board.owners[p.id] != null) return false;
+    return true;
+  }
+
+  /* --------------------------------------------------------------- actions */
+
+  function draftPlayer(playerId, teamId) {
+    if (state.picks.length >= LEAGUE.totalPicks) {
+      UI.showToast('All ' + LEAGUE.totalPicks + ' picks are in.');
+      return;
+    }
+    if (Draft.ownerMap(state)[playerId] != null) {
+      UI.showToast('That player is already off the board.');
+      return;
+    }
+
+    var p = playersById[playerId];
+    var team = state.teams[teamId];
+    var n = state.picks.length + 1;
+
+    state.picks.push({ playerId: playerId, teamId: teamId, n: n });
+    Draft.save(state);
+    render();
+
+    var counts = Draft.rosterCounts(state, teamId, playersById);
+    var over = counts[p.position] > LEAGUE.slots[p.position];
+    var msg = Draft.pickLabel(n) + ' · ' + team.name + ' take ' + p.name;
+    if (over) {
+      msg += ' — over the ' + p.position + ' limit (' +
+        counts[p.position] + '/' + LEAGUE.slots[p.position] + ')';
+    }
+    UI.showToast(msg, 'Undo', undoLastPick);
+  }
+
+  function undoLastPick() {
+    if (!state.picks.length) return;
+    var last = state.picks.pop();
+    Draft.save(state);
+    render();
+    var p = playersById[last.playerId];
+    UI.showToast('Undid ' + Draft.pickLabel(last.n) + ' — ' + (p ? p.name : 'pick') + ' is back on the board.');
+  }
+
+  // Removes a player from whichever team holds them. A live pick can only be
+  // pulled back if it is the most recent one, so the snake stays consistent.
+  function releasePlayer(playerId) {
+    if (state.keepers[playerId] != null) {
+      delete state.keepers[playerId];
+      Draft.save(state);
+      render();
+      UI.showToast('Keeper removed.');
+      return;
+    }
+    var idx = -1;
+    for (var i = 0; i < state.picks.length; i++) {
+      if (state.picks[i].playerId === playerId) idx = i;
+    }
+    if (idx === -1) return;
+    if (idx !== state.picks.length - 1) {
+      UI.showToast('Only the most recent pick can be undone — undo back to it first.');
+      return;
+    }
+    undoLastPick();
+  }
+
+  function assignKeeper(playerId, teamId) {
+    if (Draft.ownerMap(state)[playerId] != null) return;
+    if (Draft.keepersForTeam(state, teamId).length >= LEAGUE.keepersPerTeam) {
+      UI.showToast(state.teams[teamId].name + ' already has ' + LEAGUE.keepersPerTeam + ' keepers.');
+      return;
+    }
+    state.keepers[playerId] = teamId;
+    Draft.save(state);
+    render();
+  }
+
+  /* ---------------------------------------------------------------- render */
+
+  function render() {
+    var board = buildBoard();
+    renderTopbar(board);
+    if (view.tab === 'board') renderBoard(board);
+    if (view.tab === 'teams') renderTeams(board);
+    if (view.tab === 'setup') renderSetup(board);
+  }
+
+  function renderTopbar(board) {
+    var c = Draft.clock(state);
+    var topbar = $('#topbar');
+
+    $('#undoBtn').disabled = state.picks.length === 0;
+
+    if (c.complete) {
+      $('#pickLabel').textContent = 'Done';
+      $('#onClockText').textContent = 'Draft complete';
+      $('#turnLine').textContent = LEAGUE.totalPicks + ' picks made · ' +
+        Draft.keeperCount(state) + ' keepers';
+      topbar.classList.remove('is-mine');
+      $('#turnLine').classList.remove('is-mine');
+      return;
+    }
+
+    $('#pickLabel').textContent = Draft.pickLabel(c.currentPick);
+    $('#onClockText').innerHTML = '';
+    $('#onClockText').appendChild(document.createTextNode(c.onClockTeam.name));
+    if (c.onClockIsMe) {
+      $('#onClockText').appendChild(el('span', 'me-tag', 'YOU'));
+    }
+
+    topbar.classList.toggle('is-mine', c.onClockIsMe);
+    var turn = $('#turnLine');
+    turn.classList.toggle('is-mine', c.onClockIsMe);
+    turn.innerHTML = '';
+
+    if (!state.setupDone) {
+      turn.textContent = 'Finish setup to start the draft.';
+      return;
+    }
+
+    if (c.onClockIsMe) {
+      turn.appendChild(document.createTextNode("You're up. Next turn after this: "));
+      var b1 = el('b', null, Draft.pickLabel(c.targetPick));
+      turn.appendChild(b1);
+      turn.appendChild(document.createTextNode(' (' + c.picksUntilMine + ' picks away)'));
+    } else {
+      var b2 = el('b', null, String(c.picksUntilMine));
+      turn.appendChild(document.createTextNode('Your pick '));
+      turn.appendChild(b2);
+      turn.appendChild(document.createTextNode(
+        ' pick' + (c.picksUntilMine === 1 ? '' : 's') + ' away · ' + Draft.pickLabel(c.targetPick)
+      ));
+    }
+  }
+
+  function renderBoard(board) {
+    var list = $('#playerList');
+    var frag = document.createDocumentFragment();
+    var c = Draft.clock(state);
+    var horizon = (state.setupDone && !c.complete) ? c.picksUntilMine : 0;
+
+    var shown = players.filter(function (p) { return matchesFilters(p, board); });
+    shown.sort(function (a, b) {
+      var ao = board.owners[a.id] != null, bo = board.owners[b.id] != null;
+      if (ao !== bo) return ao ? 1 : -1; // drafted players sink to the bottom
+      return (COMPARATORS[view.sort] || COMPARATORS.tier)(a, b);
+    });
+
+    var dividerPlaced = false;
+    var anyAvailable = false;
+
+    for (var i = 0; i < shown.length; i++) {
+      var p = shown[i];
+      var ownerId = board.owners[p.id];
+      var rank = board.rankById[p.id];
+      if (ownerId == null) anyAvailable = true;
+
+      // The divider sits where the full board is expected to stand when Ken
+      // is next up: everyone above it is projected gone.
+      if (!dividerPlaced && horizon > 0 && ownerId == null && rank >= horizon) {
+        frag.appendChild(buildDivider(horizon, c));
+        dividerPlaced = true;
+      }
+
+      frag.appendChild(buildPlayerRow(p, ownerId, rank, c));
+    }
+
+    // Everyone on screen is projected gone by then — put the line at the end.
+    if (!dividerPlaced && horizon > 0 && anyAvailable) {
+      frag.appendChild(buildDivider(horizon, c));
+    }
+
+    list.innerHTML = '';
+    list.appendChild(frag);
+    $('#boardEmpty').hidden = shown.length > 0;
+    $('#searchNote').hidden = !view.search;
+  }
+
+  function buildDivider(horizon, c) {
+    var li = el('li', 'divider');
+    li.appendChild(el('span', 'divider-label', 'Your pick · ' + Draft.pickLabel(c.targetPick)));
+    li.appendChild(el('span', 'divider-note',
+      horizon + ' pick' + (horizon === 1 ? '' : 's') + ' from now — above this line is likely gone'));
+    return li;
+  }
+
+  function buildPlayerRow(p, ownerId, rank, c) {
+    var li = el('li', 'prow pos-' + p.position + (ownerId != null ? ' is-taken' : ''));
+
+    li.appendChild(el('span', 'p-rank', ownerId == null ? String(rank + 1) : '–'));
+
+    var main = el('button', 'p-main');
+    main.type = 'button';
+    main.appendChild(el('span', 'p-name', p.name));
+    var sub = el('span', 'p-sub');
+    sub.appendChild(el('span', 'p-pos', p.position));
+    sub.appendChild(el('span', null, p.team));
+    if (ownerId != null) {
+      var isKeeper = state.keepers[p.id] != null;
+      sub.appendChild(el('span', 'p-owner' + (isKeeper ? ' is-keeper' : ''),
+        (isKeeper ? 'K · ' : '') + state.teams[ownerId].name));
+    }
+    main.appendChild(sub);
+    main.addEventListener('click', function () { openPlayerSheet(p); });
+    li.appendChild(main);
+
+    li.appendChild(el('span', 'p-tier', String(p.tier)));
+    li.appendChild(el('span', 'p-num', num(p.vorp)));
+    li.appendChild(el('span', 'p-num p-pts', num(p.points)));
+
+    if (ownerId != null) {
+      li.appendChild(el('span', 'p-taken', state.keepers[p.id] != null ? 'Keeper' : 'Drafted'));
+    } else if (c.complete || !state.setupDone) {
+      li.appendChild(el('span', 'p-taken', ''));
+    } else {
+      var btn = el('button', 'p-draft', c.onClockTeam.name.slice(0, 7));
+      btn.type = 'button';
+      btn.title = 'Draft to ' + c.onClockTeam.name;
+      btn.addEventListener('click', function (ev) {
+        ev.stopPropagation();
+        draftPlayer(p.id, c.onClockTeam.id);
+      });
+      li.appendChild(btn);
+    }
+
+    return li;
+  }
+
+  function openPlayerSheet(p) {
+    var owners = Draft.ownerMap(state);
+    var ownerId = owners[p.id];
+    var c = Draft.clock(state);
+    var sub = p.position + ' · ' + p.team + ' · Tier ' + p.tier +
+      ' · ' + num(p.vorp) + ' VORP · ' + num(p.points) + ' pts';
+
+    UI.openSheet(p.name, sub, function (body) {
+      if (ownerId != null) {
+        body.appendChild(el('div', 'sheet-section-label',
+          (state.keepers[p.id] != null ? 'Keeper for' : 'Drafted by')));
+        body.appendChild(el('div', 'p-name', state.teams[ownerId].name));
+        var rel = el('button', 'btn btn-danger', 'Remove from ' + state.teams[ownerId].name);
+        rel.type = 'button';
+        rel.style.marginTop = '12px';
+        rel.addEventListener('click', function () {
+          UI.closeSheet();
+          releasePlayer(p.id);
+        });
+        body.appendChild(rel);
+        return;
+      }
+
+      if (!state.setupDone) {
+        body.appendChild(el('p', 'sheet-warn', 'Finish setup before drafting.'));
+        return;
+      }
+      if (c.complete) {
+        body.appendChild(el('p', 'sheet-warn', 'The draft is complete.'));
+        return;
+      }
+
+      var primary = el('button', 'btn btn-primary',
+        'Draft to ' + c.onClockTeam.name + ' · ' + Draft.pickLabel(c.currentPick));
+      primary.type = 'button';
+      primary.addEventListener('click', function () {
+        UI.closeSheet();
+        draftPlayer(p.id, c.onClockTeam.id);
+      });
+      body.appendChild(primary);
+
+      body.appendChild(el('div', 'sheet-section-label', 'Or assign to another team'));
+      var grid = el('div', 'teamgrid');
+      state.teams.forEach(function (t) {
+        var counts = Draft.rosterCounts(state, t.id, playersById);
+        var full = counts[p.position] >= LEAGUE.slots[p.position];
+        var b = el('button', 'tgbtn' +
+          (t.id === c.onClockTeam.id ? ' is-onclock' : '') +
+          (t.slot === state.mySlot ? ' is-mine' : '') +
+          (full ? ' is-full' : ''));
+        b.type = 'button';
+        b.appendChild(el('span', null, t.name));
+        b.appendChild(el('span', 'tg-sub',
+          p.position + ' ' + counts[p.position] + '/' + LEAGUE.slots[p.position]));
+        b.addEventListener('click', function () {
+          UI.closeSheet();
+          draftPlayer(p.id, t.id);
+        });
+        grid.appendChild(b);
+      });
+      body.appendChild(grid);
+
+      var onClockCounts = Draft.rosterCounts(state, c.onClockTeam.id, playersById);
+      if (onClockCounts[p.position] >= LEAGUE.slots[p.position]) {
+        body.appendChild(el('p', 'sheet-warn',
+          c.onClockTeam.name + ' already has ' + onClockCounts[p.position] + ' ' +
+          p.position + ' (limit ' + LEAGUE.slots[p.position] + ').'));
+      }
+    });
+  }
+
+  /* ----------------------------------------------------------- teams view */
+
+  function rostersByTeam(board) {
+    var out = {};
+    state.teams.forEach(function (t) { out[t.id] = []; });
+    for (var id in board.owners) {
+      var p = playersById[id];
+      if (p) out[board.owners[id]].push(p);
+    }
+    return out;
+  }
+
+  function renderTeams(board) {
+    var rosters = rostersByTeam(board);
+    var host = $('#teamList');
+    var frag = document.createDocumentFragment();
+
+    state.teams.forEach(function (t) {
+      var roster = rosters[t.id];
+      var score = Draft.scoreRoster(roster);
+      var isMine = t.slot === state.mySlot;
+
+      var card = el('div', 'teamcard' + (isMine ? ' is-mine' : ''));
+
+      var head = el('button', 'tc-head');
+      head.type = 'button';
+      head.setAttribute('aria-expanded', view.expandedTeams[t.id] ? 'true' : 'false');
+
+      var left = el('div');
+      var nameLine = el('div', 'tc-name');
+      nameLine.appendChild(el('span', 'slot', String(t.slot)));
+      nameLine.appendChild(document.createTextNode(t.name));
+      if (isMine) nameLine.appendChild(el('span', 'me-tag', 'YOU'));
+      left.appendChild(nameLine);
+
+      var counts = el('div', 'tc-counts');
+      ['F', 'D', 'G'].forEach(function (pos) {
+        var n = score.counts[pos];
+        var lim = LEAGUE.slots[pos];
+        counts.appendChild(el('span', 'c-' + pos + (n >= lim ? ' is-full' : ''),
+          pos + ' ' + n + '/' + lim));
+      });
+      counts.appendChild(el('span', null, roster.length + '/' + LEAGUE.rosterSize));
+      left.appendChild(counts);
+      head.appendChild(left);
+
+      var right = el('div', 'tc-score');
+      right.appendChild(el('div', 'tc-eff', num(score.effective)));
+      right.appendChild(el('div', 'tc-raw', 'raw ' + num(score.raw)));
+      head.appendChild(right);
+
+      head.addEventListener('click', function () {
+        view.expandedTeams[t.id] = !view.expandedTeams[t.id];
+        renderTeams(buildBoard());
+      });
+      card.appendChild(head);
+
+      if (view.expandedTeams[t.id]) {
+        card.appendChild(buildRosterBody(roster, score));
+      }
+      frag.appendChild(card);
+    });
+
+    host.innerHTML = '';
+    host.appendChild(frag);
+  }
+
+  function buildRosterBody(roster, score) {
+    var body = el('div', 'tc-body');
+    if (!roster.length) {
+      body.appendChild(el('div', 'tc-empty', 'No players yet.'));
+      return body;
+    }
+    var order = { F: 0, D: 1, G: 2 };
+    roster.slice().sort(function (a, b) {
+      return (order[a.position] - order[b.position]) || (b.points - a.points);
+    }).forEach(function (p) {
+      var counting = !!score.countingIds[p.id];
+      var row = el('div', 'rrow pos-' + p.position + (counting ? '' : ' is-bench'));
+      row.appendChild(el('span', 'r-pos', p.position));
+      row.appendChild(el('span', 'r-name', p.name));
+      row.appendChild(el('span', 'r-tag', state.keepers[p.id] != null ? 'K' : ''));
+      row.appendChild(el('span', 'r-pts', num(p.points)));
+      body.appendChild(row);
+    });
+    return body;
+  }
+
+  /* ----------------------------------------------------------- setup view */
+
+  function renderSetup(board) {
+    renderTeamSetup();
+    renderKeeperSetup(board);
+    renderSetupStatus();
+  }
+
+  function renderTeamSetup() {
+    var host = $('#teamSetup');
+    if (host.dataset.built === '1') {
+      // Rebuilding on every keystroke would steal focus from the inputs.
+      $$('.tsrow', host).forEach(function (row) {
+        var id = Number(row.dataset.teamId);
+        row.classList.toggle('is-mine', state.teams[id].slot === state.mySlot);
+        $('input[type=radio]', row).checked = state.teams[id].slot === state.mySlot;
+      });
+      return;
+    }
+
+    var frag = document.createDocumentFragment();
+    state.teams.forEach(function (t) {
+      var row = el('li', 'tsrow' + (t.slot === state.mySlot ? ' is-mine' : ''));
+      row.dataset.teamId = String(t.id);
+      row.appendChild(el('span', 'ts-slot', String(t.slot)));
+
+      var input = el('input');
+      input.type = 'text';
+      input.value = t.name;
+      input.setAttribute('aria-label', 'Team in slot ' + t.slot);
+      input.addEventListener('input', function () {
+        state.teams[t.id].name = input.value.trim() || ('Team ' + t.slot);
+        Draft.save(state);
+        renderTopbar(buildBoard());
+      });
+      row.appendChild(input);
+
+      var mine = el('label', 'ts-me');
+      var radio = el('input');
+      radio.type = 'radio';
+      radio.name = 'myslot';
+      radio.checked = t.slot === state.mySlot;
+      radio.setAttribute('aria-label', 'I am ' + t.name);
+      radio.addEventListener('change', function () {
+        state.mySlot = t.slot;
+        Draft.save(state);
+        render();
+      });
+      mine.appendChild(radio);
+      row.appendChild(mine);
+
+      frag.appendChild(row);
+    });
+    host.innerHTML = '';
+    host.appendChild(frag);
+    host.dataset.built = '1';
+  }
+
+  function renderKeeperSetup(board) {
+    $('#keeperCounter').textContent = Draft.keeperCount(state) + ' / ' + LEAGUE.totalKeepers;
+
+    var picker = $('#keeperTeamPicker');
+    picker.innerHTML = '';
+    state.teams.forEach(function (t) {
+      var n = Draft.keepersForTeam(state, t.id).length;
+      var b = el('button', 'ktbtn' +
+        (t.id === view.keeperTeam ? ' is-sel' : '') +
+        (n >= LEAGUE.keepersPerTeam ? ' is-full' : ''));
+      b.type = 'button';
+      b.appendChild(el('span', null, t.name));
+      b.appendChild(el('span', 'kt-n', n + '/' + LEAGUE.keepersPerTeam));
+      b.addEventListener('click', function () {
+        view.keeperTeam = t.id;
+        renderKeeperSetup(buildBoard());
+      });
+      picker.appendChild(b);
+    });
+
+    var panel = $('#keeperPanel');
+    panel.innerHTML = '';
+
+    var teamId = view.keeperTeam;
+    var held = Draft.keepersForTeam(state, teamId);
+
+    var slots = el('div', 'kp-slots');
+    for (var i = 0; i < LEAGUE.keepersPerTeam; i++) {
+      var pid = held[i];
+      var slot = el('div', 'kp-slot' + (pid ? ' is-filled' : ''));
+      if (pid) {
+        var p = playersById[pid];
+        slot.appendChild(el('span', null, p.name + '  ·  ' + p.position + ' ' + p.team +
+          '  ·  ' + num(p.points) + ' pts'));
+        var x = el('button', 'kp-x', '×');
+        x.type = 'button';
+        x.setAttribute('aria-label', 'Remove ' + p.name);
+        (function (id) {
+          x.addEventListener('click', function () {
+            delete state.keepers[id];
+            Draft.save(state);
+            render();
+          });
+        })(pid);
+        slot.appendChild(x);
+      } else {
+        slot.appendChild(el('span', 'kp-empty', 'Empty keeper slot'));
+        slot.appendChild(el('span', null, ''));
+      }
+      slots.appendChild(slot);
+    }
+    panel.appendChild(slots);
+
+    if (held.length >= LEAGUE.keepersPerTeam) return;
+
+    var search = el('input', 'kp-search');
+    search.type = 'search';
+    search.placeholder = 'Search a keeper for ' + state.teams[teamId].name + '…';
+    search.value = view.keeperSearch;
+    search.autocomplete = 'off';
+    search.addEventListener('input', function () {
+      view.keeperSearch = search.value;
+      renderKeeperResults(results, buildBoard());
+    });
+    panel.appendChild(search);
+
+    var results = el('ul', 'kp-results');
+    panel.appendChild(results);
+    renderKeeperResults(results, board);
+  }
+
+  function renderKeeperResults(host, board) {
+    host.innerHTML = '';
+    var q = normalize(view.keeperSearch);
+    var matches = players.filter(function (p) {
+      if (board.owners[p.id] != null) return false;
+      return !q || searchKeys[p.id].indexOf(q) !== -1;
+    });
+    matches.sort(COMPARATORS.tier);
+    matches.slice(0, q ? 25 : 12).forEach(function (p) {
+      var li = el('li');
+      var b = el('button', 'kp-result pos-' + p.position);
+      b.type = 'button';
+      var left = el('span');
+      left.appendChild(el('span', 'p-name', p.name));
+      left.appendChild(el('span', 'kr-sub', p.position + ' · ' + p.team + ' · Tier ' + p.tier));
+      b.appendChild(left);
+      b.appendChild(el('span', 'kr-pts', num(p.points)));
+      b.addEventListener('click', function () {
+        assignKeeper(p.id, view.keeperTeam);
+        view.keeperSearch = '';
+      });
+      li.appendChild(b);
+      host.appendChild(li);
+    });
+    if (!matches.length) {
+      host.appendChild(el('li', 'tc-empty', 'No available players match.'));
+    }
+  }
+
+  function renderSetupStatus() {
+    var host = $('#setupStatus');
+    host.innerHTML = '';
+    var kc = Draft.keeperCount(state);
+    var me = Draft.myTeam(state);
+
+    function row(label, value, cls) {
+      var d = el('div');
+      d.appendChild(el('span', null, label));
+      d.appendChild(el('span', cls, value));
+      host.appendChild(d);
+    }
+
+    row('Keepers assigned', kc + ' / ' + LEAGUE.totalKeepers,
+      kc === LEAGUE.totalKeepers ? 'ok' : 'warn');
+    row('Your team', me ? me.name + ' (slot ' + me.slot + ')' : '—', 'ok');
+    row('Draft rounds', String(LEAGUE.draftRounds), 'ok');
+    row('Total picks', String(LEAGUE.totalPicks), 'ok');
+    row('Picks made', String(state.picks.length), 'ok');
+
+    $('#startBtn').textContent = state.setupDone ? 'Back to board' : 'Start draft';
+  }
+
+  /* ---------------------------------------------------------------- events */
+
+  function setTab(name) {
+    view.tab = name;
+    $$('.tab').forEach(function (b) { b.classList.toggle('is-active', b.dataset.tab === name); });
+    $$('.view').forEach(function (v) { v.classList.toggle('is-active', v.id === 'view-' + name); });
+    render();
+    global.scrollTo(0, 0);
+  }
+
+  function wire() {
+    $$('.tab').forEach(function (b) {
+      b.addEventListener('click', function () { setTab(b.dataset.tab); });
+    });
+
+    $('#undoBtn').addEventListener('click', undoLastPick);
+
+    var search = $('#search');
+    search.addEventListener('input', function () {
+      view.search = normalize(search.value);
+      $('#searchClear').hidden = !search.value;
+      renderBoard(buildBoard());
+    });
+    $('#searchClear').addEventListener('click', function () {
+      search.value = '';
+      view.search = '';
+      $('#searchClear').hidden = true;
+      renderBoard(buildBoard());
+      search.focus();
+    });
+
+    $$('.chip').forEach(function (chip) {
+      chip.addEventListener('click', function () {
+        var pos = chip.dataset.pos;
+        if (pos === 'ALL') {
+          view.positions = { F: true, D: true, G: true };
+        } else {
+          view.positions[pos] = !view.positions[pos];
+          // Never leave the board with nothing selected.
+          if (!view.positions.F && !view.positions.D && !view.positions.G) {
+            view.positions[pos] = true;
+          }
+        }
+        syncChips();
+        renderBoard(buildBoard());
+      });
+    });
+
+    $('#sort').addEventListener('change', function () {
+      view.sort = $('#sort').value;
+      renderBoard(buildBoard());
+    });
+
+    $('#showDrafted').addEventListener('change', function () {
+      view.showDrafted = $('#showDrafted').checked;
+      renderBoard(buildBoard());
+    });
+
+    $('#sheetClose').addEventListener('click', UI.closeSheet);
+    $('#sheetBackdrop').addEventListener('click', UI.closeSheet);
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && UI.sheetIsOpen()) UI.closeSheet();
+    });
+
+    $('#startBtn').addEventListener('click', function () {
+      state.setupDone = true;
+      Draft.save(state);
+      setTab('board');
+    });
+
+    $('#exportBtn').addEventListener('click', exportState);
+    $('#importBtn').addEventListener('click', function () { $('#importFile').click(); });
+    $('#importFile').addEventListener('change', importState);
+
+    $('#resetPicksBtn').addEventListener('click', function () {
+      if (!global.confirm('Clear all ' + state.picks.length + ' draft picks? Keepers and team names stay.')) return;
+      state.picks = [];
+      Draft.save(state);
+      render();
+      UI.showToast('Draft picks cleared.');
+    });
+
+    $('#resetAllBtn').addEventListener('click', function () {
+      if (!global.confirm('Reset everything — keepers, team names, and all picks?')) return;
+      state = Draft.freshState();
+      Draft.save(state);
+      $('#teamSetup').dataset.built = '';
+      view.keeperTeam = 0;
+      view.keeperSearch = '';
+      render();
+      UI.showToast('Reset to a clean draft.');
+    });
+  }
+
+  function syncChips() {
+    var all = view.positions.F && view.positions.D && view.positions.G;
+    $$('.chip').forEach(function (chip) {
+      var pos = chip.dataset.pos;
+      chip.classList.toggle('is-on', pos === 'ALL' ? all : view.positions[pos]);
+    });
+  }
+
+  function exportState() {
+    var blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+    var url = URL.createObjectURL(blob);
+    var a = el('a');
+    a.href = url;
+    a.download = 'hockeydraft26-state.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+  }
+
+  function importState(ev) {
+    var file = ev.target.files && ev.target.files[0];
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function () {
+      try {
+        var next = JSON.parse(reader.result);
+        if (!next || next.v !== 1 || !Array.isArray(next.teams) || next.teams.length !== LEAGUE.teamCount) {
+          throw new Error('Not a draft state file');
+        }
+        state = next;
+        state.keepers = state.keepers || {};
+        state.picks = Array.isArray(state.picks) ? state.picks : [];
+        Draft.save(state);
+        $('#teamSetup').dataset.built = '';
+        render();
+        UI.showToast('State imported — ' + state.picks.length + ' picks, ' +
+          Draft.keeperCount(state) + ' keepers.');
+      } catch (err) {
+        UI.showToast('That file is not a valid draft state.');
+      }
+      ev.target.value = '';
+    };
+    reader.readAsText(file);
+  }
+
+  /* ------------------------------------------------------------------ boot */
+
+  function boot(data) {
+    players = data;
+    players.forEach(function (p) {
+      playersById[p.id] = p;
+      searchKeys[p.id] = normalize(p.name + p.team);
+    });
+
+    state = Draft.load();
+
+    // Drop any saved reference to a player the data file no longer carries.
+    var stale = false;
+    for (var id in state.keepers) {
+      if (!playersById[id]) { delete state.keepers[id]; stale = true; }
+    }
+    var kept = state.picks.filter(function (pick) { return !!playersById[pick.playerId]; });
+    if (kept.length !== state.picks.length) { stale = true; }
+    state.picks = kept.map(function (pick, i) {
+      return { playerId: pick.playerId, teamId: pick.teamId, n: i + 1 };
+    });
+    if (stale) {
+      console.warn('Dropped saved players missing from the data file.');
+    }
+    // Write on boot so a fresh install has a state record immediately, rather
+    // than only after the first pick.
+    Draft.save(state);
+
+    $('#versionLine').textContent = 'Draft Day 26 · v' + APP_VERSION + ' · ' +
+      players.length + ' players';
+    $('#sort').value = view.sort;
+    syncChips();
+    wire();
+    setTab(state.setupDone ? 'board' : 'setup');
+  }
+
+  function start() {
+    fetch('./data/players.json', { cache: 'no-cache' })
+      .then(function (r) {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.json();
+      })
+      .then(boot)
+      .catch(function (err) {
+        console.error('Could not load player data', err);
+        $('#playerList').innerHTML = '';
+        $('#boardEmpty').hidden = false;
+        $('#boardEmpty').textContent =
+          'Could not load player data. Reconnect once, then it works offline.';
+      });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', start);
+  } else {
+    start();
+  }
+
+  if ('serviceWorker' in navigator) {
+    global.addEventListener('load', function () {
+      navigator.serviceWorker.register('./sw.js').catch(function (err) {
+        console.warn('Service worker registration failed', err);
+      });
+    });
+  }
+})(window);

@@ -1,0 +1,100 @@
+# Draft Day 26
+
+Mobile-first, installable PWA for a 14-team fantasy hockey keeper snake draft.
+Static site, no build step, works fully offline once loaded.
+
+## League rules encoded in the app
+
+| | |
+|---|---|
+| Teams | 14, snake order |
+| Ken's slot | 12th |
+| Keepers | 3 per team (42 total), pre-owned, **cost no pick** |
+| Drafted rounds | 21 (24 roster spots − 3 keepers) |
+| Total live picks | 294 |
+| Roster | 15 F / 6 D / 3 G = 24 |
+| Counting | best **12 F** + best **4 D** + best **2 G** = 18 score, 6 sit |
+| Skater scoring | 1 pt per goal, 1 per assist |
+| Goalie scoring | 2 pts per win, +3 per shutout |
+
+Player projections already reflect that scoring — the app treats `points` as the
+season total and never recomputes it from categories.
+
+## Using it on draft day
+
+1. **Setup → Draft order.** The 14 names are pre-filled in order (Eric … Rick,
+   Ken 12th). Edit any name; the radio marks which team is yours.
+2. **Setup → Keepers.** Pick a team chip, search a player, tap to assign. Three
+   slots per team, 42 total. The counter tracks progress.
+3. **Start draft.** The board takes over.
+4. **Board.** Tap the button on a row to draft that player to whoever is on the
+   clock. Tap the player's *name* instead to open a sheet and assign the pick to
+   a different team. **Undo** is in the header and on every toast.
+5. **Teams.** Live effective total, raw total, and positional counts per team.
+   Tap a card to expand the roster — benched (non-counting) players are dimmed.
+
+### The "next pick" divider
+
+The dashed purple line marks where the board is projected to stand when Ken is
+next up. It counts forward N picks — N being the picks between now and his next
+turn — against the **full combined board**, not the filtered view, because
+opponents can take any position. Change the position filter and the line stays
+anchored to real board depth. When Ken is on the clock it shows the wheel to his
+*following* pick, which is the decision that actually matters.
+
+### Search
+
+Name search deliberately **overrides** the position filter and shows drafted
+players too — it is a "jump to this player" action. Accents and punctuation are
+folded, so `stutzle` finds Stützle and `oreilly` finds O'Reilly.
+
+## State and offline
+
+Everything (team names, keepers, picks, progress) is written to `localStorage`
+on every change, so a refresh or a phone lock loses nothing. A service worker
+precaches the whole app including the player data, so once the page has loaded
+one time it runs with no connection at all. **Load it once on wifi before the
+draft.** Setup → Backup exports/imports the state as JSON if you want a copy.
+
+## Data
+
+`data/players.json` — 403 rated players (239 F / 100 D / 64 G):
+
+```json
+{ "id": "connor-mcdavid", "name": "Connor McDavid", "position": "F",
+  "team": "EDM", "tier": 1, "vorp": 95.69, "points": 130.69 }
+```
+
+Draft state is not stored in this file; the app owns it separately. To refresh
+projections, replace the file keeping the same `id` values — any saved keeper or
+pick whose id disappears is dropped on load rather than corrupting the draft.
+
+## Deploying
+
+Pushes to `main` publish to GitHub Pages via `.github/workflows/pages.yml`
+(enable Pages → Source: GitHub Actions once). All asset paths are relative, so
+it works from the `/hockeydraft26/` project-page subpath.
+
+Bump `CACHE_VERSION` in `sw.js` whenever you change assets, or clients keep
+serving the cached copy.
+
+## Local development
+
+```sh
+python3 -m http.server 8765   # then open http://localhost:8765
+```
+
+A server is required — `file://` cannot fetch the player JSON or register the
+service worker.
+
+## Layout
+
+```
+index.html          shell: header, tabs, board / teams / setup views
+css/app.css         mobile-first dark theme
+js/draft.js         league rules, snake math, scoring, persistence  (no DOM)
+js/ui.js            DOM helpers, toast, bottom sheet
+js/app.js           controller: state, board derivation, rendering, events
+data/players.json   403-player pool
+sw.js               offline precache
+```
