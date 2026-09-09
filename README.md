@@ -27,9 +27,17 @@ season total and never recomputes it from categories.
 2. **Setup → Keepers.** Pick a team chip, search a player, tap to assign. Three
    slots per team, 42 total. The counter tracks progress.
 3. **Start draft.** The board takes over.
-4. **Board.** Tap the button on a row to draft that player to whoever is on the
-   clock. Tap the player's *name* instead to open a sheet and assign the pick to
-   a different team. **Undo** is in the header and on every toast.
+4. **Board.**
+   - **Press and hold a row for 2 seconds** to draft that player to whoever is
+     on the clock. A popup appears above your finger reading *"<player> drafted
+     by <team>"* with a progress bar filling left to right; the pick commits
+     when the bar completes. Sliding your finger more than 12px cancels it, so
+     scrolling never drafts anyone by accident.
+   - **Tap a row** to open the sheet and assign the pick to a different team.
+   - **Undo** is in the header and on every toast.
+
+   The hold duration is `HOLD_MS` in `js/app.js` if 2s feels long once you have
+   drafted a few.
 5. **Teams.** Live effective total, raw total, and positional counts per team.
    Tap a card to expand the roster — benched (non-counting) players are dimmed.
 

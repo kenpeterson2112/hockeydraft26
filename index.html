@@ -64,6 +64,7 @@
   </div>
 
   <p class="searchnote" id="searchNote" hidden>Search ignores the position filter and shows drafted players too.</p>
+  <p class="holdhint" id="holdHint"></p>
 
   <div class="listhead">
     <span class="lh-rank">#</span>
@@ -71,7 +72,6 @@
     <span class="lh-num">Tier</span>
     <span class="lh-num">VORP</span>
     <span class="lh-num">Pts</span>
-    <span class="lh-act"></span>
   </div>
 
   <ol class="playerlist" id="playerList"></ol>
@@ -136,6 +136,15 @@
     <button class="sheet-close" id="sheetClose" type="button" aria-label="Close">&times;</button>
   </div>
   <div class="sheet-body" id="sheetBody"></div>
+</div>
+
+<div class="holdpop" id="holdPop" hidden aria-hidden="true">
+  <div class="holdpop-text">
+    <span class="holdpop-player" id="holdPopPlayer"></span>
+    <span class="holdpop-verb">drafted by</span>
+    <span class="holdpop-team" id="holdPopTeam"></span>
+  </div>
+  <div class="holdpop-track"><div class="holdpop-bar" id="holdPopBar"></div></div>
 </div>
 
 <div class="toast" id="toast" hidden>

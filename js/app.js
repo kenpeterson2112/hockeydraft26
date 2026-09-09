@@ -5,7 +5,7 @@
   var $ = UI.$, $$ = UI.$$, el = UI.el, num = UI.num, normalize = UI.normalize;
   var LEAGUE = Draft.LEAGUE;
 
-  var APP_VERSION = '1.0.0';
+  var APP_VERSION = '1.1.0';
 
   var players = [];              // seeded from data/players.json
   var playersById = {};
@@ -199,6 +199,10 @@
     var c = Draft.clock(state);
     var horizon = (state.setupDone && !c.complete) ? c.picksUntilMine : 0;
 
+    // Rows are about to be replaced; never leave a press pointing at one.
+    cancelHold();
+    renderHoldHint(c);
+
     var shown = players.filter(function (p) { return matchesFilters(p, board); });
     shown.sort(function (a, b) {
       var ao = board.owners[a.id] != null, bo = board.owners[b.id] != null;
@@ -236,6 +240,18 @@
     $('#searchNote').hidden = !view.search;
   }
 
+  // One line naming the team a hold would draft to, rather than repeating that
+  // team on every row.
+  function renderHoldHint(c) {
+    var hint = $('#holdHint');
+    hint.hidden = !state.setupDone || c.complete;
+    if (hint.hidden) return;
+    hint.innerHTML = '';
+    hint.appendChild(document.createTextNode('Hold a player to draft to '));
+    hint.appendChild(el('b', null, c.onClockTeam.name));
+    hint.appendChild(document.createTextNode(' \u00b7 tap to choose another team'));
+  }
+
   function buildDivider(horizon, c) {
     var li = el('li', 'divider');
     li.appendChild(el('span', 'divider-label', 'Your pick · ' + Draft.pickLabel(c.targetPick)));
@@ -245,12 +261,12 @@
   }
 
   function buildPlayerRow(p, ownerId, rank, c) {
+    var available = ownerId == null && state.setupDone && !c.complete;
     var li = el('li', 'prow pos-' + p.position + (ownerId != null ? ' is-taken' : ''));
 
     li.appendChild(el('span', 'p-rank', ownerId == null ? String(rank + 1) : '–'));
 
-    var main = el('button', 'p-main');
-    main.type = 'button';
+    var main = el('div', 'p-main');
     main.appendChild(el('span', 'p-name', p.name));
     var sub = el('span', 'p-sub');
     sub.appendChild(el('span', 'p-pos', p.position));
@@ -261,29 +277,145 @@
         (isKeeper ? 'K · ' : '') + state.teams[ownerId].name));
     }
     main.appendChild(sub);
-    main.addEventListener('click', function () { openPlayerSheet(p); });
     li.appendChild(main);
 
     li.appendChild(el('span', 'p-tier', String(p.tier)));
     li.appendChild(el('span', 'p-num', num(p.vorp)));
     li.appendChild(el('span', 'p-num p-pts', num(p.points)));
 
-    if (ownerId != null) {
-      li.appendChild(el('span', 'p-taken', state.keepers[p.id] != null ? 'Keeper' : 'Drafted'));
-    } else if (c.complete || !state.setupDone) {
-      li.appendChild(el('span', 'p-taken', ''));
-    } else {
-      var btn = el('button', 'p-draft', c.onClockTeam.name.slice(0, 7));
-      btn.type = 'button';
-      btn.title = 'Draft to ' + c.onClockTeam.name;
-      btn.addEventListener('click', function (ev) {
-        ev.stopPropagation();
-        draftPlayer(p.id, c.onClockTeam.id);
-      });
-      li.appendChild(btn);
+    if (available) {
+      li.classList.add('is-actionable');
+      li.setAttribute('role', 'button');
+      li.tabIndex = 0;
+      li.setAttribute('aria-label',
+        'Hold to draft ' + p.name + ' to ' + c.onClockTeam.name + ', or tap to choose a team');
+      attachHold(li, p, c.onClockTeam);
     }
 
     return li;
+  }
+
+  /* ------------------------------------------------------- hold-to-draft */
+
+  var HOLD_MS = 2000;      // full press duration before the pick commits
+  var MOVE_CANCEL_PX = 12; // treat as a scroll, not a press
+
+  var hold = null;
+
+  function attachHold(li, p, team) {
+    li.addEventListener('pointerdown', function (ev) {
+      if (!ev.isPrimary || (ev.pointerType === 'mouse' && ev.button !== 0)) return;
+      startHold(ev, li, p, team);
+    });
+    // Keyboard users get the team chooser, which is fully operable.
+    li.addEventListener('keydown', function (ev) {
+      if (ev.key === 'Enter' || ev.key === ' ') {
+        ev.preventDefault();
+        openPlayerSheet(p);
+      }
+    });
+  }
+
+  function startHold(ev, li, p, team) {
+    cancelHold();
+    hold = {
+      player: p,
+      team: team,
+      li: li,
+      startX: ev.clientX,
+      startY: ev.clientY,
+      start: 0,
+      raf: 0,
+      done: false
+    };
+    li.classList.add('is-holding');
+    showHoldPop(p, team, ev.clientX, ev.clientY);
+    buzz(8);
+
+    global.addEventListener('pointermove', onHoldMove, { passive: true });
+    global.addEventListener('pointerup', onHoldEnd);
+    global.addEventListener('pointercancel', onHoldAbort);
+    global.addEventListener('scroll', onHoldAbort, { passive: true });
+    global.addEventListener('contextmenu', onContextMenu);
+
+    hold.raf = global.requestAnimationFrame(stepHold);
+  }
+
+  function stepHold(ts) {
+    if (!hold) return;
+    if (!hold.start) hold.start = ts;
+    var pct = Math.min(1, (ts - hold.start) / HOLD_MS);
+    $('#holdPopBar').style.width = (pct * 100).toFixed(1) + '%';
+
+    if (pct >= 1) {
+      var p = hold.player, team = hold.team;
+      hold.done = true;
+      buzz([18, 40, 18]);
+      cancelHold();
+      draftPlayer(p.id, team.id);
+      return;
+    }
+    hold.raf = global.requestAnimationFrame(stepHold);
+  }
+
+  function onHoldMove(ev) {
+    if (!hold) return;
+    if (Math.abs(ev.clientX - hold.startX) > MOVE_CANCEL_PX ||
+        Math.abs(ev.clientY - hold.startY) > MOVE_CANCEL_PX) {
+      cancelHold();
+    }
+  }
+
+  // Releasing early is a plain tap: open the team chooser instead.
+  function onHoldEnd() {
+    if (!hold || hold.done) return;
+    var p = hold.player;
+    cancelHold();
+    openPlayerSheet(p);
+  }
+
+  function onHoldAbort() { cancelHold(); }
+
+  function onContextMenu(ev) { if (hold) ev.preventDefault(); }
+
+  function cancelHold() {
+    if (!hold) return;
+    if (hold.raf) global.cancelAnimationFrame(hold.raf);
+    hold.li.classList.remove('is-holding');
+    hold = null;
+    hideHoldPop();
+    global.removeEventListener('pointermove', onHoldMove);
+    global.removeEventListener('pointerup', onHoldEnd);
+    global.removeEventListener('pointercancel', onHoldAbort);
+    global.removeEventListener('scroll', onHoldAbort);
+    global.removeEventListener('contextmenu', onContextMenu);
+  }
+
+  function showHoldPop(p, team, x, y) {
+    var pop = $('#holdPop');
+    $('#holdPopPlayer').textContent = p.name;
+    $('#holdPopTeam').textContent = team.name;
+    $('#holdPopBar').style.width = '0%';
+    pop.hidden = false;
+
+    // Sit above the finger, but stay inside the viewport on all four sides.
+    var w = pop.offsetWidth, h = pop.offsetHeight, pad = 8;
+    var left = Math.min(Math.max(x, w / 2 + pad), global.innerWidth - w / 2 - pad);
+    var top = y - h - 18;
+    pop.classList.toggle('is-below', top < pad);
+    if (top < pad) top = y + 22;
+    pop.style.left = left + 'px';
+    pop.style.top = top + 'px';
+  }
+
+  function hideHoldPop() {
+    $('#holdPop').hidden = true;
+  }
+
+  function buzz(pattern) {
+    if (navigator.vibrate) {
+      try { navigator.vibrate(pattern); } catch (err) { /* not supported */ }
+    }
   }
 
   function openPlayerSheet(p) {
