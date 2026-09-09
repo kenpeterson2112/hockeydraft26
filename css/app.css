@@ -100,27 +100,27 @@ button { cursor: pointer; }
 .controls {
   position: sticky; top: 41px; z-index: 20;
   background: var(--bg); border-bottom: 1px solid var(--line);
-  padding: 8px 12px;
+  padding: 6px 12px;
 }
 
 .searchwrap { position: relative; }
 .search {
-  width: 100%; height: var(--tap); padding: 0 36px 0 12px;
+  width: 100%; height: 38px; padding: 0 34px 0 12px;
   background: var(--bg-2); border: 1px solid var(--line);
   border-radius: 10px; color: var(--txt);
 }
 .search::placeholder { color: var(--txt-faint); }
 .search:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
 .clear-btn {
-  position: absolute; right: 4px; top: 4px;
-  width: 36px; height: 36px; background: none; border: 0;
+  position: absolute; right: 2px; top: 2px;
+  width: 34px; height: 34px; background: none; border: 0;
   color: var(--txt-faint); font-size: 22px; line-height: 1;
 }
 
-.filterrow { display: flex; gap: 8px; margin-top: 8px; align-items: center; }
+.filterrow { display: flex; gap: 6px; margin-top: 6px; align-items: center; }
 .chips { display: flex; gap: 6px; flex: 1; }
 .chip {
-  flex: 1; height: 36px; border-radius: 8px;
+  flex: 1; height: 34px; border-radius: 8px;
   background: var(--bg-2); border: 1px solid var(--line);
   color: var(--txt-faint); font-weight: 700; font-size: 14px;
 }
@@ -131,22 +131,22 @@ button { cursor: pointer; }
 .chip-G.is-on { background: var(--pos-G); border-color: var(--pos-G); }
 
 .sort {
-  height: 36px; padding: 0 8px; border-radius: 8px;
+  height: 34px; padding: 0 6px; border-radius: 8px;
   background: var(--bg-2); border: 1px solid var(--line); color: var(--txt-dim);
 }
 
 .showdrafted {
-  display: inline-flex; align-items: center; gap: 6px;
-  margin-top: 8px; font-size: 13px; color: var(--txt-faint);
+  display: inline-flex; align-items: center; gap: 5px; flex: none;
+  font-size: 12px; color: var(--txt-faint); white-space: nowrap;
 }
-.showdrafted input { width: 16px; height: 16px; accent-color: var(--accent); }
+.showdrafted input { width: 15px; height: 15px; margin: 0; accent-color: var(--accent); }
 
 /* ------------------------------------------------------------ list */
 
 .listhead {
   display: grid; align-items: center;
-  grid-template-columns: 30px 1fr 34px 46px 46px 62px;
-  gap: 6px; padding: 6px 12px;
+  grid-template-columns: 26px 1fr 30px 44px 44px 58px;
+  gap: 6px; padding: 4px 12px;
   font-size: 10px; letter-spacing: .08em; text-transform: uppercase;
   color: var(--txt-faint); border-bottom: 1px solid var(--line);
 }
@@ -157,8 +157,8 @@ button { cursor: pointer; }
 
 .prow {
   display: grid; align-items: center;
-  grid-template-columns: 30px 1fr 34px 46px 46px 62px;
-  gap: 6px; padding: 7px 12px;
+  grid-template-columns: 26px 1fr 30px 44px 44px 58px;
+  gap: 6px; padding: 4px 12px;
   border-bottom: 1px solid rgba(38, 51, 77, .55);
   border-left: 3px solid transparent;
 }
@@ -173,7 +173,7 @@ button { cursor: pointer; }
 }
 .p-main { min-width: 0; background: none; border: 0; padding: 0; text-align: left; }
 .p-name {
-  font-weight: 600; font-size: 15px;
+  font-weight: 600; font-size: 14px;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .p-sub {
@@ -198,7 +198,7 @@ button { cursor: pointer; }
 .p-pts { color: var(--txt); font-weight: 600; }
 
 .p-draft {
-  height: 34px; border-radius: 8px;
+  height: 32px; border-radius: 8px;
   background: var(--bg-3); border: 1px solid var(--line);
   color: var(--txt); font-size: 12px; font-weight: 700;
 }
@@ -208,10 +208,10 @@ button { cursor: pointer; }
 /* the "board by my next pick" divider */
 .divider {
   list-style: none; position: relative;
-  margin: 0; padding: 10px 12px 8px;
+  margin: 0; padding: 6px 12px 5px;
   background: linear-gradient(90deg, rgba(167,139,250,.16), transparent 70%);
   border-top: 2px dashed var(--me);
-  display: flex; align-items: center; gap: 8px;
+  display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap;
 }
 .divider-label {
   font-size: 11px; font-weight: 800; letter-spacing: .06em;
@@ -430,9 +430,28 @@ button { cursor: pointer; }
   color: var(--accent); font-weight: 800; font-size: 13px; padding: 4px 2px;
 }
 
+/* Short viewports (iPhone SE and friends): trim chrome so the board still
+   shows 10+ players without scrolling. */
+@media (max-height: 700px) {
+  .topbar { padding-top: max(5px, env(safe-area-inset-top)); padding-bottom: 5px; }
+  .onclock { font-size: 15px; }
+  .turnline { font-size: 12px; margin-top: 2px; }
+  .undo-btn { height: 30px; }
+  .tab { padding: 7px 4px; }
+  .controls { top: 33px; padding: 5px 12px; }
+  .search { height: 34px; }
+  .clear-btn { height: 30px; width: 30px; }
+  .filterrow { margin-top: 5px; }
+  .chip, .sort { height: 30px; }
+  .listhead { display: none; }
+  .prow { padding: 3px 12px; }
+  .p-name { font-size: 13px; }
+}
+
 @media (min-width: 640px) {
   .teamlist { grid-template-columns: repeat(2, 1fr); }
   .prow, .listhead { grid-template-columns: 34px 1fr 40px 56px 56px 70px; }
+  .prow { padding: 6px 12px; }
 }
 
 @media (prefers-reduced-motion: no-preference) {
