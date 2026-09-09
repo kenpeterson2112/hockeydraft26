@@ -71,9 +71,14 @@ pick whose id disappears is dropped on load rather than corrupting the draft.
 
 ## Deploying
 
-Pushes to `main` publish to GitHub Pages via `.github/workflows/pages.yml`
-(enable Pages → Source: GitHub Actions once). All asset paths are relative, so
-it works from the `/hockeydraft26/` project-page subpath.
+**One-time setup:** repo **Settings → Pages → Build and deployment → Source:
+GitHub Actions**. The workflow token is not allowed to enable Pages itself, so
+the first deploy fails with *"Get Pages site failed"* until this is set. After
+that, every push to `main` publishes via `.github/workflows/pages.yml` — re-run
+the failed workflow once to publish immediately.
+
+Live at `https://kenpeterson2112.github.io/hockeydraft26/`. All asset paths are
+relative, so it works from the project-page subpath.
 
 Bump `CACHE_VERSION` in `sw.js` whenever you change assets, or clients keep
 serving the cached copy.
