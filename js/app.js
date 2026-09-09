@@ -700,23 +700,103 @@
     $('#importBtn').addEventListener('click', function () { $('#importFile').click(); });
     $('#importFile').addEventListener('change', importState);
 
-    $('#resetPicksBtn').addEventListener('click', function () {
-      if (!global.confirm('Clear all ' + state.picks.length + ' draft picks? Keepers and team names stay.')) return;
-      state.picks = [];
-      Draft.save(state);
-      render();
-      UI.showToast('Draft picks cleared.');
-    });
+    $('#resetBtn').addEventListener('click', openResetSheet);
+  }
 
-    $('#resetAllBtn').addEventListener('click', function () {
-      if (!global.confirm('Reset everything — keepers, team names, and all picks?')) return;
-      state = Draft.freshState();
-      Draft.save(state);
-      $('#teamSetup').dataset.built = '';
-      view.keeperTeam = 0;
-      view.keeperSearch = '';
-      render();
-      UI.showToast('Reset to a clean draft.');
+  /* ----------------------------------------------------------------- reset */
+
+  // Three scopes, narrowest first, because re-running a sim is the common case
+  // and re-entering 42 keepers is the expensive one. Player projections live in
+  // data/players.json and are never written by the app, so no scope touches them.
+  function resetPicksOnly() {
+    var n = state.picks.length;
+    state.picks = [];
+    Draft.save(state);
+    render();
+    UI.showToast('Cleared ' + n + ' pick' + (n === 1 ? '' : 's') + '. Keepers and teams kept.');
+  }
+
+  function resetToSetup() {
+    var n = state.picks.length;
+    state.picks = [];
+    state.setupDone = false;
+    Draft.save(state);
+    setTab('setup');
+    UI.showToast('Draft cancelled — ' + n + ' pick' + (n === 1 ? '' : 's') +
+      ' cleared. Keepers and teams kept.');
+  }
+
+  function resetEverything() {
+    state = Draft.freshState();
+    Draft.save(state);
+    $('#teamSetup').dataset.built = '';
+    view.keeperTeam = 0;
+    view.keeperSearch = '';
+    view.expandedTeams = {};
+    setTab('setup');
+    UI.showToast('Everything reset. Player projections are untouched.');
+  }
+
+  function openResetSheet() {
+    var picks = state.picks.length;
+    var keepers = Draft.keeperCount(state);
+
+    UI.openSheet('Reset', 'Player names, tiers, VORP and projected points are never changed.', function (body) {
+      var options = [
+        {
+          title: 'Clear picks only',
+          detail: 'Removes ' + picks + ' draft pick' + (picks === 1 ? '' : 's') +
+            '. Keeps all ' + keepers + ' keepers, team names, and stays on the board — ' +
+            'ready to redraft immediately.',
+          label: 'Clear picks',
+          run: resetPicksOnly
+        },
+        {
+          title: 'Cancel the current draft',
+          detail: 'Clears the ' + picks + ' pick' + (picks === 1 ? '' : 's') +
+            ' and returns to setup so you can change keepers or team names before ' +
+            'starting again.',
+          label: 'Cancel draft',
+          run: resetToSetup
+        },
+        {
+          title: 'Clear everything',
+          detail: 'Wipes picks, all ' + keepers + ' keepers, and resets team names to the ' +
+            'default draft order. Nothing but the player pool survives.',
+          label: 'Clear everything',
+          run: resetEverything,
+          confirm: true
+        }
+      ];
+
+      options.forEach(function (opt) {
+        var card = el('div', 'resetopt' + (opt.confirm ? ' is-severe' : ''));
+        card.appendChild(el('div', 'resetopt-title', opt.title));
+        card.appendChild(el('div', 'resetopt-detail', opt.detail));
+
+        var btn = el('button', 'btn btn-danger', opt.label);
+        btn.type = 'button';
+        var armed = false;
+        btn.addEventListener('click', function () {
+          // The destructive scope asks twice; the sim-friendly ones do not.
+          if (opt.confirm && !armed) {
+            armed = true;
+            btn.textContent = 'Tap again to confirm';
+            btn.classList.add('is-armed');
+            return;
+          }
+          UI.closeSheet();
+          opt.run();
+        });
+        card.appendChild(btn);
+        body.appendChild(card);
+      });
+
+      var cancel = el('button', 'btn', 'Cancel');
+      cancel.type = 'button';
+      cancel.style.marginTop = '4px';
+      cancel.addEventListener('click', UI.closeSheet);
+      body.appendChild(cancel);
     });
   }
 

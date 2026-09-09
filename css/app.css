@@ -18,6 +18,11 @@
 
 * { box-sizing: border-box; }
 
+/* A class selector like `.toast { display: flex }` outbids the user-agent
+   `[hidden] { display: none }` rule, which would leave hidden elements on
+   screen swallowing taps. Keep this ahead of every component rule. */
+[hidden] { display: none !important; }
+
 html { -webkit-text-size-adjust: 100%; }
 
 body {
@@ -406,6 +411,22 @@ button { cursor: pointer; }
 .tgbtn.is-onclock { border-color: var(--accent); }
 .tgbtn.is-mine { border-color: var(--me); }
 .tgbtn.is-full { opacity: .5; }
+
+.resetopt {
+  background: var(--bg-3); border: 1px solid var(--line);
+  border-radius: 10px; padding: 10px 12px 12px; margin-bottom: 8px;
+}
+.resetopt.is-severe { border-color: rgba(248, 113, 113, .45); }
+.resetopt-title { font-weight: 700; font-size: 14px; }
+.resetopt-detail {
+  font-size: 12px; color: var(--txt-faint);
+  margin: 3px 0 10px; line-height: 1.45;
+}
+.resetopt .btn { width: 100%; flex: none; }
+.resetopt .btn.is-armed {
+  background: var(--danger); border-color: var(--danger);
+  color: #0b1220; font-weight: 800;
+}
 
 .sheet-warn {
   margin: 10px 0 0; padding: 8px 10px; border-radius: 8px; font-size: 12px;

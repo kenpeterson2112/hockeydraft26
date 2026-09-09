@@ -50,6 +50,20 @@ folded, so `stutzle` finds Stützle and `oreilly` finds O'Reilly.
 
 ## State and offline
 
+### Resetting between simulated drafts
+
+**Setup → Reset…** opens a modal with three scopes:
+
+| Scope | Clears | Keeps |
+|---|---|---|
+| Clear picks only | Picks | Keepers, team names, stays on the board |
+| Cancel the current draft | Picks, returns to setup | Keepers, team names |
+| Clear everything | Picks, keepers, team names → defaults | Nothing but the player pool |
+
+"Clear everything" takes two taps to confirm; the other two act immediately so
+re-running a sim stays fast. **No scope ever touches `data/players.json`** —
+names, tiers, VORP and projected points are read-only to the app.
+
 Everything (team names, keepers, picks, progress) is written to `localStorage`
 on every change, so a refresh or a phone lock loses nothing. A service worker
 precaches the whole app including the player data, so once the page has loaded
