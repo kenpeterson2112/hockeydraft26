@@ -292,12 +292,14 @@ button { cursor: pointer; }
 }
 .prow.is-taken { opacity: .4; }
 
-/* Projected to be gone by the time this pick comes round. Marked per row so it
-   stays true under any sort, not only when the list matches board order.
-   Uses background-COLOR so it layers under the positional wash above rather
-   than replacing it. */
-.prow.is-projected-gone { background-color: rgba(167, 139, 250, .13); }
-.prow.is-projected-gone .p-rank { color: var(--me); font-weight: 700; }
+/* Projected to be gone by the time this pick comes round. The row tint that
+   used to carry this has been dropped: layered under the positional tint it
+   muddied the colour that actually matters, particularly on amber goalie rows.
+   The rank number alone now carries it — free, and it muddies nothing. */
+/* Scoped through .playerlist so it outranks the sort-emphasis rule
+   `.playerlist[data-sort="rank"] .p-rank`, which is equally specific and
+   declared later — without this the projection marker silently loses. */
+.playerlist .prow.is-projected-gone .p-rank { color: var(--me); font-weight: 800; }
 
 .p-rank {
   font-size: 13px; color: var(--txt-faint);

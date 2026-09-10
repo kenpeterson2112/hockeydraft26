@@ -72,15 +72,17 @@ the number of picks until your turn does not depend on what you are looking at.
 When Ken is on the clock it counts to the wheel, his *following* pick, which is
 the decision that actually matters.
 
-**The shaded rows are the projection.** A player is shaded, with a purple rank
-number, when their canonical board rank falls inside that horizon — they are
-expected to be gone. This is measured against the **full combined board**, not
+**The purple rank numbers are the projection.** A player's rank number turns
+purple when their canonical board rank falls inside that horizon — they are
+expected to be gone. (A row tint carried this originally; layered under the
+positional tint it muddied the colour that matters more, so only the number
+carries it now.) This is measured against the **full combined board**, not
 the filtered view, because opponents can take any position. Filter to defence
 and you see exactly which defencemen you expect to lose, which is usually fewer
 than N.
 
 On an unfiltered board in the default sort the two coincide: N rows above the
-line, all shaded. They diverge under a filter, and each stays honest — the line
+line, all purple-numbered. They diverge under a filter, and each stays honest — the line
 keeps counting picks, the shading keeps naming players.
 
 ### The position filter chips

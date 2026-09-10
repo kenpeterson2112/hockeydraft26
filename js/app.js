@@ -5,7 +5,7 @@
   var $ = UI.$, $$ = UI.$$, el = UI.el, num = UI.num, normalize = UI.normalize;
   var LEAGUE = Draft.LEAGUE;
 
-  var APP_VERSION = '2.0.1';
+  var APP_VERSION = '2.0.2';
 
   var players = [];              // seeded from data/players.json
   var playersById = {};
@@ -384,7 +384,7 @@
     var li = el('li', 'divider');
     li.appendChild(el('span', 'divider-label', 'Your pick · ' + Draft.pickLabel(c.targetPick)));
     li.appendChild(el('span', 'divider-note',
-      horizon + ' pick' + (horizon === 1 ? '' : 's') + " until you're up — shaded rows likely gone"));
+      horizon + ' pick' + (horizon === 1 ? '' : 's') + " until you're up"));
     return li;
   }
 
