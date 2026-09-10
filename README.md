@@ -41,6 +41,19 @@ season total and never recomputes it from categories.
 5. **Teams.** Live effective total, raw total, and positional counts per team.
    Tap a card to expand the roster — benched (non-counting) players are dimmed.
 
+### Sorting
+
+There is no sort control — the **Tier / VORP / Pts column headers are the sort
+buttons**. Tapping one sorts by that column most-desirable-first (tier 1→8,
+VORP and points high→low); tapping the active column again reverses it. An
+arrow marks the active column and direction.
+
+The **#** column is the *canonical board rank* — tier, then VORP, then points —
+not the row's position in the current view. Under an alternate sort the numbers
+are therefore non-contiguous (1, 4, 5, 19…), which is deliberate: it tells you
+where a player sits on the real board while you are looking at a VORP- or
+points-ordered view.
+
 ### The "next pick" divider
 
 The dashed purple line marks where the board is projected to stand when Ken is
@@ -49,6 +62,10 @@ turn — against the **full combined board**, not the filtered view, because
 opponents can take any position. Change the position filter and the line stays
 anchored to real board depth. When Ken is on the clock it shows the wheel to his
 *following* pick, which is the decision that actually matters.
+
+The divider counts against the canonical board rank, so it survives a change of
+sort column. It **hides entirely when a column is reversed** into a
+worst-first order, where "everyone above this line is gone" would be false.
 
 ### Tier badges on the position filters
 

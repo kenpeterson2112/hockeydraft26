@@ -36,30 +36,22 @@
 <!-- ------------------------------------------------------------- BOARD -->
 <main class="view is-active" id="view-board">
   <div class="controls">
-    <div class="searchwrap">
-      <input id="search" class="search" type="search" inputmode="search"
-             placeholder="Search player…" autocomplete="off" autocorrect="off"
-             autocapitalize="off" spellcheck="false">
-      <button class="clear-btn" id="searchClear" type="button" hidden aria-label="Clear search">&times;</button>
-    </div>
-    <div class="filterrow">
-      <div class="chips" role="group" aria-label="Position filter">
-        <button class="chip chip-all is-on" data-pos="ALL" type="button">All</button>
-        <button class="chip chip-F" data-pos="F" type="button"><span class="chip-letter">F</span><span class="tierbadge" id="badge-F" hidden></span></button>
-        <button class="chip chip-D" data-pos="D" type="button"><span class="chip-letter">D</span><span class="tierbadge" id="badge-D" hidden></span></button>
-        <button class="chip chip-G" data-pos="G" type="button"><span class="chip-letter">G</span><span class="tierbadge" id="badge-G" hidden></span></button>
+    <div class="searchrow">
+      <div class="searchwrap">
+        <input id="search" class="search" type="search" inputmode="search"
+               placeholder="Search player…" autocomplete="off" autocorrect="off"
+               autocapitalize="off" spellcheck="false">
+        <button class="clear-btn" id="searchClear" type="button" hidden aria-label="Clear search">&times;</button>
       </div>
-      <label class="sortwrap">
-        <span class="sr-only">Sort by</span>
-        <select id="sort" class="sort">
-          <option value="tier">Tier</option>
-          <option value="vorp">VORP</option>
-          <option value="points">Points</option>
-        </select>
-      </label>
-      <label class="showdrafted" title="Show drafted players">
+      <label class="showdrafted" title="Show players already drafted">
         <input type="checkbox" id="showDrafted"><span class="showdrafted-label">Drafted</span>
       </label>
+    </div>
+    <div class="chips" role="group" aria-label="Position filter">
+      <button class="chip chip-all is-on" data-pos="ALL" type="button">All</button>
+      <button class="chip chip-F" data-pos="F" type="button"><span class="chip-letter">F</span><span class="tierbadge" id="badge-F" hidden></span></button>
+      <button class="chip chip-D" data-pos="D" type="button"><span class="chip-letter">D</span><span class="tierbadge" id="badge-D" hidden></span></button>
+      <button class="chip chip-G" data-pos="G" type="button"><span class="chip-letter">G</span><span class="tierbadge" id="badge-G" hidden></span></button>
     </div>
   </div>
 
@@ -69,9 +61,9 @@
   <div class="listhead">
     <span class="lh-rank">#</span>
     <span class="lh-name">Player</span>
-    <span class="lh-num">Tier</span>
-    <span class="lh-num">VORP</span>
-    <span class="lh-num">Pts</span>
+    <button class="lh-sort" data-sort="tier" type="button">Tier<span class="lh-arrow"></span></button>
+    <button class="lh-sort" data-sort="vorp" type="button">VORP<span class="lh-arrow"></span></button>
+    <button class="lh-sort" data-sort="points" type="button">Pts<span class="lh-arrow"></span></button>
   </div>
 
   <ol class="playerlist" id="playerList"></ol>

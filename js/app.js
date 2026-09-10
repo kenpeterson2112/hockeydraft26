@@ -5,7 +5,7 @@
   var $ = UI.$, $$ = UI.$$, el = UI.el, num = UI.num, normalize = UI.normalize;
   var LEAGUE = Draft.LEAGUE;
 
-  var APP_VERSION = '1.2.0';
+  var APP_VERSION = '1.3.0';
 
   var players = [];              // seeded from data/players.json
   var playersById = {};
@@ -19,6 +19,7 @@
     positions: { F: true, D: true, G: true },
     search: '',
     sort: 'tier',
+    sortDir: 'asc',
     showDrafted: false,
     expandedTeams: {},
     keeperTeam: 0,
@@ -27,25 +28,44 @@
 
   /* ------------------------------------------------------------ board data */
 
-  var COMPARATORS = {
-    tier: function (a, b) {
-      return (a.tier - b.tier) || (b.vorp - a.vorp) || (b.points - a.points);
-    },
-    vorp: function (a, b) {
-      return (b.vorp - a.vorp) || (a.tier - b.tier) || (b.points - a.points);
-    },
-    points: function (a, b) {
-      return (b.points - a.points) || (a.tier - b.tier) || (b.vorp - a.vorp);
-    }
+  // Sortable columns. `best` is the direction that puts the most desirable
+  // player first — descending for VORP and points, but ascending for tier,
+  // since tier 1 is the good end. Tapping a column sorts it that way; tapping
+  // the active column again reverses.
+  var SORT_COLUMNS = {
+    tier:   { best: 'asc',  value: function (p) { return p.tier; } },
+    vorp:   { best: 'desc', value: function (p) { return p.vorp; } },
+    points: { best: 'desc', value: function (p) { return p.points; } }
   };
 
-  // The full combined board of everyone still available, in the current sort.
-  // Ranks come from here — never from the filtered view — because opponents
-  // can take any position between now and Ken's next turn.
+  // Fixed value ordering used for the # column and the next-pick divider,
+  // independent of however the user has chosen to display the list.
+  function canonicalCompare(a, b) {
+    return (a.tier - b.tier) || (b.vorp - a.vorp) || (b.points - a.points) ||
+      a.name.localeCompare(b.name);
+  }
+
+  function displayCompare(a, b) {
+    var col = SORT_COLUMNS[view.sort] || SORT_COLUMNS.tier;
+    var diff = col.value(a) - col.value(b);
+    if (diff) return view.sortDir === 'asc' ? diff : -diff;
+    return canonicalCompare(a, b);
+  }
+
+  // True while the list runs best-player-first, which is the only arrangement
+  // in which the divider means anything.
+  function sortIsDescendingDesirability() {
+    var col = SORT_COLUMNS[view.sort] || SORT_COLUMNS.tier;
+    return view.sortDir === col.best;
+  }
+
+  // The full combined board of everyone still available. Ranks come from here —
+  // never from the filtered view — because opponents can take any position
+  // between now and Ken's next turn.
   function buildBoard() {
     var owners = Draft.ownerMap(state);
     var available = players.filter(function (p) { return owners[p.id] == null; });
-    available.sort(COMPARATORS[view.sort] || COMPARATORS.tier);
+    available.sort(canonicalCompare);
 
     var rankById = {};
     for (var i = 0; i < available.length; i++) rankById[available[i].id] = i;
@@ -236,17 +256,21 @@
     var list = $('#playerList');
     var frag = document.createDocumentFragment();
     var c = Draft.clock(state);
-    var horizon = (state.setupDone && !c.complete) ? c.picksUntilMine : 0;
+    // Reversed onto a worst-first order, "everyone above the line is gone"
+    // would be a lie, so the divider stands down rather than mislead.
+    var horizon = (state.setupDone && !c.complete && sortIsDescendingDesirability())
+      ? c.picksUntilMine : 0;
 
     // Rows are about to be replaced; never leave a press pointing at one.
     cancelHold();
     renderHoldHint(c);
+    renderSortHeader();
 
     var shown = players.filter(function (p) { return matchesFilters(p, board); });
     shown.sort(function (a, b) {
       var ao = board.owners[a.id] != null, bo = board.owners[b.id] != null;
       if (ao !== bo) return ao ? 1 : -1; // drafted players sink to the bottom
-      return (COMPARATORS[view.sort] || COMPARATORS.tier)(a, b);
+      return displayCompare(a, b);
     });
 
     var dividerPlaced = false;
@@ -280,15 +304,42 @@
   }
 
   // One line naming the team a hold would draft to, rather than repeating that
-  // team on every row.
+  // team on every row. It is discovery UI, so it retires after the first few
+  // picks and gives its height back to the board; the on-clock team stays
+  // visible in the header regardless.
+  var HINT_PICKS = 3;
+
   function renderHoldHint(c) {
     var hint = $('#holdHint');
-    hint.hidden = !state.setupDone || c.complete;
+    hint.hidden = !state.setupDone || c.complete || state.picks.length >= HINT_PICKS;
     if (hint.hidden) return;
     hint.innerHTML = '';
     hint.appendChild(document.createTextNode('Hold a player to draft to '));
     hint.appendChild(el('b', null, c.onClockTeam.name));
     hint.appendChild(document.createTextNode(' \u00b7 tap to choose another team'));
+  }
+
+  function renderSortHeader() {
+    $$('.lh-sort').forEach(function (btn) {
+      var key = btn.dataset.sort;
+      var active = key === view.sort;
+      var dir = active ? view.sortDir : null;
+      btn.classList.toggle('is-active', active);
+      btn.classList.toggle('is-asc', dir === 'asc');
+      $('.lh-arrow', btn).textContent = active ? (dir === 'asc' ? '\u25B2' : '\u25BC') : '';
+      btn.setAttribute('aria-sort', active ? (dir === 'asc' ? 'ascending' : 'descending') : 'none');
+    });
+  }
+
+  function sortBy(key) {
+    if (!SORT_COLUMNS[key]) return;
+    if (view.sort === key) {
+      view.sortDir = view.sortDir === 'asc' ? 'desc' : 'asc';
+    } else {
+      view.sort = key;
+      view.sortDir = SORT_COLUMNS[key].best;
+    }
+    renderBoard(buildBoard());
   }
 
   function buildDivider(horizon, c) {
@@ -752,7 +803,7 @@
       if (board.owners[p.id] != null) return false;
       return !q || searchKeys[p.id].indexOf(q) !== -1;
     });
-    matches.sort(COMPARATORS.tier);
+    matches.sort(canonicalCompare);
     matches.slice(0, q ? 25 : 12).forEach(function (p) {
       var li = el('li');
       var b = el('button', 'kp-result pos-' + p.position);
@@ -845,9 +896,8 @@
       });
     });
 
-    $('#sort').addEventListener('change', function () {
-      view.sort = $('#sort').value;
-      renderBoard(buildBoard());
+    $$('.lh-sort').forEach(function (btn) {
+      btn.addEventListener('click', function () { sortBy(btn.dataset.sort); });
     });
 
     $('#showDrafted').addEventListener('change', function () {
@@ -1047,7 +1097,6 @@
 
     $('#versionLine').textContent = 'Draft Day 26 · v' + APP_VERSION + ' · ' +
       players.length + ' players';
-    $('#sort').value = view.sort;
     syncChips();
     wire();
     setTab(state.setupDone ? 'board' : 'setup');
