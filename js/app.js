@@ -5,7 +5,7 @@
   var $ = UI.$, $$ = UI.$$, el = UI.el, num = UI.num, normalize = UI.normalize;
   var LEAGUE = Draft.LEAGUE;
 
-  var APP_VERSION = '1.5.0';
+  var APP_VERSION = '1.6.0';
 
   var players = [];              // seeded from data/players.json
   var playersById = {};
@@ -281,18 +281,14 @@
       return displayCompare(a, b);
     });
 
-    var split = horizon > 0 ? projectedSplit(shown, board, horizon) : null;
+    var splitAt = horizon > 0 ? dividerIndex(shown, board, horizon) : null;
 
     for (var i = 0; i < shown.length; i++) {
-      if (split && split.index === i) {
-        frag.appendChild(buildDivider(horizon, c));
-      }
+      if (splitAt === i) frag.appendChild(buildDivider(horizon, c));
       var p = shown[i];
       frag.appendChild(buildPlayerRow(p, board.owners[p.id], board.rankById[p.id], c, horizon));
     }
-    if (split && split.index === shown.length) {
-      frag.appendChild(buildDivider(horizon, c));
-    }
+    if (splitAt === shown.length) frag.appendChild(buildDivider(horizon, c));
 
     // Drives which value column is emphasised, so the eye lands on the column
     // the list is actually ordered by.
@@ -342,37 +338,27 @@
     renderBoard(buildBoard());
   }
 
-  // Which players are projected gone is a property of the board, not of the
-  // display order — a player is gone if their canonical rank falls inside the
-  // horizon. So the line goes wherever that status first flips as the list is
-  // read top to bottom, which lands it correctly under any sort, reversed
-  // included. `goneFirst` says which side of the line the gone players are on.
-  function projectedSplit(shown, board, horizon) {
-    var prev = null;
-    var first = null;
-    var lastAvailableIndex = -1;
-
+  // The line is a ruler, not a claim: it sits exactly `horizon` rows down so the
+  // picks until Ken is up can be counted off the screen, and it stays put when
+  // the position filter changes. Which players are actually projected gone is a
+  // property of the board rather than of the view, and that is carried by the
+  // per-row shading instead — the two coincide on an unfiltered board and each
+  // stays honest when they diverge.
+  function dividerIndex(shown, board, horizon) {
+    var seen = 0;
     for (var i = 0; i < shown.length; i++) {
-      if (board.owners[shown[i].id] != null) continue; // drafted rows carry no rank
-      var gone = board.rankById[shown[i].id] < horizon;
-      if (first === null) first = gone;
-      if (prev !== null && gone !== prev) return { index: i, goneFirst: first };
-      prev = gone;
-      lastAvailableIndex = i;
+      if (board.owners[shown[i].id] != null) continue; // drafted rows are not picks to come
+      seen++;
+      if (seen === horizon) return i + 1;
     }
-
-    if (first === null) return null;                       // nothing available on screen
-    // No transition: every visible player sits on the same side of the line.
-    return first
-      ? { index: lastAvailableIndex + 1, goneFirst: true }  // all projected gone
-      : { index: 0, goneFirst: true };                      // none of them are
+    return null; // fewer rows on screen than picks to count
   }
 
   function buildDivider(horizon, c) {
     var li = el('li', 'divider');
     li.appendChild(el('span', 'divider-label', 'Your pick · ' + Draft.pickLabel(c.targetPick)));
     li.appendChild(el('span', 'divider-note',
-      horizon + ' pick' + (horizon === 1 ? '' : 's') + ' away — shaded rows likely gone'));
+      horizon + ' pick' + (horizon === 1 ? '' : 's') + " until you're up — shaded rows likely gone"));
     return li;
   }
 

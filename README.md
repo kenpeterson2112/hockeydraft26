@@ -56,18 +56,25 @@ points-ordered view.
 
 ### The "next pick" divider
 
-The dashed purple line marks where the board is projected to stand when Ken is
-next up. It counts forward N picks — N being the picks between now and his next
-turn — against the **full combined board**, not the filtered view, because
-opponents can take any position. Change the position filter and the line stays
-anchored to real board depth. When Ken is on the clock it shows the wheel to his
-*following* pick, which is the decision that actually matters.
+Two things are shown, because they answer different questions.
 
-Projected-gone rows are also **shaded**, with a purple rank number. Being
-projected gone is a fact about the board, not about the display order, so the
-shading stays exact under every sort — including a reversed one, where a single
-line cannot cleanly separate the two groups. The line is the landmark; the
-shading is the truth.
+**The dashed purple line is a ruler.** It sits exactly N rows down, N being the
+picks between now and Ken's next turn, so the wait can be counted straight off
+the screen. It does not move when the position filter or the sort changes —
+the number of picks until your turn does not depend on what you are looking at.
+When Ken is on the clock it counts to the wheel, his *following* pick, which is
+the decision that actually matters.
+
+**The shaded rows are the projection.** A player is shaded, with a purple rank
+number, when their canonical board rank falls inside that horizon — they are
+expected to be gone. This is measured against the **full combined board**, not
+the filtered view, because opponents can take any position. Filter to defence
+and you see exactly which defencemen you expect to lose, which is usually fewer
+than N.
+
+On an unfiltered board in the default sort the two coincide: N rows above the
+line, all shaded. They diverge under a filter, and each stays honest — the line
+keeps counting picks, the shading keeps naming players.
 
 ### Tier badges on the position filters
 
