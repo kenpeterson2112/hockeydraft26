@@ -49,10 +49,20 @@ button { cursor: pointer; }
   border-bottom: 1px solid var(--line);
   padding: max(8px, env(safe-area-inset-top)) 12px 8px;
 }
-.topbar.is-mine { box-shadow: inset 0 3px 0 var(--me); }
+/* Ken is on the clock — the one moment in the draft that must not be missed. */
+.topbar.is-mine {
+  background: linear-gradient(180deg, #2b1f52, #1b1533);
+  box-shadow: inset 0 4px 0 var(--me);
+}
 
-.clockline { display: flex; align-items: center; gap: 10px; }
-.clock-main { display: flex; align-items: center; gap: 8px; min-width: 0; flex: 1; }
+/* Equal-width flanks so the team name sits truly centred between the pick
+   number and the undo button, whatever those two happen to measure. */
+.clockline {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center; gap: 8px;
+}
+.clockline .pill { justify-self: start; }
+.clockline .undo-btn { justify-self: end; }
 
 .pill {
   background: var(--bg-3); border: 1px solid var(--line);
@@ -61,13 +71,16 @@ button { cursor: pointer; }
   color: var(--txt-dim); flex: none;
 }
 .onclock {
-  font-weight: 700; font-size: 16px;
+  font-weight: 800; font-size: 26px; text-align: center; min-width: 0;
+  letter-spacing: -.01em;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .onclock .me-tag {
-  color: var(--me); font-size: 12px; font-weight: 800;
-  letter-spacing: .06em; margin-left: 6px;
+  color: #0b1220; background: var(--me);
+  font-size: 11px; font-weight: 800; letter-spacing: .06em;
+  margin-left: 8px; padding: 2px 6px; border-radius: 4px;
 }
+.topbar.is-mine .onclock { color: #ffffff; }
 
 .undo-btn {
   flex: none; height: 34px; padding: 0 12px;
@@ -82,7 +95,8 @@ button { cursor: pointer; }
   letter-spacing: -.01em;
 }
 .turnline b { color: var(--accent); font-size: 1.1em; font-weight: 800; }
-.turnline.is-mine b { color: var(--me); }
+.turnline.is-mine { color: #ffffff; font-weight: 800; }
+.turnline.is-mine b { color: #ffffff; }
 
 /* --------------------------------------------------------------- tabs */
 
@@ -173,7 +187,7 @@ button { cursor: pointer; }
 
 .listhead {
   display: grid; align-items: stretch;
-  grid-template-columns: 30px 1fr 34px 52px 54px;
+  grid-template-columns: 28px 1fr 32px 62px 64px;
   gap: 8px; padding: 0 12px;
   font-size: 10px; letter-spacing: .08em; text-transform: uppercase;
   color: var(--txt-faint); border-bottom: 1px solid var(--line);
@@ -196,10 +210,10 @@ button { cursor: pointer; }
 
 .prow {
   display: grid; align-items: center;
-  grid-template-columns: 30px 1fr 34px 52px 54px;
-  gap: 8px; padding: 9px 12px;
+  grid-template-columns: 28px 1fr 32px 62px 64px;
+  gap: 8px; padding: 8px 12px;
   border-bottom: 1px solid rgba(38, 51, 77, .55);
-  border-left: 3px solid transparent;
+  border-left: 6px solid transparent;
 }
 /* The row itself is the press target: suppress the OS text-selection and
    callout that a long press would otherwise trigger, while leaving vertical
@@ -212,17 +226,18 @@ button { cursor: pointer; }
 .prow.is-holding { background: rgba(77, 163, 255, .12); }
 .prow:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
 
-.prow.pos-F { border-left-color: var(--pos-F); }
-.prow.pos-D { border-left-color: var(--pos-D); }
-.prow.pos-G { border-left-color: var(--pos-G); }
+/* The position bar is brighter than the text colour and washes right across
+   roughly half the row, so position reads before anything else does. */
+.prow.pos-F { border-left-color: #3ee9a4; background-image: linear-gradient(90deg, rgba(62, 233, 164, .20), rgba(62, 233, 164, 0) 46%); }
+.prow.pos-D { border-left-color: #7ab8ff; background-image: linear-gradient(90deg, rgba(122, 184, 255, .20), rgba(122, 184, 255, 0) 46%); }
+.prow.pos-G { border-left-color: #ffcb3d; background-image: linear-gradient(90deg, rgba(255, 203, 61, .20), rgba(255, 203, 61, 0) 46%); }
 .prow.is-taken { opacity: .4; }
 
 /* Projected to be gone by the time this pick comes round. Marked per row so it
-   stays true under any sort, not only when the list matches board order. */
-.prow.is-projected-gone {
-  background:
-    linear-gradient(90deg, rgba(167, 139, 250, .14), rgba(167, 139, 250, .03) 60%, transparent);
-}
+   stays true under any sort, not only when the list matches board order.
+   Uses background-COLOR so it layers under the positional wash above rather
+   than replacing it. */
+.prow.is-projected-gone { background-color: rgba(167, 139, 250, .13); }
 .prow.is-projected-gone .p-rank { color: var(--me); font-weight: 700; }
 
 .p-rank {
@@ -235,10 +250,10 @@ button { cursor: pointer; }
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .p-sub {
-  display: flex; align-items: center; gap: 6px;
-  font-size: 12px; color: var(--txt-faint); margin-top: 2px;
+  display: flex; align-items: baseline; gap: 7px;
+  font-size: 14px; color: var(--txt-dim); margin-top: 3px;
 }
-.p-pos { font-weight: 800; letter-spacing: .04em; }
+.p-pos { font-weight: 900; font-size: 15px; letter-spacing: .04em; }
 .pos-F .p-pos { color: var(--pos-F); }
 .pos-D .p-pos { color: var(--pos-D); }
 .pos-G .p-pos { color: var(--pos-G); }
@@ -246,10 +261,10 @@ button { cursor: pointer; }
 .p-owner.is-keeper { color: var(--pos-G); font-style: normal; }
 
 .p-num {
-  text-align: right; font-size: 14px;
+  text-align: right; font-size: 24px; line-height: 1.05;
   font-variant-numeric: tabular-nums; color: var(--txt-dim);
 }
-.p-tier { font-size: 13px; font-weight: 700; color: var(--txt-faint); }
+.p-tier { font-size: 24px; font-weight: 700; color: var(--txt-faint); }
 
 /* The column the board is sorted by gets the emphasis. */
 .playerlist[data-sort="tier"]   .p-tier,
@@ -266,7 +281,7 @@ button { cursor: pointer; }
 /* the "board by my next pick" divider */
 .divider {
   list-style: none; position: relative;
-  margin: 0; padding: 6px 12px 5px;
+  margin: 0; padding: 4px 12px 4px;
   background: linear-gradient(90deg, rgba(167,139,250,.16), transparent 70%);
   border-top: 2px dashed var(--me);
   display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap;
@@ -562,17 +577,20 @@ button { cursor: pointer; }
   .listhead > span { padding: 4px 0; }
   .prow { padding: 5px 12px; }
   .p-name { font-size: 14px; }
-  .p-sub { font-size: 11px; margin-top: 0; }
+  .p-sub { font-size: 12px; margin-top: 1px; }
+  .p-pos { font-size: 13px; }
+  .p-num, .p-tier { font-size: 19px; }
   .turnline { font-size: 17px; }
   .divider { padding: 4px 12px 3px; }
   .divider-note { display: none; }
   .holdhint { padding: 3px 12px; }
   .tab { padding: 6px 4px; font-size: 13px; }
+  .onclock { font-size: 20px; }
 }
 
 @media (min-width: 640px) {
   .teamlist { grid-template-columns: repeat(2, 1fr); }
-  .prow, .listhead { grid-template-columns: 34px 1fr 40px 58px 62px; }
+  .prow, .listhead { grid-template-columns: 28px 1fr 32px 60px 62px; }
   .prow { padding: 6px 12px; }
 }
 

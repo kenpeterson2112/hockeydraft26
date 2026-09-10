@@ -5,7 +5,7 @@
   var $ = UI.$, $$ = UI.$$, el = UI.el, num = UI.num, normalize = UI.normalize;
   var LEAGUE = Draft.LEAGUE;
 
-  var APP_VERSION = '1.6.1';
+  var APP_VERSION = '1.7.0';
 
   var players = [];              // seeded from data/players.json
   var playersById = {};
@@ -252,10 +252,10 @@
     }
 
     if (c.onClockIsMe) {
-      turn.appendChild(document.createTextNode("You're up. Next turn after this: "));
-      var b1 = el('b', null, Draft.pickLabel(c.targetPick));
-      turn.appendChild(b1);
-      turn.appendChild(document.createTextNode(' (' + c.picksUntilMine + ' picks away)'));
+      turn.appendChild(document.createTextNode("You're up! Next selection in "));
+      turn.appendChild(el('b', null, String(c.picksUntilMine)));
+      turn.appendChild(document.createTextNode(
+        ' pick' + (c.picksUntilMine === 1 ? '' : 's') + '.'));
     } else {
       var b2 = el('b', null, String(c.picksUntilMine));
       turn.appendChild(document.createTextNode('Your pick '));
@@ -408,7 +408,7 @@
 
   /* ------------------------------------------------------- hold-to-draft */
 
-  var HOLD_MS = 2000;      // full press duration before the pick commits
+  var HOLD_MS = 1500;      // full press duration before the pick commits
   var MOVE_CANCEL_PX = 12; // treat as a scroll, not a press
   var HOLD_POP_GAP = 62;   // clearance from the press point, so a thumb cannot
                            // cover the popup or its progress bar
@@ -439,6 +439,7 @@
       startY: ev.clientY,
       start: 0,
       raf: 0,
+      halfway: false,
       done: false
     };
     li.classList.add('is-holding');
@@ -459,6 +460,12 @@
     if (!hold.start) hold.start = ts;
     var pct = Math.min(1, (ts - hold.start) / HOLD_MS);
     $('#holdPopBar').style.width = (pct * 100).toFixed(1) + '%';
+
+    // Three beats through the press: 0ms, halfway, and a double at the commit.
+    if (!hold.halfway && pct >= 0.5) {
+      hold.halfway = true;
+      buzz(12);
+    }
 
     if (pct >= 1) {
       var p = hold.player, team = hold.team;

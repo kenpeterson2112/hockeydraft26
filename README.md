@@ -29,16 +29,18 @@ season total and never recomputes it from categories.
    straight through. Three slots per team; the counter tracks progress.
 3. **Start draft.** The board takes over.
 4. **Board.**
-   - **Press and hold a row for 2 seconds** to draft that player to whoever is
-     on the clock. A popup appears above your finger reading *"<player> drafted
+   - **Press and hold a row for 1.5 seconds** to draft that player to whoever is
+     on the clock. It buzzes on press, again at the halfway mark, and twice on
+     commit. A popup appears above your finger reading *"<player> drafted
      by <team>"* with a progress bar filling left to right; the pick commits
      when the bar completes. Sliding your finger more than 12px cancels it, so
      scrolling never drafts anyone by accident.
    - **Tap a row** to open the sheet and assign the pick to a different team.
    - **Undo** is in the header and on every toast.
 
-   The hold duration is `HOLD_MS` in `js/app.js` if 2s feels long once you have
-   drafted a few.
+   The hold duration is `HOLD_MS` in `js/app.js`.
+   When it is your turn the whole header turns purple and the line reads
+   **"You're up! Next selection in X picks."** in white.
 5. **Teams.** Live effective total, raw total, and positional counts per team.
    Tap a card to expand the roster — benched (non-counting) players are dimmed.
 
