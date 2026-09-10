@@ -77,10 +77,11 @@ button { cursor: pointer; }
 .undo-btn:disabled { opacity: .35; }
 
 .turnline {
-  margin-top: 4px; font-size: 13px; color: var(--txt-dim);
+  margin-top: 5px; font-size: 22px; font-weight: 600; color: var(--txt-dim);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  letter-spacing: -.01em;
 }
-.turnline b { color: var(--accent); }
+.turnline b { color: var(--accent); font-size: 1.1em; font-weight: 800; }
 .turnline.is-mine b { color: var(--me); }
 
 /* --------------------------------------------------------------- tabs */
@@ -172,8 +173,8 @@ button { cursor: pointer; }
 
 .listhead {
   display: grid; align-items: stretch;
-  grid-template-columns: 26px 1fr 30px 46px 48px;
-  gap: 6px; padding: 0 12px;
+  grid-template-columns: 30px 1fr 34px 52px 54px;
+  gap: 8px; padding: 0 12px;
   font-size: 10px; letter-spacing: .08em; text-transform: uppercase;
   color: var(--txt-faint); border-bottom: 1px solid var(--line);
 }
@@ -195,8 +196,8 @@ button { cursor: pointer; }
 
 .prow {
   display: grid; align-items: center;
-  grid-template-columns: 26px 1fr 30px 46px 48px;
-  gap: 6px; padding: 4px 12px;
+  grid-template-columns: 30px 1fr 34px 52px 54px;
+  gap: 8px; padding: 9px 12px;
   border-bottom: 1px solid rgba(38, 51, 77, .55);
   border-left: 3px solid transparent;
 }
@@ -216,18 +217,26 @@ button { cursor: pointer; }
 .prow.pos-G { border-left-color: var(--pos-G); }
 .prow.is-taken { opacity: .4; }
 
+/* Projected to be gone by the time this pick comes round. Marked per row so it
+   stays true under any sort, not only when the list matches board order. */
+.prow.is-projected-gone {
+  background:
+    linear-gradient(90deg, rgba(167, 139, 250, .14), rgba(167, 139, 250, .03) 60%, transparent);
+}
+.prow.is-projected-gone .p-rank { color: var(--me); font-weight: 700; }
+
 .p-rank {
-  font-size: 12px; color: var(--txt-faint);
+  font-size: 13px; color: var(--txt-faint);
   font-variant-numeric: tabular-nums;
 }
 .p-main { min-width: 0; background: none; border: 0; padding: 0; text-align: left; }
 .p-name {
-  font-weight: 600; font-size: 14px;
+  font-weight: 600; font-size: 16px;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .p-sub {
   display: flex; align-items: center; gap: 6px;
-  font-size: 11px; color: var(--txt-faint); margin-top: 1px;
+  font-size: 12px; color: var(--txt-faint); margin-top: 2px;
 }
 .p-pos { font-weight: 800; letter-spacing: .04em; }
 .pos-F .p-pos { color: var(--pos-F); }
@@ -237,14 +246,15 @@ button { cursor: pointer; }
 .p-owner.is-keeper { color: var(--pos-G); font-style: normal; }
 
 .p-num {
-  text-align: right; font-size: 13px;
+  text-align: right; font-size: 14px;
   font-variant-numeric: tabular-nums; color: var(--txt-dim);
 }
-.p-tier {
-  text-align: right; font-size: 12px; font-weight: 700;
-  color: var(--txt-faint); font-variant-numeric: tabular-nums;
-}
-.p-pts { color: var(--txt); font-weight: 600; }
+.p-tier { font-size: 13px; font-weight: 700; color: var(--txt-faint); }
+
+/* The column the board is sorted by gets the emphasis. */
+.playerlist[data-sort="tier"]   .p-tier,
+.playerlist[data-sort="vorp"]   .p-vorp,
+.playerlist[data-sort="points"] .p-pts { color: var(--txt); font-weight: 700; }
 
 .holdhint {
   margin: 0; padding: 5px 12px; font-size: 11px;
@@ -550,9 +560,10 @@ button { cursor: pointer; }
   .listhead { font-size: 9px; }
   .lh-sort { padding: 5px 0; font-size: 9px; }
   .listhead > span { padding: 4px 0; }
-  .prow { padding: 2px 12px; }
-  .p-name { font-size: 13px; }
-  .p-sub { font-size: 10px; margin-top: 0; }
+  .prow { padding: 5px 12px; }
+  .p-name { font-size: 14px; }
+  .p-sub { font-size: 11px; margin-top: 0; }
+  .turnline { font-size: 17px; }
   .divider { padding: 4px 12px 3px; }
   .divider-note { display: none; }
   .holdhint { padding: 3px 12px; }

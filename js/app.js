@@ -5,7 +5,7 @@
   var $ = UI.$, $$ = UI.$$, el = UI.el, num = UI.num, normalize = UI.normalize;
   var LEAGUE = Draft.LEAGUE;
 
-  var APP_VERSION = '1.4.0';
+  var APP_VERSION = '1.5.0';
 
   var players = [];              // seeded from data/players.json
   var playersById = {};
@@ -50,13 +50,6 @@
     var diff = col.value(a) - col.value(b);
     if (diff) return view.sortDir === 'asc' ? diff : -diff;
     return canonicalCompare(a, b);
-  }
-
-  // True while the list runs best-player-first, which is the only arrangement
-  // in which the divider means anything.
-  function sortIsDescendingDesirability() {
-    var col = SORT_COLUMNS[view.sort] || SORT_COLUMNS.tier;
-    return view.sortDir === col.best;
   }
 
   // The full combined board of everyone still available. Ranks come from here —
@@ -274,10 +267,7 @@
     var list = $('#playerList');
     var frag = document.createDocumentFragment();
     var c = Draft.clock(state);
-    // Reversed onto a worst-first order, "everyone above the line is gone"
-    // would be a lie, so the divider stands down rather than mislead.
-    var horizon = (state.setupDone && !c.complete && sortIsDescendingDesirability())
-      ? c.picksUntilMine : 0;
+    var horizon = (state.setupDone && !c.complete) ? c.picksUntilMine : 0;
 
     // Rows are about to be replaced; never leave a press pointing at one.
     cancelHold();
@@ -291,30 +281,22 @@
       return displayCompare(a, b);
     });
 
-    var dividerPlaced = false;
-    var anyAvailable = false;
+    var split = horizon > 0 ? projectedSplit(shown, board, horizon) : null;
 
     for (var i = 0; i < shown.length; i++) {
-      var p = shown[i];
-      var ownerId = board.owners[p.id];
-      var rank = board.rankById[p.id];
-      if (ownerId == null) anyAvailable = true;
-
-      // The divider sits where the full board is expected to stand when Ken
-      // is next up: everyone above it is projected gone.
-      if (!dividerPlaced && horizon > 0 && ownerId == null && rank >= horizon) {
+      if (split && split.index === i) {
         frag.appendChild(buildDivider(horizon, c));
-        dividerPlaced = true;
       }
-
-      frag.appendChild(buildPlayerRow(p, ownerId, rank, c));
+      var p = shown[i];
+      frag.appendChild(buildPlayerRow(p, board.owners[p.id], board.rankById[p.id], c, horizon));
     }
-
-    // Everyone on screen is projected gone by then — put the line at the end.
-    if (!dividerPlaced && horizon > 0 && anyAvailable) {
+    if (split && split.index === shown.length) {
       frag.appendChild(buildDivider(horizon, c));
     }
 
+    // Drives which value column is emphasised, so the eye lands on the column
+    // the list is actually ordered by.
+    list.dataset.sort = view.sort;
     list.innerHTML = '';
     list.appendChild(frag);
     $('#boardEmpty').hidden = shown.length > 0;
@@ -360,17 +342,49 @@
     renderBoard(buildBoard());
   }
 
+  // Which players are projected gone is a property of the board, not of the
+  // display order — a player is gone if their canonical rank falls inside the
+  // horizon. So the line goes wherever that status first flips as the list is
+  // read top to bottom, which lands it correctly under any sort, reversed
+  // included. `goneFirst` says which side of the line the gone players are on.
+  function projectedSplit(shown, board, horizon) {
+    var prev = null;
+    var first = null;
+    var lastAvailableIndex = -1;
+
+    for (var i = 0; i < shown.length; i++) {
+      if (board.owners[shown[i].id] != null) continue; // drafted rows carry no rank
+      var gone = board.rankById[shown[i].id] < horizon;
+      if (first === null) first = gone;
+      if (prev !== null && gone !== prev) return { index: i, goneFirst: first };
+      prev = gone;
+      lastAvailableIndex = i;
+    }
+
+    if (first === null) return null;                       // nothing available on screen
+    // No transition: every visible player sits on the same side of the line.
+    return first
+      ? { index: lastAvailableIndex + 1, goneFirst: true }  // all projected gone
+      : { index: 0, goneFirst: true };                      // none of them are
+  }
+
   function buildDivider(horizon, c) {
     var li = el('li', 'divider');
     li.appendChild(el('span', 'divider-label', 'Your pick · ' + Draft.pickLabel(c.targetPick)));
     li.appendChild(el('span', 'divider-note',
-      horizon + ' pick' + (horizon === 1 ? '' : 's') + ' from now — above this line is likely gone'));
+      horizon + ' pick' + (horizon === 1 ? '' : 's') + ' away — shaded rows likely gone'));
     return li;
   }
 
-  function buildPlayerRow(p, ownerId, rank, c) {
+  function buildPlayerRow(p, ownerId, rank, c, horizon) {
     var available = ownerId == null && state.setupDone && !c.complete;
-    var li = el('li', 'prow pos-' + p.position + (ownerId != null ? ' is-taken' : ''));
+    // Whether a player is projected gone is a fact about the board, so shading
+    // the rows says it exactly — the divider alone can only approximate it once
+    // the display order stops matching board rank.
+    var projectedGone = ownerId == null && horizon > 0 && rank < horizon;
+    var li = el('li', 'prow pos-' + p.position +
+      (ownerId != null ? ' is-taken' : '') +
+      (projectedGone ? ' is-projected-gone' : ''));
 
     li.appendChild(el('span', 'p-rank', ownerId == null ? String(rank + 1) : '–'));
 
@@ -387,8 +401,8 @@
     main.appendChild(sub);
     li.appendChild(main);
 
-    li.appendChild(el('span', 'p-tier', String(p.tier)));
-    li.appendChild(el('span', 'p-num', num(p.vorp)));
+    li.appendChild(el('span', 'p-num p-tier', String(p.tier)));
+    li.appendChild(el('span', 'p-num p-vorp', num(p.vorp)));
     li.appendChild(el('span', 'p-num p-pts', num(p.points)));
 
     if (available) {
@@ -407,6 +421,8 @@
 
   var HOLD_MS = 2000;      // full press duration before the pick commits
   var MOVE_CANCEL_PX = 12; // treat as a scroll, not a press
+  var HOLD_POP_GAP = 62;   // clearance from the press point, so a thumb cannot
+                           // cover the popup or its progress bar
 
   var hold = null;
 
@@ -509,9 +525,9 @@
     // Sit above the finger, but stay inside the viewport on all four sides.
     var w = pop.offsetWidth, h = pop.offsetHeight, pad = 8;
     var left = Math.min(Math.max(x, w / 2 + pad), global.innerWidth - w / 2 - pad);
-    var top = y - h - 18;
+    var top = y - h - HOLD_POP_GAP;
     pop.classList.toggle('is-below', top < pad);
-    if (top < pad) top = y + 22;
+    if (top < pad) top = y + HOLD_POP_GAP;
     pop.style.left = left + 'px';
     pop.style.top = top + 'px';
   }

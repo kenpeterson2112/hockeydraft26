@@ -63,9 +63,11 @@ opponents can take any position. Change the position filter and the line stays
 anchored to real board depth. When Ken is on the clock it shows the wheel to his
 *following* pick, which is the decision that actually matters.
 
-The divider counts against the canonical board rank, so it survives a change of
-sort column. It **hides entirely when a column is reversed** into a
-worst-first order, where "everyone above this line is gone" would be false.
+Projected-gone rows are also **shaded**, with a purple rank number. Being
+projected gone is a fact about the board, not about the display order, so the
+shading stays exact under every sort — including a reversed one, where a single
+line cannot cleanly separate the two groups. The line is the landmark; the
+shading is the truth.
 
 ### Tier badges on the position filters
 
