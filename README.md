@@ -46,16 +46,20 @@ season total and never recomputes it from categories.
 
 ### Sorting
 
-There is no sort control — the **Tier / VORP / Pts column headers are the sort
-buttons**. Tapping one sorts by that column most-desirable-first (tier 1→8,
-VORP and points high→low); tapping the active column again reverses it. An
-arrow marks the active column and direction.
+There is no sort control — the **column headers are the sort buttons**: **#**,
+**ADP**, **VORP**, **Pts**. Tapping one sorts by it most-desirable-first (ADP
+low→high, VORP and points high→low); tapping the active column again reverses.
+An arrow marks the active column and direction.
 
-The **#** column is the *canonical board rank* — tier, then VORP, then points —
-not the row's position in the current view. Under an alternate sort the numbers
-are therefore non-contiguous (1, 4, 5, 19…), which is deliberate: it tells you
-where a player sits on the real board while you are looking at a VORP- or
-points-ordered view.
+**#** sorts by *board order* — tier, then VORP, then points — which is both the
+default and how tier sorting stays reachable now that tier has no column of its
+own. The number in that column is the canonical board rank, not the row's
+position in the current view, so under an alternate sort it reads
+non-contiguously (1, 4, 5, 19…). That is deliberate: it tells you where a player
+sits on the real board while you look at an ADP- or points-ordered view.
+
+Players with no ADP sort to the bottom in **both** directions — an absent value
+is not a good one, and it is not a bad one either.
 
 ### The "next pick" divider
 
@@ -167,7 +171,7 @@ draft.** Setup → Backup exports/imports the state as JSON if you want a copy.
 
 ```json
 { "id": "connor-mcdavid", "name": "Connor McDavid", "position": "F",
-  "team": "EDM", "tier": 1, "vorp": 95.69, "points": 130.69 }
+  "team": "EDM", "tier": 1, "vorp": 95.69, "points": 130.69, "adp": 1.6 }
 ```
 
 Draft state is not stored in this file; the app owns it separately. To refresh

@@ -231,17 +231,19 @@ button { cursor: pointer; }
 
 .listhead {
   display: grid; align-items: stretch;
-  grid-template-columns: 28px 1fr 32px 62px 64px;
+  grid-template-columns: 28px 1fr 46px 60px 62px;
   gap: 8px; padding: 0 12px;
   font-size: 10px; letter-spacing: .08em; text-transform: uppercase;
   color: var(--txt-faint); border-bottom: 1px solid var(--line);
 }
 .listhead > span { display: flex; align-items: center; padding: 5px 0; }
 .lh-name { justify-content: flex-start; }
+.lh-sort.lh-rank { justify-content: flex-start; }
 
 /* Tapping a column sorts by it; tapping the active one reverses. */
 .lh-sort {
   display: flex; align-items: center; justify-content: flex-end; gap: 2px;
+  min-width: 0;
   padding: 7px 0; background: none; border: 0;
   font: inherit; font-size: 10px; letter-spacing: .08em; text-transform: uppercase;
   color: var(--txt-faint); white-space: nowrap;
@@ -254,7 +256,7 @@ button { cursor: pointer; }
 
 .prow {
   display: grid; align-items: center;
-  grid-template-columns: 28px 1fr 32px 62px 64px;
+  grid-template-columns: 28px 1fr 46px 60px 62px;
   gap: 8px; padding: 8px 12px;
   border-bottom: 1px solid rgba(38, 51, 77, .55);
   border-left: 6px solid transparent;
@@ -308,12 +310,19 @@ button { cursor: pointer; }
   text-align: right; font-size: 24px; line-height: 1.05;
   font-variant-numeric: tabular-nums; color: var(--txt-dim);
 }
-.p-tier { font-size: 24px; font-weight: 700; color: var(--txt-faint); }
+/* Tier now rides with the position letter rather than owning a column. */
+.p-tier-chip {
+  font-weight: 800; font-size: 12px; letter-spacing: .02em;
+  color: var(--txt-faint);
+  border: 1px solid var(--line); border-radius: 4px;
+  padding: 0 4px; line-height: 16px;
+}
 
 /* The column the board is sorted by gets the emphasis. */
-.playerlist[data-sort="tier"]   .p-tier,
+.playerlist[data-sort="adp"]    .p-adp,
 .playerlist[data-sort="vorp"]   .p-vorp,
 .playerlist[data-sort="points"] .p-pts { color: var(--txt); font-weight: 700; }
+.playerlist[data-sort="rank"]   .p-rank { color: var(--txt); }
 
 .holdhint {
   margin: 0; padding: 5px 12px; font-size: 11px;
@@ -627,7 +636,8 @@ button { cursor: pointer; }
   .p-name { font-size: 14px; }
   .p-sub { font-size: 12px; margin-top: 1px; }
   .p-pos { font-size: 13px; }
-  .p-num, .p-tier { font-size: 19px; }
+  .p-num { font-size: 19px; }
+  .p-tier-chip { font-size: 11px; line-height: 15px; }
   .turnline { font-size: 17px; }
   .divider { padding: 4px 12px 3px; }
   .divider-note { display: none; }
@@ -638,7 +648,7 @@ button { cursor: pointer; }
 
 @media (min-width: 640px) {
   .teamlist { grid-template-columns: repeat(2, 1fr); }
-  .prow, .listhead { grid-template-columns: 28px 1fr 32px 60px 62px; }
+  .prow, .listhead { grid-template-columns: 26px 1fr 44px 58px 60px; }
   .prow { padding: 6px 12px; }
 }
 

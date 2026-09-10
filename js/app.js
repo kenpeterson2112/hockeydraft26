@@ -5,7 +5,7 @@
   var $ = UI.$, $$ = UI.$$, el = UI.el, num = UI.num, normalize = UI.normalize;
   var LEAGUE = Draft.LEAGUE;
 
-  var APP_VERSION = '1.9.0';
+  var APP_VERSION = '2.0.0';
 
   var players = [];              // seeded from data/players.json
   var playersById = {};
@@ -18,7 +18,7 @@
     tab: 'board',
     positions: { F: true, D: true, G: true },
     search: '',
-    sort: 'tier',
+    sort: 'rank',
     sortDir: 'asc',
     showDrafted: false,
     expandedTeams: {},
@@ -29,11 +29,13 @@
   /* ------------------------------------------------------------ board data */
 
   // Sortable columns. `best` is the direction that puts the most desirable
-  // player first — descending for VORP and points, but ascending for tier,
-  // since tier 1 is the good end. Tapping a column sorts it that way; tapping
-  // the active column again reverses.
+  // player first — descending for VORP and points, ascending for ADP (drafted
+  // earlier is better). Tapping a column sorts it that way; tapping the active
+  // column again reverses. '#' sorts by board order, which is how tier sorting
+  // stays reachable now that tier has no column of its own.
   var SORT_COLUMNS = {
-    tier:   { best: 'asc',  value: function (p) { return p.tier; } },
+    rank:   { best: 'asc',  value: null },
+    adp:    { best: 'asc',  value: function (p) { return p.adp; } },
     vorp:   { best: 'desc', value: function (p) { return p.vorp; } },
     points: { best: 'desc', value: function (p) { return p.points; } }
   };
@@ -46,8 +48,17 @@
   }
 
   function displayCompare(a, b) {
-    var col = SORT_COLUMNS[view.sort] || SORT_COLUMNS.tier;
-    var diff = col.value(a) - col.value(b);
+    var col = SORT_COLUMNS[view.sort] || SORT_COLUMNS.rank;
+    if (!col.value) return canonicalCompare(a, b);
+
+    var av = col.value(a), bv = col.value(b);
+    // Players with no ADP sink to the bottom either way — an absent value is
+    // not a good value, and it is not a bad one either.
+    if (av == null && bv == null) return canonicalCompare(a, b);
+    if (av == null) return 1;
+    if (bv == null) return -1;
+
+    var diff = av - bv;
     if (diff) return view.sortDir === 'asc' ? diff : -diff;
     return canonicalCompare(a, b);
   }
@@ -377,6 +388,14 @@
     return li;
   }
 
+  // One decimal below 10, where the gap between the first and second pick
+  // actually means something, and whole numbers above it, where it does not —
+  // which also keeps the column narrow enough to leave room for the name.
+  function formatAdp(v) {
+    if (v == null) return '–';
+    return v < 10 ? v.toFixed(1) : String(Math.round(v));
+  }
+
   function buildPlayerRow(p, ownerId, rank, c, horizon) {
     var available = ownerId == null && state.setupDone && !c.complete;
     // Whether a player is projected gone is a fact about the board, so shading
@@ -393,6 +412,7 @@
     main.appendChild(el('span', 'p-name', p.name));
     var sub = el('span', 'p-sub');
     sub.appendChild(el('span', 'p-pos', p.position));
+    sub.appendChild(el('span', 'p-tier-chip', 'T' + p.tier));
     sub.appendChild(el('span', null, p.team));
     if (ownerId != null) {
       var isKeeper = state.keepers[p.id] != null;
@@ -402,7 +422,7 @@
     main.appendChild(sub);
     li.appendChild(main);
 
-    li.appendChild(el('span', 'p-num p-tier', String(p.tier)));
+    li.appendChild(el('span', 'p-num p-adp', formatAdp(p.adp)));
     li.appendChild(el('span', 'p-num p-vorp', num(p.vorp)));
     li.appendChild(el('span', 'p-num p-pts', num(p.points)));
 
@@ -555,7 +575,8 @@
     var ownerId = owners[p.id];
     var c = Draft.clock(state);
     var sub = p.position + ' · ' + p.team + ' · Tier ' + p.tier +
-      ' · ' + num(p.vorp) + ' VORP · ' + num(p.points) + ' pts';
+      ' · ADP ' + formatAdp(p.adp) + ' · ' + num(p.vorp) + ' VORP · ' +
+      num(p.points) + ' pts';
 
     UI.openSheet(p.name, sub, function (body) {
       if (ownerId != null) {
