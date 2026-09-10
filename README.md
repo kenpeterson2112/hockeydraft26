@@ -111,6 +111,19 @@ Name search deliberately **overrides** the position filter and shows drafted
 players too — it is a "jump to this player" action. Accents and punctuation are
 folded, so `stutzle` finds Stützle and `oreilly` finds O'Reilly.
 
+### No pull-to-refresh
+
+A draft is a lot of up-and-down scrolling, and an accidental refresh mid-draft
+is pure annoyance. `overscroll-behavior` handles Chrome and Safari 16+, but the
+guarantee is structural: the shell is exactly viewport height with
+`overflow: hidden`, and scrolling happens inside the active `.view`. The
+document itself never scrolls, so a downward drag at the top has nothing to
+pull on, in any browser. Each tab scrolls independently and keeps its own
+position.
+
+Nothing would be lost to a refresh anyway — state is in `localStorage` — but
+scroll position and momentum would be.
+
 ## State and offline
 
 ### Resetting between simulated drafts

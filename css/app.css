@@ -23,14 +23,29 @@
    screen swallowing taps. Keep this ahead of every component rule. */
 [hidden] { display: none !important; }
 
-html { -webkit-text-size-adjust: 100%; }
+/* Pull-to-refresh suppression.
+   overscroll-behavior alone covers Chrome and Safari 16+, but the guarantee is
+   that the DOCUMENT never scrolls: the shell is exactly viewport height with
+   overflow hidden, and scrolling happens inside .view. With no document-level
+   overscroll there is nothing for a downward drag at the top to trigger, on any
+   browser. dvh accounts for the collapsing mobile URL bar; vh is the fallback. */
+html {
+  -webkit-text-size-adjust: 100%;
+  height: 100%;
+  overscroll-behavior: none;
+}
 
 body {
   margin: 0;
   background: var(--bg);
   color: var(--txt);
   font: 15px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  overscroll-behavior-y: none;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+  overscroll-behavior: none;
+  display: flex;
+  flex-direction: column;
 }
 
 button, input, select { font: inherit; color: inherit; }
@@ -44,7 +59,7 @@ button { cursor: pointer; }
 /* ------------------------------------------------------------- top bar */
 
 .topbar {
-  position: sticky; top: 0; z-index: 30;
+  flex: none; z-index: 30;
   background: linear-gradient(180deg, #111c33, #0d1526);
   border-bottom: 1px solid var(--line);
   padding: max(8px, env(safe-area-inset-top)) 12px 8px;
@@ -101,7 +116,7 @@ button { cursor: pointer; }
 /* --------------------------------------------------------------- tabs */
 
 .tabs {
-  position: sticky; top: 0; z-index: 25;
+  flex: none; z-index: 25;
   display: grid; grid-template-columns: repeat(3, 1fr);
   background: var(--bg-2); border-bottom: 1px solid var(--line);
 }
@@ -112,13 +127,21 @@ button { cursor: pointer; }
 }
 .tab.is-active { color: var(--txt); border-bottom-color: var(--accent); }
 
-.view { display: none; padding-bottom: calc(28px + var(--safe-b)); }
-.view.is-active { display: block; }
+.view { display: none; }
+.view.is-active {
+  display: block;
+  flex: 1 1 auto; min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  /* Keeps a fling inside the list from chaining out to the shell. */
+  overscroll-behavior: contain;
+  padding-bottom: calc(28px + var(--safe-b));
+}
 
 /* ----------------------------------------------------------- controls */
 
 .controls {
-  position: sticky; top: 41px; z-index: 20;
+  position: sticky; top: 0; z-index: 20;
   background: var(--bg); border-bottom: 1px solid var(--line);
   padding: 6px 12px;
 }
@@ -565,7 +588,7 @@ button { cursor: pointer; }
   .turnline { font-size: 12px; margin-top: 2px; }
   .undo-btn { height: 30px; }
   .tab { padding: 7px 4px; }
-  .controls { top: 33px; padding: 5px 12px; }
+  .controls { padding: 5px 12px; }
   .search { height: 34px; }
   .clear-btn { height: 30px; width: 30px; }
   .chips { margin-top: 5px; }
