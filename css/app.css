@@ -123,12 +123,38 @@ button { cursor: pointer; }
 }
 
 .filterrow { display: flex; gap: 6px; margin-top: 6px; align-items: center; }
-.chips { display: flex; gap: 6px; flex: 1; }
+.chips { display: flex; gap: 6px; flex: 1 1 auto; min-width: 0; }
 .chip {
-  flex: 1; height: 34px; border-radius: 8px;
+  flex: 1; height: 34px; border-radius: 8px; padding: 0 4px;
   background: var(--bg-2); border: 1px solid var(--line);
   color: var(--txt-faint); font-weight: 700; font-size: 14px;
+  display: inline-flex; align-items: center; justify-content: center; gap: 4px;
 }
+
+/* Best tier still unowned at this position. The digit carries the meaning;
+   colour reinforces it, running cool at tier 1 to hot as the position thins
+   out. Luminance drops along the ramp too, so the steps stay distinguishable
+   without relying on hue discrimination. */
+.tierbadge {
+  flex: none; width: 18px; height: 18px; border-radius: 50%;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 800; line-height: 1;
+  color: #0b1220; background: var(--txt-faint);
+  font-variant-numeric: tabular-nums;
+  /* Solid dark ring, not a translucent halo: an active chip is filled with its
+     position colour, and some badge colours collide with it exactly (tier 5
+     amber is the same value as the goalie chip). The ring guarantees the badge
+     stays a distinct object whatever sits behind it. */
+  box-shadow: 0 0 0 2px var(--bg);
+}
+.tierbadge[data-tier="1"] { background: #6ee7b7; }
+.tierbadge[data-tier="2"] { background: #86efac; }
+.tierbadge[data-tier="3"] { background: #bef264; }
+.tierbadge[data-tier="4"] { background: #fde047; }
+.tierbadge[data-tier="5"] { background: #fbbf24; }
+.tierbadge[data-tier="6"] { background: #fb923c; }
+.tierbadge[data-tier="7"] { background: #f87171; }
+.tierbadge[data-tier="8"] { background: #ef4444; color: #fff5f5; }
 .chip.is-on { color: #0b1220; }
 .chip-all.is-on { background: var(--txt-dim); border-color: var(--txt-dim); }
 .chip-F.is-on { background: var(--pos-F); border-color: var(--pos-F); }
@@ -136,7 +162,7 @@ button { cursor: pointer; }
 .chip-G.is-on { background: var(--pos-G); border-color: var(--pos-G); }
 
 .sort {
-  height: 34px; padding: 0 6px; border-radius: 8px;
+  height: 34px; padding: 0 6px; border-radius: 8px; min-width: 0;
   background: var(--bg-2); border: 1px solid var(--line); color: var(--txt-dim);
 }
 
@@ -491,6 +517,18 @@ button { cursor: pointer; }
 .toast-undo {
   flex: none; background: none; border: 0;
   color: var(--accent); font-weight: 800; font-size: 13px; padding: 4px 2px;
+}
+
+/* Very narrow phones (320px): the filter row runs out of room once the tier
+   badges are in it, so the drafted toggle sheds its label. The checkbox keeps
+   its accessible name via the visually-hidden span. */
+@media (max-width: 360px) {
+  .filterrow { gap: 5px; }
+  .chips { gap: 4px; }
+  .chip { padding: 0 2px; gap: 3px; }
+  .tierbadge { width: 16px; height: 16px; font-size: 10px; }
+  .showdrafted-label { position: absolute; width: 1px; height: 1px; padding: 0;
+    margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 }
 
 /* Short viewports (iPhone SE and friends): trim chrome so the board still

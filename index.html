@@ -45,9 +45,9 @@
     <div class="filterrow">
       <div class="chips" role="group" aria-label="Position filter">
         <button class="chip chip-all is-on" data-pos="ALL" type="button">All</button>
-        <button class="chip chip-F" data-pos="F" type="button">F</button>
-        <button class="chip chip-D" data-pos="D" type="button">D</button>
-        <button class="chip chip-G" data-pos="G" type="button">G</button>
+        <button class="chip chip-F" data-pos="F" type="button"><span class="chip-letter">F</span><span class="tierbadge" id="badge-F" hidden></span></button>
+        <button class="chip chip-D" data-pos="D" type="button"><span class="chip-letter">D</span><span class="tierbadge" id="badge-D" hidden></span></button>
+        <button class="chip chip-G" data-pos="G" type="button"><span class="chip-letter">G</span><span class="tierbadge" id="badge-G" hidden></span></button>
       </div>
       <label class="sortwrap">
         <span class="sr-only">Sort by</span>
@@ -57,8 +57,8 @@
           <option value="points">Points</option>
         </select>
       </label>
-      <label class="showdrafted">
-        <input type="checkbox" id="showDrafted"> Drafted
+      <label class="showdrafted" title="Show drafted players">
+        <input type="checkbox" id="showDrafted"><span class="showdrafted-label">Drafted</span>
       </label>
     </div>
   </div>

@@ -5,7 +5,7 @@
   var $ = UI.$, $$ = UI.$$, el = UI.el, num = UI.num, normalize = UI.normalize;
   var LEAGUE = Draft.LEAGUE;
 
-  var APP_VERSION = '1.1.0';
+  var APP_VERSION = '1.2.0';
 
   var players = [];              // seeded from data/players.json
   var playersById = {};
@@ -137,9 +137,48 @@
 
   /* ---------------------------------------------------------------- render */
 
+  // Lowest (best) tier still unowned at each position. Keepers count as owned,
+  // so these already reflect keeper losses before the first pick.
+  function bestTierByPosition(board) {
+    var best = { F: null, D: null, G: null };
+    for (var i = 0; i < board.available.length; i++) {
+      var p = board.available[i];
+      if (best[p.position] == null || p.tier < best[p.position]) {
+        best[p.position] = p.tier;
+      }
+    }
+    return best;
+  }
+
+  var POS_WORD = { F: 'forwards', D: 'defence', G: 'goalies' };
+
+  function renderTierBadges(board) {
+    var best = bestTierByPosition(board);
+    ['F', 'D', 'G'].forEach(function (pos) {
+      var badge = $('#badge-' + pos);
+      var chip = $('.chip-' + pos);
+      var tier = best[pos];
+
+      if (tier == null) {
+        // No one left at the position — cannot happen with this pool, but the
+        // badge should vanish rather than show a stale number if it ever does.
+        badge.hidden = true;
+        chip.setAttribute('aria-label', 'Filter ' + POS_WORD[pos] + ', none left');
+        return;
+      }
+
+      badge.hidden = false;
+      badge.textContent = String(tier);
+      badge.dataset.tier = String(tier);
+      chip.setAttribute('aria-label',
+        'Filter ' + POS_WORD[pos] + ', best tier available ' + tier);
+    });
+  }
+
   function render() {
     var board = buildBoard();
     renderTopbar(board);
+    renderTierBadges(board);
     if (view.tab === 'board') renderBoard(board);
     if (view.tab === 'teams') renderTeams(board);
     if (view.tab === 'setup') renderSetup(board);

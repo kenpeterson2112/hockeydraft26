@@ -50,6 +50,22 @@ opponents can take any position. Change the position filter and the line stays
 anchored to real board depth. When Ken is on the clock it shows the wheel to his
 *following* pick, which is the decision that actually matters.
 
+### Tier badges on the position filters
+
+Each of the F / D / G filter chips carries a coloured circular badge showing the
+**lowest-numbered tier that still has at least one unowned player at that
+position** — scarcity at a glance, independent of whether the chip is toggled on.
+Keepers count as owned, so the badges already reflect keeper losses on pick 1.
+
+The digit carries the meaning; colour reinforces it, running cool at tier 1 to
+hot as the position thins out (mint → green → lime → yellow → amber → orange →
+red). Luminance falls along the ramp too, so the steps stay distinguishable
+without relying on hue discrimination. The badge keeps a solid dark ring because
+an active chip is filled with its position colour and some badge colours collide
+with it exactly — tier 5 amber is the same value as the goalie chip.
+
+D and G move fastest early: only 4 tier-1 D and 4 tier-1 G exist in the pool.
+
 ### Search
 
 Name search deliberately **overrides** the position filter and shows drafted

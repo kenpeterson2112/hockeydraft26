@@ -2,7 +2,7 @@
    Bump CACHE_VERSION on every deploy so clients pick up new assets. */
 'use strict';
 
-var CACHE_VERSION = 'v1.1.0';
+var CACHE_VERSION = 'v1.2.0';
 var CACHE_NAME = 'hockeydraft26-' + CACHE_VERSION;
 
 // Everything the app needs to run with no connection at all.
