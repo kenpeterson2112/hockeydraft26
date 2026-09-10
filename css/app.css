@@ -272,11 +272,24 @@ button { cursor: pointer; }
 .prow.is-holding { background: rgba(77, 163, 255, .12); }
 .prow:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
 
-/* The position bar is brighter than the text colour and washes right across
-   roughly half the row, so position reads before anything else does. */
-.prow.pos-F { border-left-color: #3ee9a4; background-image: linear-gradient(90deg, rgba(62, 233, 164, .20), rgba(62, 233, 164, 0) 46%); }
-.prow.pos-D { border-left-color: #7ab8ff; background-image: linear-gradient(90deg, rgba(122, 184, 255, .20), rgba(122, 184, 255, 0) 46%); }
-.prow.pos-G { border-left-color: #ffcb3d; background-image: linear-gradient(90deg, rgba(255, 203, 61, .20), rgba(255, 203, 61, 0) 46%); }
+/* Position tint: FLAT across the row rather than a left-to-right wash, so the
+   colour is still there under the ADP/VORP/Pts columns and position can be read
+   without looking back to the left edge. A bright ramp at the left was both
+   harder on the eyes and absent exactly where it was needed. Only the last
+   fifth softens, to avoid a hard edge at the end of the row. Alpha kept low —
+   at .16 and above the amber goalie rows go muddy against the navy. */
+.prow.pos-F {
+  border-left-color: #3ee9a4;
+  background-image: linear-gradient(90deg, rgba(62, 233, 164, .10) 0%, rgba(62, 233, 164, .10) 82%, rgba(62, 233, 164, 0) 100%);
+}
+.prow.pos-D {
+  border-left-color: #7ab8ff;
+  background-image: linear-gradient(90deg, rgba(122, 184, 255, .10) 0%, rgba(122, 184, 255, .10) 82%, rgba(122, 184, 255, 0) 100%);
+}
+.prow.pos-G {
+  border-left-color: #ffcb3d;
+  background-image: linear-gradient(90deg, rgba(255, 203, 61, .10) 0%, rgba(255, 203, 61, .10) 82%, rgba(255, 203, 61, 0) 100%);
+}
 .prow.is-taken { opacity: .4; }
 
 /* Projected to be gone by the time this pick comes round. Marked per row so it
