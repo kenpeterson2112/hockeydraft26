@@ -5,7 +5,7 @@
   var $ = UI.$, $$ = UI.$$, el = UI.el, num = UI.num, normalize = UI.normalize;
   var LEAGUE = Draft.LEAGUE;
 
-  var APP_VERSION = '1.6.0';
+  var APP_VERSION = '1.6.1';
 
   var players = [];              // seeded from data/players.json
   var playersById = {};
@@ -137,15 +137,18 @@
     undoLastPick();
   }
 
+  // Returns whether the keeper was actually added, so the caller only resets
+  // the search box on a real assignment.
   function assignKeeper(playerId, teamId) {
-    if (Draft.ownerMap(state)[playerId] != null) return;
+    if (Draft.ownerMap(state)[playerId] != null) return false;
     if (Draft.keepersForTeam(state, teamId).length >= LEAGUE.keepersPerTeam) {
       UI.showToast(state.teams[teamId].name + ' already has ' + LEAGUE.keepersPerTeam + ' keepers.');
-      return;
+      return false;
     }
     state.keepers[playerId] = teamId;
     Draft.save(state);
     render();
+    return true;
   }
 
   /* ---------------------------------------------------------------- render */
@@ -834,8 +837,16 @@
       b.appendChild(left);
       b.appendChild(el('span', 'kr-pts', num(p.points)));
       b.addEventListener('click', function () {
-        assignKeeper(p.id, view.keeperTeam);
+        // Clear before assigning: assignKeeper re-renders this panel, and the
+        // rebuilt input reads view.keeperSearch, so clearing afterwards would
+        // be overwritten by the value that was just on screen.
+        var previous = view.keeperSearch;
         view.keeperSearch = '';
+        if (assignKeeper(p.id, view.keeperTeam)) {
+          focusKeeperSearch();
+        } else {
+          view.keeperSearch = previous;
+        }
       });
       li.appendChild(b);
       host.appendChild(li);
@@ -843,6 +854,13 @@
     if (!matches.length) {
       host.appendChild(el('li', 'tc-empty', 'No available players match.'));
     }
+  }
+
+  // Puts the cursor back in the box so 42 keepers can be entered without
+  // reaching for the field between each one. Absent once a team is full.
+  function focusKeeperSearch() {
+    var input = $('.kp-search');
+    if (input) input.focus();
   }
 
   function renderSetupStatus() {

@@ -24,8 +24,9 @@ season total and never recomputes it from categories.
 
 1. **Setup → Draft order.** The 14 names are pre-filled in order (Eric … Rick,
    Ken 12th). Edit any name; the radio marks which team is yours.
-2. **Setup → Keepers.** Pick a team chip, search a player, tap to assign. Three
-   slots per team, 42 total. The counter tracks progress.
+2. **Setup → Keepers.** Pick a team chip, search a player, tap to assign. The
+   search box clears and keeps focus after each pick, so 42 keepers can be typed
+   straight through. Three slots per team; the counter tracks progress.
 3. **Start draft.** The board takes over.
 4. **Board.**
    - **Press and hold a row for 2 seconds** to draft that player to whoever is
