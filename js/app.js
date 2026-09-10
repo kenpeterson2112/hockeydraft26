@@ -5,7 +5,7 @@
   var $ = UI.$, $$ = UI.$$, el = UI.el, num = UI.num, normalize = UI.normalize;
   var LEAGUE = Draft.LEAGUE;
 
-  var APP_VERSION = '1.8.0';
+  var APP_VERSION = '1.9.0';
 
   var players = [];              // seeded from data/players.json
   var playersById = {};
@@ -184,17 +184,28 @@
 
   function renderTierBadges(board) {
     var scarcity = positionScarcity(board);
+    var me = Draft.myTeam(state);
+    var mine = me ? Draft.rosterCounts(state, me.id, playersById) : { F: 0, D: 0, G: 0 };
+
     ['F', 'D', 'G'].forEach(function (pos) {
       var badge = $('#badge-' + pos);
       var chip = $('.chip-' + pos);
       var s = scarcity[pos];
+
+      // Left of the chip: how full Ken's own roster is at this position.
+      var have = mine[pos];
+      var limit = LEAGUE.slots[pos];
+      var countEl = $('#count-' + pos);
+      countEl.textContent = have + '/' + limit;
+      countEl.classList.toggle('is-full', have >= limit);
 
       if (s == null) {
         // No one left at the position — cannot happen with this pool, but the
         // badge should vanish rather than show a stale number if it ever does.
         badge.hidden = true;
         delete badge.dataset.level;
-        chip.setAttribute('aria-label', 'Filter ' + POS_WORD[pos] + ', none left');
+        chip.setAttribute('aria-label',
+          'Filter ' + POS_WORD[pos] + ', you have ' + have + ' of ' + limit + ', none left');
         return;
       }
 
@@ -202,10 +213,11 @@
       badge.hidden = false;
       badge.textContent = String(s.tier);
       badge.dataset.level = level;
-      chip.title = s.count + ' tier ' + s.tier + ' ' + POS_WORD[pos] + ' left';
+      chip.title = 'You have ' + have + ' of ' + limit + ' ' + POS_WORD[pos] + ' · ' +
+        s.count + ' tier ' + s.tier + ' left';
       chip.setAttribute('aria-label',
-        'Filter ' + POS_WORD[pos] + ', best tier available ' + s.tier + ', ' +
-        s.count + ' left, ' + LEVEL_WORD[level]);
+        'Filter ' + POS_WORD[pos] + ', you have ' + have + ' of ' + limit +
+        ', best tier available ' + s.tier + ', ' + s.count + ' left, ' + LEVEL_WORD[level]);
     });
   }
 

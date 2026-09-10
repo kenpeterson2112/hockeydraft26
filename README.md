@@ -79,9 +79,24 @@ On an unfiltered board in the default sort the two coincide: N rows above the
 line, all shaded. They diverge under a filter, and each stays honest — the line
 keeps counting picks, the shading keeps naming players.
 
-### Tier badges on the position filters
+### The position filter chips
 
-Each of the F / D / G filter chips carries a circular badge. The **number** is
+Each F / D / G chip carries three things:
+
+```
+ 2/15      F      (3)
+ ^ yours   ^ pos   ^ best tier left
+```
+
+- **Left** — how many of that position are on *your* roster, out of the limit
+  (15 F / 6 D / 3 G). Keepers count. It turns green once the position is full.
+  It can read over the limit, e.g. 4/3, because the app warns about an
+  over-limit pick but never blocks one.
+- **Centre** — the position letter.
+- **Right** — the tier badge, below.
+
+The **number** in the badge is
+the lowest-numbered tier that still has at least one unowned player at that
 the lowest-numbered tier that still has at least one unowned player at that
 position. The **ring colour** reports how many players remain in that tier —
 it warns that a run is ending, not which tier it happens to be:
