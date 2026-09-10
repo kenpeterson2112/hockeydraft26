@@ -131,30 +131,30 @@ button { cursor: pointer; }
   display: inline-flex; align-items: center; justify-content: center; gap: 4px;
 }
 
-/* Best tier still unowned at this position. The digit carries the meaning;
-   colour reinforces it, running cool at tier 1 to hot as the position thins
-   out. Luminance drops along the ramp too, so the steps stay distinguishable
-   without relying on hue discrimination. */
+/* Shows the best tier still unowned at this position. The RING COLOUR reports
+   how many players remain in that tier — 7+ plenty, 4-6 thinning, 1-3 nearly
+   gone — so it warns about a run ending, not about which tier it happens to be.
+   A thick ring over a constant dark fill keeps the badge legible whether or not
+   the chip is toggled on; a solid fill would collide with the chip's own
+   position colour. */
 .tierbadge {
-  flex: none; width: 18px; height: 18px; border-radius: 50%;
+  flex: none; width: 22px; height: 22px; border-radius: 50%;
   display: inline-flex; align-items: center; justify-content: center;
   font-size: 11px; font-weight: 800; line-height: 1;
-  color: #0b1220; background: var(--txt-faint);
   font-variant-numeric: tabular-nums;
-  /* Solid dark ring, not a translucent halo: an active chip is filled with its
-     position colour, and some badge colours collide with it exactly (tier 5
-     amber is the same value as the goalie chip). The ring guarantees the badge
-     stays a distinct object whatever sits behind it. */
+  background: var(--bg);
+  border: 3px solid var(--txt-faint);
+  color: var(--txt);
+  /* Dark halo OUTSIDE the ring. Without it the ring colour collides with the
+     chip's own fill when they match — a green ring vanishes on a selected F,
+     amber on a selected G — losing the very signal the ring carries. Framed by
+     dark on both sides, the ring reads against any chip state. */
   box-shadow: 0 0 0 2px var(--bg);
 }
-.tierbadge[data-tier="1"] { background: #6ee7b7; }
-.tierbadge[data-tier="2"] { background: #86efac; }
-.tierbadge[data-tier="3"] { background: #bef264; }
-.tierbadge[data-tier="4"] { background: #fde047; }
-.tierbadge[data-tier="5"] { background: #fbbf24; }
-.tierbadge[data-tier="6"] { background: #fb923c; }
-.tierbadge[data-tier="7"] { background: #f87171; }
-.tierbadge[data-tier="8"] { background: #ef4444; color: #fff5f5; }
+.tierbadge[data-level="good"]    { border-color: #34d399; color: #6ee7b7; }
+.tierbadge[data-level="concern"] { border-color: #fbbf24; color: #fcd34d; }
+.tierbadge[data-level="danger"]  { border-color: #f43f5e; color: #fda4af; }
+
 .chip.is-on { color: #0b1220; }
 .chip-all.is-on { background: var(--txt-dim); border-color: var(--txt-dim); }
 .chip-F.is-on { background: var(--pos-F); border-color: var(--pos-F); }

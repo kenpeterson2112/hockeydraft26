@@ -69,19 +69,29 @@ worst-first order, where "everyone above this line is gone" would be false.
 
 ### Tier badges on the position filters
 
-Each of the F / D / G filter chips carries a coloured circular badge showing the
-**lowest-numbered tier that still has at least one unowned player at that
-position** — scarcity at a glance, independent of whether the chip is toggled on.
-Keepers count as owned, so the badges already reflect keeper losses on pick 1.
+Each of the F / D / G filter chips carries a circular badge. The **number** is
+the lowest-numbered tier that still has at least one unowned player at that
+position. The **ring colour** reports how many players remain in that tier —
+it warns that a run is ending, not which tier it happens to be:
 
-The digit carries the meaning; colour reinforces it, running cool at tier 1 to
-hot as the position thins out (mint → green → lime → yellow → amber → orange →
-red). Luminance falls along the ramp too, so the steps stay distinguishable
-without relying on hue discrimination. The badge keeps a solid dark ring because
-an active chip is filled with its position colour and some badge colours collide
-with it exactly — tier 5 amber is the same value as the goalie chip.
+| Left in the tier | Ring | Meaning |
+|---|---|---|
+| 7 or more | green | plenty left, you can wait |
+| 4 to 6 | amber | thinning |
+| 1 to 3 | red | nearly gone |
 
-D and G move fastest early: only 4 tier-1 D and 4 tier-1 G exist in the pool.
+Keepers count as owned, so the badges reflect keeper losses on pick 1. Long-press
+or hover a chip for the exact count ("6 tier 1 forwards left").
+
+With a full pool nothing starts red — the deepest a tier ever opens is 6 at
+tier 1 forwards, so red only appears once a run is genuinely ending, which is
+when it matters.
+
+The badge is a thick coloured ring over a constant dark fill, with a dark halo
+outside it. A solid fill, or a bare ring, collides with the chip's own position
+colour when the two match — a green ring vanishes on a selected F chip, amber on
+a selected G — losing the signal. Framed by dark on both sides it reads in every
+chip state.
 
 ### Search
 

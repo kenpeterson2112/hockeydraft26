@@ -5,7 +5,7 @@
   var $ = UI.$, $$ = UI.$$, el = UI.el, num = UI.num, normalize = UI.normalize;
   var LEAGUE = Draft.LEAGUE;
 
-  var APP_VERSION = '1.3.0';
+  var APP_VERSION = '1.4.0';
 
   var players = [];              // seeded from data/players.json
   var playersById = {};
@@ -157,41 +157,59 @@
 
   /* ---------------------------------------------------------------- render */
 
-  // Lowest (best) tier still unowned at each position. Keepers count as owned,
-  // so these already reflect keeper losses before the first pick.
-  function bestTierByPosition(board) {
-    var best = { F: null, D: null, G: null };
-    for (var i = 0; i < board.available.length; i++) {
-      var p = board.available[i];
-      if (best[p.position] == null || p.tier < best[p.position]) {
-        best[p.position] = p.tier;
+  // Lowest (best) tier still unowned at each position, and how many are left in
+  // it. Keepers count as owned, so these reflect keeper losses before pick 1.
+  function positionScarcity(board) {
+    var out = { F: null, D: null, G: null };
+    var i, p;
+    for (i = 0; i < board.available.length; i++) {
+      p = board.available[i];
+      if (out[p.position] == null || p.tier < out[p.position].tier) {
+        out[p.position] = { tier: p.tier, count: 0 };
       }
     }
-    return best;
+    for (i = 0; i < board.available.length; i++) {
+      p = board.available[i];
+      if (out[p.position] && p.tier === out[p.position].tier) out[p.position].count++;
+    }
+    return out;
+  }
+
+  // The badge colour tracks how deep the tier still is, not which tier it is:
+  // plenty left means you can wait, a handful means the run is nearly over.
+  function scarcityLevel(count) {
+    if (count >= 7) return 'good';
+    if (count >= 4) return 'concern';
+    return 'danger';
   }
 
   var POS_WORD = { F: 'forwards', D: 'defence', G: 'goalies' };
+  var LEVEL_WORD = { good: 'plenty left', concern: 'thinning', danger: 'nearly gone' };
 
   function renderTierBadges(board) {
-    var best = bestTierByPosition(board);
+    var scarcity = positionScarcity(board);
     ['F', 'D', 'G'].forEach(function (pos) {
       var badge = $('#badge-' + pos);
       var chip = $('.chip-' + pos);
-      var tier = best[pos];
+      var s = scarcity[pos];
 
-      if (tier == null) {
+      if (s == null) {
         // No one left at the position — cannot happen with this pool, but the
         // badge should vanish rather than show a stale number if it ever does.
         badge.hidden = true;
+        delete badge.dataset.level;
         chip.setAttribute('aria-label', 'Filter ' + POS_WORD[pos] + ', none left');
         return;
       }
 
+      var level = scarcityLevel(s.count);
       badge.hidden = false;
-      badge.textContent = String(tier);
-      badge.dataset.tier = String(tier);
+      badge.textContent = String(s.tier);
+      badge.dataset.level = level;
+      chip.title = s.count + ' tier ' + s.tier + ' ' + POS_WORD[pos] + ' left';
       chip.setAttribute('aria-label',
-        'Filter ' + POS_WORD[pos] + ', best tier available ' + tier);
+        'Filter ' + POS_WORD[pos] + ', best tier available ' + s.tier + ', ' +
+        s.count + ' left, ' + LEVEL_WORD[level]);
     });
   }
 
