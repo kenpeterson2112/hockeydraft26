@@ -5,7 +5,7 @@
   var $ = UI.$, $$ = UI.$$, el = UI.el, num = UI.num, normalize = UI.normalize;
   var LEAGUE = Draft.LEAGUE;
 
-  var APP_VERSION = '2.0.2';
+  var APP_VERSION = '2.1.0';
 
   var players = [];              // seeded from data/players.json
   var playersById = {};
@@ -550,12 +550,22 @@
     $('#holdPopBar').style.width = '0%';
     pop.hidden = false;
 
-    // Sit above the finger, but stay inside the viewport on all four sides.
+    // Prefer above the finger; drop below if there is no room; and if the panel
+    // is too tall for either, clamp it into the viewport and drop the tail,
+    // which would otherwise point at nothing.
     var w = pop.offsetWidth, h = pop.offsetHeight, pad = 8;
+    var maxTop = global.innerHeight - h - pad;
     var left = Math.min(Math.max(x, w / 2 + pad), global.innerWidth - w / 2 - pad);
+
     var top = y - h - HOLD_POP_GAP;
-    pop.classList.toggle('is-below', top < pad);
-    if (top < pad) top = y + HOLD_POP_GAP;
+    var below = top < pad;
+    if (below) top = y + HOLD_POP_GAP;
+
+    var clamped = top > maxTop || top < pad;
+    if (clamped) top = Math.max(pad, Math.min(top, maxTop));
+
+    pop.classList.toggle('is-below', below);
+    pop.classList.toggle('is-clamped', clamped);
     pop.style.left = left + 'px';
     pop.style.top = top + 'px';
   }

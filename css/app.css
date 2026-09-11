@@ -572,37 +572,610 @@ button { cursor: pointer; }
 
 /* ------------------------------------------------------------ toast */
 
+/* During a press this is the only thing that matters on screen, so it is sized
+   like a dialog rather than a tooltip — roughly four times the area it had —
+   with the drafting team as the largest element, since that is the fact being
+   checked before the pick commits. */
 .holdpop {
   position: fixed; z-index: 60;
   transform: translateX(-50%);
   pointer-events: none;
-  min-width: 190px; max-width: min(300px, calc(100vw - 16px));
+  width: min(360px, calc(100vw - 24px));
   background: var(--bg-3);
-  border: 1px solid var(--accent);
-  border-radius: 10px; padding: 8px 10px 9px;
-  box-shadow: 0 10px 28px rgba(0, 0, 0, .55);
+  border: 2px solid var(--accent);
+  border-radius: 16px; padding: 16px 18px 18px;
+  box-shadow: 0 18px 48px rgba(0, 0, 0, .7);
 }
-/* Little pointer aimed back at the finger. */
+/* Pointer back toward the finger. */
 .holdpop::after {
-  content: ''; position: absolute; left: 50%; margin-left: -6px;
-  border: 6px solid transparent;
+  content: ''; position: absolute; left: 50%; margin-left: -10px;
+  border: 10px solid transparent;
 }
 .holdpop:not(.is-below)::after { top: 100%; border-top-color: var(--accent); }
 .holdpop.is-below::after { bottom: 100%; border-bottom-color: var(--accent); }
+/* Clamped against a screen edge, the tail would point at nothing. */
+.holdpop.is-clamped::after { display: none; }
 
-.holdpop-text { font-size: 13px; line-height: 1.3; }
-.holdpop-player { font-weight: 700; }
-.holdpop-verb { color: var(--txt-faint); }
-.holdpop-team { font-weight: 700; color: var(--accent); }
+.holdpop-text {
+  display: flex; flex-direction: column; align-items: center;
+  text-align: center; gap: 2px;
+}
+.holdpop-player {
+  font-weight: 700; font-size: 20px; line-height: 1.15;
+  color: var(--txt);
+}
+.holdpop-verb {
+  font-size: 11px; letter-spacing: .1em; text-transform: uppercase;
+  color: var(--txt-faint); margin-top: 4px;
+}
+.holdpop-team {
+  font-weight: 900; font-size: 38px; line-height: 1.1;
+  color: var(--accent); letter-spacing: -.02em;
+  max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
 
 .holdpop-track {
-  margin-top: 7px; height: 5px; border-radius: 3px;
+  margin-top: 14px; height: 12px; border-radius: 6px;
   background: rgba(255, 255, 255, .12); overflow: hidden;
 }
 .holdpop-bar {
-  height: 100%; width: 0%; border-radius: 3px;
+  height: 100%; width: 0%; border-radius: 6px;
   background: linear-gradient(90deg, var(--accent), var(--pos-F));
 }
+
+.toast { display: flex }` outbids the user-agent
+   `[hidden] { display: none }` rule, which would leave hidden elements on
+   screen swallowing taps. Keep this ahead of every component rule. */
+[hidden] { display: none !important; }
+
+/* Pull-to-refresh suppression.
+   overscroll-behavior alone covers Chrome and Safari 16+, but the guarantee is
+   that the DOCUMENT never scrolls: the shell is exactly viewport height with
+   overflow hidden, and scrolling happens inside .view. With no document-level
+   overscroll there is nothing for a downward drag at the top to trigger, on any
+   browser. dvh accounts for the collapsing mobile URL bar; vh is the fallback. */
+html {
+  -webkit-text-size-adjust: 100%;
+  height: 100%;
+  overscroll-behavior: none;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--txt);
+  font: 15px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+  overscroll-behavior: none;
+  display: flex;
+  flex-direction: column;
+}
+
+button, input, select { font: inherit; color: inherit; }
+button { cursor: pointer; }
+
+.sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+
+/* ------------------------------------------------------------- top bar */
+
+.topbar {
+  flex: none; z-index: 30;
+  background: linear-gradient(180deg, #111c33, #0d1526);
+  border-bottom: 1px solid var(--line);
+  padding: max(8px, env(safe-area-inset-top)) 12px 8px;
+}
+/* Ken is on the clock — the one moment in the draft that must not be missed. */
+.topbar.is-mine {
+  background: linear-gradient(180deg, #2b1f52, #1b1533);
+  box-shadow: inset 0 4px 0 var(--me);
+}
+
+/* Equal-width flanks so the team name sits truly centred between the pick
+   number and the undo button, whatever those two happen to measure. */
+.clockline {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center; gap: 8px;
+}
+.clockline .pill { justify-self: start; }
+.clockline .undo-btn { justify-self: end; }
+
+.pill {
+  background: var(--bg-3); border: 1px solid var(--line);
+  padding: 3px 8px; border-radius: 999px;
+  font-variant-numeric: tabular-nums; font-weight: 700; font-size: 13px;
+  color: var(--txt-dim); flex: none;
+}
+.onclock {
+  font-weight: 800; font-size: 26px; text-align: center; min-width: 0;
+  letter-spacing: -.01em;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.onclock .me-tag {
+  color: #0b1220; background: var(--me);
+  font-size: 11px; font-weight: 800; letter-spacing: .06em;
+  margin-left: 8px; padding: 2px 6px; border-radius: 4px;
+}
+.topbar.is-mine .onclock { color: #ffffff; }
+
+.undo-btn {
+  flex: none; height: 34px; padding: 0 12px;
+  background: var(--bg-3); border: 1px solid var(--line);
+  border-radius: 8px; color: var(--txt-dim); font-size: 13px; font-weight: 600;
+}
+.undo-btn:disabled { opacity: .35; }
+
+.turnline {
+  margin-top: 5px; font-size: 22px; font-weight: 600; color: var(--txt-dim);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  letter-spacing: -.01em;
+}
+.turnline b { color: var(--accent); font-size: 1.1em; font-weight: 800; }
+.turnline.is-mine { color: #ffffff; font-weight: 800; }
+.turnline.is-mine b { color: #ffffff; }
+
+/* --------------------------------------------------------------- tabs */
+
+.tabs {
+  flex: none; z-index: 25;
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  background: var(--bg-2); border-bottom: 1px solid var(--line);
+}
+.tab {
+  background: none; border: 0; padding: 11px 4px;
+  color: var(--txt-faint); font-size: 14px; font-weight: 600;
+  border-bottom: 2px solid transparent;
+}
+.tab.is-active { color: var(--txt); border-bottom-color: var(--accent); }
+
+.view { display: none; }
+.view.is-active {
+  display: block;
+  flex: 1 1 auto; min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  /* Keeps a fling inside the list from chaining out to the shell. */
+  overscroll-behavior: contain;
+  padding-bottom: calc(28px + var(--safe-b));
+}
+
+/* ----------------------------------------------------------- controls */
+
+.controls {
+  position: sticky; top: 0; z-index: 20;
+  background: var(--bg); border-bottom: 1px solid var(--line);
+  padding: 6px 12px;
+}
+
+.searchrow { display: flex; align-items: center; gap: 8px; }
+.searchwrap { position: relative; flex: 1 1 auto; min-width: 0; }
+.search {
+  width: 100%; height: 38px; padding: 0 34px 0 12px;
+  background: var(--bg-2); border: 1px solid var(--line);
+  border-radius: 10px; color: var(--txt);
+}
+.search::placeholder { color: var(--txt-faint); }
+.search:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+.clear-btn {
+  position: absolute; right: 2px; top: 2px;
+  width: 34px; height: 34px; background: none; border: 0;
+  color: var(--txt-faint); font-size: 22px; line-height: 1;
+}
+
+.chips { display: flex; gap: 6px; margin-top: 6px; }
+.chip {
+  height: 38px; border-radius: 8px; padding: 0 6px;
+  background: var(--bg-2); border: 1px solid var(--line);
+  color: var(--txt-faint); font-weight: 700; font-size: 14px;
+  display: inline-flex; align-items: center; justify-content: center; gap: 4px;
+}
+/* "All" only needs its label, so it takes just what it needs and leaves the
+   rest of the row to the three-part position chips. */
+.chip-all { flex: 0 0 auto; padding: 0 12px; }
+
+/* roster counter | position letter | tier badge — the 1fr flanks keep the
+   letter centred whatever the two sides measure. */
+.chip-pos {
+  flex: 1 1 0; min-width: 0;
+  display: grid; grid-template-columns: 1fr auto 1fr;
+  align-items: center; gap: 3px;
+}
+.chip-count {
+  justify-self: start;
+  font-size: 11px; font-weight: 700; font-variant-numeric: tabular-nums;
+  color: var(--txt-faint); white-space: nowrap;
+}
+.chip-count.is-full { color: var(--pos-F); }
+.chip-pos.is-on .chip-count { color: rgba(11, 18, 32, .65); }
+.chip-pos.is-on .chip-count.is-full { color: #0b1220; }
+.chip-letter { font-size: 15px; font-weight: 800; }
+.chip-pos .tierbadge { justify-self: end; }
+
+/* Shows the best tier still unowned at this position. The RING COLOUR reports
+   how many players remain in that tier — 7+ plenty, 4-6 thinning, 1-3 nearly
+   gone — so it warns about a run ending, not about which tier it happens to be.
+   A thick ring over a constant dark fill keeps the badge legible whether or not
+   the chip is toggled on; a solid fill would collide with the chip's own
+   position colour. */
+.tierbadge {
+  flex: none; width: 22px; height: 22px; border-radius: 50%;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 800; line-height: 1;
+  font-variant-numeric: tabular-nums;
+  background: var(--bg);
+  border: 3px solid var(--txt-faint);
+  color: var(--txt);
+  /* Dark halo OUTSIDE the ring. Without it the ring colour collides with the
+     chip's own fill when they match — a green ring vanishes on a selected F,
+     amber on a selected G — losing the very signal the ring carries. Framed by
+     dark on both sides, the ring reads against any chip state. */
+  box-shadow: 0 0 0 2px var(--bg);
+}
+.tierbadge[data-level="good"]    { border-color: #34d399; color: #6ee7b7; }
+.tierbadge[data-level="concern"] { border-color: #fbbf24; color: #fcd34d; }
+.tierbadge[data-level="danger"]  { border-color: #f43f5e; color: #fda4af; }
+
+.chip.is-on { color: #0b1220; }
+.chip-all.is-on { background: var(--txt-dim); border-color: var(--txt-dim); }
+.chip-F.is-on { background: var(--pos-F); border-color: var(--pos-F); }
+.chip-D.is-on { background: var(--pos-D); border-color: var(--pos-D); }
+.chip-G.is-on { background: var(--pos-G); border-color: var(--pos-G); }
+
+.showdrafted {
+  display: inline-flex; align-items: center; gap: 5px; flex: none;
+  height: 38px; padding: 0 2px;
+  font-size: 12px; color: var(--txt-faint); white-space: nowrap;
+}
+.showdrafted input { width: 15px; height: 15px; margin: 0; accent-color: var(--accent); }
+
+/* ------------------------------------------------------------ list */
+
+.listhead {
+  display: grid; align-items: stretch;
+  grid-template-columns: 28px 1fr 46px 60px 62px;
+  gap: 8px; padding: 0 12px;
+  font-size: 10px; letter-spacing: .08em; text-transform: uppercase;
+  color: var(--txt-faint); border-bottom: 1px solid var(--line);
+}
+.listhead > span { display: flex; align-items: center; padding: 5px 0; }
+.lh-name { justify-content: flex-start; }
+.lh-sort.lh-rank { justify-content: flex-start; }
+
+/* Tapping a column sorts by it; tapping the active one reverses. */
+.lh-sort {
+  display: flex; align-items: center; justify-content: flex-end; gap: 2px;
+  min-width: 0;
+  padding: 7px 0; background: none; border: 0;
+  font: inherit; font-size: 10px; letter-spacing: .08em; text-transform: uppercase;
+  color: var(--txt-faint); white-space: nowrap;
+}
+.lh-sort.is-active { color: var(--accent); font-weight: 700; }
+.lh-sort:active { color: var(--txt); }
+.lh-arrow { font-size: 8px; line-height: 1; }
+
+.playerlist { list-style: none; margin: 0; padding: 0; }
+
+.prow {
+  display: grid; align-items: center;
+  grid-template-columns: 28px 1fr 46px 60px 62px;
+  gap: 8px; padding: 8px 12px;
+  border-bottom: 1px solid rgba(38, 51, 77, .55);
+  border-left: 6px solid transparent;
+}
+/* The row itself is the press target: suppress the OS text-selection and
+   callout that a long press would otherwise trigger, while leaving vertical
+   scrolling intact (pan-y). */
+.prow.is-actionable {
+  cursor: pointer;
+  touch-action: pan-y;
+  user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
+}
+.prow.is-holding { background: rgba(77, 163, 255, .12); }
+.prow:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+
+/* Position tint: FLAT across the row rather than a left-to-right wash, so the
+   colour is still there under the ADP/VORP/Pts columns and position can be read
+   without looking back to the left edge. A bright ramp at the left was both
+   harder on the eyes and absent exactly where it was needed. Only the last
+   fifth softens, to avoid a hard edge at the end of the row. Alpha kept low —
+   at .16 and above the amber goalie rows go muddy against the navy. */
+.prow.pos-F {
+  border-left-color: #3ee9a4;
+  background-image: linear-gradient(90deg, rgba(62, 233, 164, .10) 0%, rgba(62, 233, 164, .10) 82%, rgba(62, 233, 164, 0) 100%);
+}
+.prow.pos-D {
+  border-left-color: #7ab8ff;
+  background-image: linear-gradient(90deg, rgba(122, 184, 255, .10) 0%, rgba(122, 184, 255, .10) 82%, rgba(122, 184, 255, 0) 100%);
+}
+.prow.pos-G {
+  border-left-color: #ffcb3d;
+  background-image: linear-gradient(90deg, rgba(255, 203, 61, .10) 0%, rgba(255, 203, 61, .10) 82%, rgba(255, 203, 61, 0) 100%);
+}
+.prow.is-taken { opacity: .4; }
+
+/* Projected to be gone by the time this pick comes round. The row tint that
+   used to carry this has been dropped: layered under the positional tint it
+   muddied the colour that actually matters, particularly on amber goalie rows.
+   The rank number alone now carries it — free, and it muddies nothing. */
+/* Scoped through .playerlist so it outranks the sort-emphasis rule
+   `.playerlist[data-sort="rank"] .p-rank`, which is equally specific and
+   declared later — without this the projection marker silently loses. */
+.playerlist .prow.is-projected-gone .p-rank { color: var(--me); font-weight: 800; }
+
+.p-rank {
+  font-size: 13px; color: var(--txt-faint);
+  font-variant-numeric: tabular-nums;
+}
+.p-main { min-width: 0; background: none; border: 0; padding: 0; text-align: left; }
+.p-name {
+  font-weight: 600; font-size: 16px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.p-sub {
+  display: flex; align-items: baseline; gap: 7px;
+  font-size: 14px; color: var(--txt-dim); margin-top: 3px;
+}
+.p-pos { font-weight: 900; font-size: 15px; letter-spacing: .04em; }
+.pos-F .p-pos { color: var(--pos-F); }
+.pos-D .p-pos { color: var(--pos-D); }
+.pos-G .p-pos { color: var(--pos-G); }
+.p-owner { color: var(--txt-dim); font-style: italic; }
+.p-owner.is-keeper { color: var(--pos-G); font-style: normal; }
+
+.p-num {
+  text-align: right; font-size: 24px; line-height: 1.05;
+  font-variant-numeric: tabular-nums; color: var(--txt-dim);
+}
+/* Tier now rides with the position letter rather than owning a column. */
+.p-tier-chip {
+  font-weight: 800; font-size: 12px; letter-spacing: .02em;
+  color: var(--txt-faint);
+  border: 1px solid var(--line); border-radius: 4px;
+  padding: 0 4px; line-height: 16px;
+}
+
+/* The column the board is sorted by gets the emphasis. */
+.playerlist[data-sort="adp"]    .p-adp,
+.playerlist[data-sort="vorp"]   .p-vorp,
+.playerlist[data-sort="points"] .p-pts { color: var(--txt); font-weight: 700; }
+.playerlist[data-sort="rank"]   .p-rank { color: var(--txt); }
+
+.holdhint {
+  margin: 0; padding: 5px 12px; font-size: 11px;
+  color: var(--txt-faint); background: var(--bg-2);
+  border-bottom: 1px solid var(--line); text-align: center;
+}
+.holdhint b { color: var(--accent); }
+
+/* the "board by my next pick" divider */
+.divider {
+  list-style: none; position: relative;
+  margin: 0; padding: 4px 12px 4px;
+  background: linear-gradient(90deg, rgba(167,139,250,.16), transparent 70%);
+  border-top: 2px dashed var(--me);
+  display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap;
+}
+.divider-label {
+  font-size: 11px; font-weight: 800; letter-spacing: .06em;
+  text-transform: uppercase; color: var(--me);
+}
+.divider-note { font-size: 11px; color: var(--txt-faint); }
+
+.searchnote {
+  margin: 0; padding: 7px 12px; font-size: 11px;
+  color: var(--accent); background: rgba(77, 163, 255, .08);
+  border-bottom: 1px solid var(--line);
+}
+
+.emptymsg { text-align: center; color: var(--txt-faint); padding: 28px 12px; }
+.hint { color: var(--txt-faint); font-size: 12px; padding: 10px 12px 0; margin: 0 0 4px; }
+
+/* ------------------------------------------------------------ teams */
+
+.teamlist { padding: 8px 12px; display: grid; gap: 8px; }
+
+.teamcard {
+  background: var(--bg-2); border: 1px solid var(--line); border-radius: 12px;
+  overflow: hidden;
+}
+.teamcard.is-mine { border-color: var(--me); }
+
+.tc-head {
+  width: 100%; display: grid; grid-template-columns: 1fr auto;
+  gap: 8px; align-items: center; padding: 10px 12px;
+  background: none; border: 0; text-align: left;
+}
+.tc-name { font-weight: 700; font-size: 15px; }
+.tc-name .slot { color: var(--txt-faint); font-weight: 600; font-size: 12px; margin-right: 6px; }
+.tc-name .me-tag { color: var(--me); font-size: 11px; font-weight: 800; margin-left: 6px; }
+
+.tc-counts { display: flex; gap: 8px; margin-top: 4px; font-size: 11px; }
+.tc-counts span { color: var(--txt-faint); font-variant-numeric: tabular-nums; }
+.tc-counts .c-F { color: var(--pos-F); }
+.tc-counts .c-D { color: var(--pos-D); }
+.tc-counts .c-G { color: var(--pos-G); }
+.tc-counts .is-full { font-weight: 800; }
+
+.tc-score { text-align: right; }
+.tc-eff { font-size: 20px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.tc-raw { font-size: 11px; color: var(--txt-faint); font-variant-numeric: tabular-nums; }
+
+.tc-body { border-top: 1px solid var(--line); padding: 4px 0; }
+.tc-empty { padding: 10px 12px; color: var(--txt-faint); font-size: 12px; }
+
+.rrow {
+  display: grid; grid-template-columns: 22px 1fr auto auto;
+  gap: 8px; align-items: center; padding: 5px 12px; font-size: 13px;
+}
+.rrow.is-bench { opacity: .45; }
+.rrow .r-pos { font-weight: 800; font-size: 11px; }
+.rrow.pos-F .r-pos { color: var(--pos-F); }
+.rrow.pos-D .r-pos { color: var(--pos-D); }
+.rrow.pos-G .r-pos { color: var(--pos-G); }
+.rrow .r-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rrow .r-tag { font-size: 10px; color: var(--pos-G); font-weight: 700; }
+.rrow .r-pts { font-variant-numeric: tabular-nums; color: var(--txt-dim); }
+
+/* ------------------------------------------------------------ setup */
+
+.card {
+  background: var(--bg-2); border: 1px solid var(--line);
+  border-radius: 12px; margin: 10px 12px; padding: 12px;
+}
+.card h2 {
+  margin: 0 0 4px; font-size: 15px;
+  display: flex; align-items: center; gap: 8px;
+}
+.card .hint { padding: 0; margin: 0 0 10px; }
+.counter {
+  margin-left: auto; font-size: 12px; color: var(--txt-faint);
+  font-variant-numeric: tabular-nums; font-weight: 600;
+}
+
+.teamsetup { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.tsrow { display: grid; grid-template-columns: 26px 1fr 44px; gap: 8px; align-items: center; }
+.tsrow .ts-slot { color: var(--txt-faint); font-size: 12px; font-variant-numeric: tabular-nums; }
+.tsrow input[type=text] {
+  height: 38px; padding: 0 10px; border-radius: 8px;
+  background: var(--bg-3); border: 1px solid var(--line); color: var(--txt);
+  min-width: 0;
+}
+.tsrow.is-mine input[type=text] { border-color: var(--me); }
+.ts-me { display: flex; align-items: center; justify-content: center; gap: 4px; }
+.ts-me input { width: 18px; height: 18px; accent-color: var(--me); }
+
+.keeperteams { display: grid; grid-template-columns: repeat(auto-fill, minmax(88px, 1fr)); gap: 6px; }
+.ktbtn {
+  height: 40px; border-radius: 8px; padding: 0 6px;
+  background: var(--bg-3); border: 1px solid var(--line);
+  color: var(--txt-dim); font-size: 12px; font-weight: 600;
+  display: flex; flex-direction: column; justify-content: center; gap: 1px;
+  white-space: nowrap; overflow: hidden;
+}
+.ktbtn .kt-n { font-size: 10px; color: var(--txt-faint); font-variant-numeric: tabular-nums; }
+.ktbtn.is-full { border-color: var(--pos-F); }
+.ktbtn.is-full .kt-n { color: var(--pos-F); }
+.ktbtn.is-sel { background: var(--accent); border-color: var(--accent); color: #0b1220; }
+.ktbtn.is-sel .kt-n { color: rgba(11,18,32,.7); }
+
+.keeperpanel { margin-top: 12px; }
+.kp-slots { display: grid; gap: 5px; margin-bottom: 10px; }
+.kp-slot {
+  display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center;
+  padding: 7px 10px; border-radius: 8px;
+  background: var(--bg-3); border: 1px dashed var(--line); font-size: 13px;
+}
+.kp-slot.is-filled { border-style: solid; }
+.kp-slot .kp-empty { color: var(--txt-faint); font-style: italic; }
+.kp-x {
+  width: 30px; height: 30px; border-radius: 6px;
+  background: none; border: 1px solid var(--line); color: var(--danger);
+  font-size: 16px; line-height: 1;
+}
+.kp-search {
+  width: 100%; height: var(--tap); padding: 0 12px; border-radius: 10px;
+  background: var(--bg-3); border: 1px solid var(--line); color: var(--txt);
+}
+.kp-results { list-style: none; margin: 8px 0 0; padding: 0; max-height: 260px; overflow-y: auto; }
+.kp-result {
+  width: 100%; display: grid; grid-template-columns: 1fr auto; gap: 8px;
+  align-items: center; padding: 9px 10px; text-align: left;
+  background: none; border: 0; border-bottom: 1px solid rgba(38,51,77,.55);
+  border-left: 3px solid transparent;
+}
+.kp-result.pos-F { border-left-color: var(--pos-F); }
+.kp-result.pos-D { border-left-color: var(--pos-D); }
+.kp-result.pos-G { border-left-color: var(--pos-G); }
+.kp-result:disabled { opacity: .4; }
+.kp-result .kr-sub { font-size: 11px; color: var(--txt-faint); }
+.kp-result .kr-pts { font-size: 12px; color: var(--txt-dim); font-variant-numeric: tabular-nums; }
+
+.statusgrid { display: grid; gap: 6px; margin-bottom: 10px; font-size: 13px; }
+.statusgrid div { display: flex; justify-content: space-between; gap: 8px; }
+.statusgrid .ok { color: var(--pos-F); }
+.statusgrid .warn { color: var(--pos-G); }
+
+.btnrow { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+.btn {
+  flex: 1 1 auto; min-height: var(--tap); padding: 0 14px; border-radius: 10px;
+  background: var(--bg-3); border: 1px solid var(--line);
+  color: var(--txt); font-weight: 600; font-size: 14px;
+}
+.btn-primary { background: var(--accent); border-color: var(--accent); color: #0b1220; font-weight: 800; }
+.btn-danger { color: var(--danger); border-color: rgba(248,113,113,.4); }
+
+.version { text-align: center; color: var(--txt-faint); font-size: 11px; margin: 16px 0 0; }
+
+/* ------------------------------------------------------------ sheet */
+
+.sheet-backdrop {
+  position: fixed; inset: 0; z-index: 40;
+  background: rgba(4, 8, 16, .6);
+}
+.sheet {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 41;
+  max-height: 82vh; overflow-y: auto;
+  background: var(--bg-2);
+  border-top: 1px solid var(--line);
+  border-radius: 16px 16px 0 0;
+  padding: 0 12px calc(16px + var(--safe-b));
+}
+.sheet-grab {
+  width: 36px; height: 4px; border-radius: 2px;
+  background: var(--line); margin: 8px auto 4px;
+}
+.sheet-head { display: flex; align-items: flex-start; gap: 8px; padding: 4px 0 10px; }
+.sheet-head h3 { margin: 0; font-size: 17px; }
+.sheet-sub { margin: 2px 0 0; font-size: 12px; color: var(--txt-faint); }
+.sheet-close {
+  margin-left: auto; width: 34px; height: 34px; flex: none;
+  background: var(--bg-3); border: 1px solid var(--line);
+  border-radius: 8px; color: var(--txt-dim); font-size: 20px; line-height: 1;
+}
+.sheet-section-label {
+  font-size: 11px; text-transform: uppercase; letter-spacing: .07em;
+  color: var(--txt-faint); margin: 12px 0 6px;
+}
+.teamgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 6px; }
+.tgbtn {
+  min-height: 44px; border-radius: 8px; padding: 4px 6px;
+  background: var(--bg-3); border: 1px solid var(--line);
+  color: var(--txt); font-size: 12px; font-weight: 600;
+  display: flex; flex-direction: column; justify-content: center; gap: 2px;
+  overflow: hidden;
+}
+.tgbtn .tg-sub { font-size: 10px; color: var(--txt-faint); font-variant-numeric: tabular-nums; }
+.tgbtn.is-onclock { border-color: var(--accent); }
+.tgbtn.is-mine { border-color: var(--me); }
+.tgbtn.is-full { opacity: .5; }
+
+.resetopt {
+  background: var(--bg-3); border: 1px solid var(--line);
+  border-radius: 10px; padding: 10px 12px 12px; margin-bottom: 8px;
+}
+.resetopt.is-severe { border-color: rgba(248, 113, 113, .45); }
+.resetopt-title { font-weight: 700; font-size: 14px; }
+.resetopt-detail {
+  font-size: 12px; color: var(--txt-faint);
+  margin: 3px 0 10px; line-height: 1.45;
+}
+.resetopt .btn { width: 100%; flex: none; }
+.resetopt .btn.is-armed {
+  background: var(--danger); border-color: var(--danger);
+  color: #0b1220; font-weight: 800;
+}
+
+.sheet-warn {
+  margin: 10px 0 0; padding: 8px 10px; border-radius: 8px; font-size: 12px;
+  background: rgba(251,191,36,.12); color: var(--pos-G);
+  border: 1px solid rgba(251,191,36,.3);
+}
+
+/* ------------------------------------------------------------ toast */
 
 .toast {
   position: fixed; left: 12px; right: 12px;

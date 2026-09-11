@@ -31,9 +31,9 @@ season total and never recomputes it from categories.
 4. **Board.**
    - **Press and hold a row for 1.5 seconds** to draft that player to whoever is
      on the clock. It buzzes on press, again at the halfway mark, and twice on
-     commit. A popup appears above your finger reading *"<player> drafted
-     by <team>"* with a progress bar filling left to right; the pick commits
-     when the bar completes. Sliding your finger more than 12px cancels it, so
+     commit. A panel appears above your finger naming the player and,
+     in large type, the team the pick will go to, with a progress bar filling
+     left to right; the pick commits when the bar completes. Sliding your finger more than 12px cancels it, so
      scrolling never drafts anyone by accident.
    - **Tap a row** to open the sheet and assign the pick to a different team.
    - **Undo** is in the header and on every toast.
