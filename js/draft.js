@@ -104,8 +104,9 @@
       v: 1,
       teams: makeTeams(DEFAULT_TEAM_NAMES),
       mySlot: DEFAULT_MY_SLOT,
-      keepers: {},   // playerId -> teamId
-      picks: [],     // [{ playerId, teamId, n }] in pick order
+      keepers: {},       // playerId -> teamId
+      picks: [],         // [{ playerId, teamId, n }] in pick order
+      customPlayers: [], // players entered by hand, absent from the rankings
       setupDone: false
     };
   }
@@ -120,6 +121,7 @@
       }
       s.keepers = s.keepers || {};
       s.picks = Array.isArray(s.picks) ? s.picks : [];
+      s.customPlayers = Array.isArray(s.customPlayers) ? s.customPlayers : [];
       return s;
     } catch (err) {
       // Corrupt or unavailable storage should never block draft day.

@@ -37,6 +37,9 @@ season total and never recomputes it from categories.
      scrolling never drafts anyone by accident.
    - **Tap a row** to open the sheet and assign the pick to a different team.
    - **Undo** is in the header and on every toast.
+   - **The + beside the team name** handles a player who is not in the
+     rankings at all. Enter position, name and a projected points figure
+     (defaults to 45) and it drafts straight to the team on the clock.
 
    The hold duration is `HOLD_MS` in `js/app.js`.
    When it is your turn the whole header turns purple and the line reads
@@ -125,6 +128,23 @@ outside it. A solid fill, or a bare ring, collides with the chip's own position
 colour when the two match — a green ring vanishes on a selected F chip, amber on
 a selected G — losing the signal. Framed by dark on both sides it reads in every
 chip state.
+
+### Off-board picks
+
+Someone will take a player who is not in the 403. The **+** next to the team on
+the clock opens a short form — position, name, projected points, defaulting to
+45 — and drafts them immediately.
+
+A hand-entered player is stored in the draft state, never in
+`data/players.json`, and is registered only in the id lookup rather than the
+rankings array, so it can never appear on the board — it has no tier, VORP or
+ADP to be ranked by. It shows on the team's roster marked `+`, and counts
+towards that team's effective total like any other player.
+
+Typing a name that *is* in the rankings drafts the ranked player instead of
+creating a second copy of them; if that player is already owned, it says so and
+does nothing. Undoing the pick removes the hand-entered player rather than
+leaving it orphaned, and every reset scope clears them.
 
 ### Search
 

@@ -5,7 +5,7 @@
   var $ = UI.$, $$ = UI.$$, el = UI.el, num = UI.num, normalize = UI.normalize;
   var LEAGUE = Draft.LEAGUE;
 
-  var APP_VERSION = '2.1.0';
+  var APP_VERSION = '2.2.0';
 
   var players = [];              // seeded from data/players.json
   var playersById = {};
@@ -120,10 +120,17 @@
   function undoLastPick() {
     if (!state.picks.length) return;
     var last = state.picks.pop();
+    var p = playersById[last.playerId];
+    var name = p ? p.name : 'pick';
+
+    // A hand-entered player only exists because of the pick that created it, so
+    // undoing that pick removes it rather than orphaning it in the roster data.
+    var wasCustom = forgetCustomPlayer(last.playerId);
+
     Draft.save(state);
     render();
-    var p = playersById[last.playerId];
-    UI.showToast('Undid ' + Draft.pickLabel(last.n) + ' — ' + (p ? p.name : 'pick') + ' is back on the board.');
+    UI.showToast('Undid ' + Draft.pickLabel(last.n) + ' — ' + name +
+      (wasCustom ? ' removed.' : ' is back on the board.'));
   }
 
   // Removes a player from whichever team holds them. A live pick can only be
@@ -146,6 +153,32 @@
       return;
     }
     undoLastPick();
+  }
+
+  /* ------------------------------------------------- manually entered picks */
+
+  var DEFAULT_CUSTOM_POINTS = 45;
+
+  // Registered into the id lookup but deliberately NOT into `players`: a
+  // hand-entered player has no ranking, so it must never surface on the board.
+  // It exists only as a roster entry, which is all the scoring needs.
+  function registerCustomPlayers() {
+    for (var i = 0; i < state.customPlayers.length; i++) {
+      var p = state.customPlayers[i];
+      playersById[p.id] = p;
+    }
+  }
+
+  function forgetCustomPlayer(playerId) {
+    var kept = state.customPlayers.filter(function (p) { return p.id !== playerId; });
+    if (kept.length === state.customPlayers.length) return false;
+    state.customPlayers = kept;
+    delete playersById[playerId];
+    return true;
+  }
+
+  function customId(name) {
+    return 'custom-' + (normalize(name) || 'player') + '-' + Date.now().toString(36);
   }
 
   // Returns whether the keeper was actually added, so the caller only resets
@@ -246,6 +279,7 @@
     var topbar = $('#topbar');
 
     $('#undoBtn').disabled = state.picks.length === 0;
+    $('#addPickBtn').hidden = !state.setupDone || c.complete;
 
     if (c.complete) {
       $('#pickLabel').textContent = 'Done';
@@ -733,7 +767,8 @@
       var row = el('div', 'rrow pos-' + p.position + (counting ? '' : ' is-bench'));
       row.appendChild(el('span', 'r-pos', p.position));
       row.appendChild(el('span', 'r-name', p.name));
-      row.appendChild(el('span', 'r-tag', state.keepers[p.id] != null ? 'K' : ''));
+      row.appendChild(el('span', 'r-tag' + (p.custom ? ' is-custom' : ''),
+        state.keepers[p.id] != null ? 'K' : (p.custom ? '+' : '')));
       row.appendChild(el('span', 'r-pts', num(p.points)));
       body.appendChild(row);
     });
@@ -952,6 +987,7 @@
     });
 
     $('#undoBtn').addEventListener('click', undoLastPick);
+    $('#addPickBtn').addEventListener('click', openAddPickSheet);
 
     var search = $('#search');
     search.addEventListener('input', function () {
@@ -1019,6 +1055,9 @@
   // data/players.json and are never written by the app, so no scope touches them.
   function resetPicksOnly() {
     var n = state.picks.length;
+    // Hand-entered players exist only through their pick, so they go with it.
+    state.customPlayers.forEach(function (p) { delete playersById[p.id]; });
+    state.customPlayers = [];
     state.picks = [];
     Draft.save(state);
     render();
@@ -1027,6 +1066,8 @@
 
   function resetToSetup() {
     var n = state.picks.length;
+    state.customPlayers.forEach(function (p) { delete playersById[p.id]; });
+    state.customPlayers = [];
     state.picks = [];
     state.setupDone = false;
     Draft.save(state);
@@ -1036,6 +1077,7 @@
   }
 
   function resetEverything() {
+    state.customPlayers.forEach(function (p) { delete playersById[p.id]; });
     state = Draft.freshState();
     Draft.save(state);
     $('#teamSetup').dataset.built = '';
@@ -1044,6 +1086,112 @@
     view.expandedTeams = {};
     setTab('setup');
     UI.showToast('Everything reset. Player projections are untouched.');
+  }
+
+  function openAddPickSheet() {
+    var c = Draft.clock(state);
+    if (!state.setupDone || c.complete) return;
+
+    UI.openSheet('Off-board pick', 'For a player who is not in the rankings.', function (body) {
+      var form = el('div', 'addform');
+
+      var posRow = el('label', 'addfield');
+      posRow.appendChild(el('span', 'addfield-label', 'Position'));
+      var pos = el('select', 'addfield-input');
+      [['F', 'Forward'], ['D', 'Defence'], ['G', 'Goalie']].forEach(function (o) {
+        var opt = el('option', null, o[1]);
+        opt.value = o[0];
+        pos.appendChild(opt);
+      });
+      posRow.appendChild(pos);
+      form.appendChild(posRow);
+
+      var nameRow = el('label', 'addfield');
+      nameRow.appendChild(el('span', 'addfield-label', 'Name'));
+      var name = el('input', 'addfield-input');
+      name.type = 'text';
+      name.placeholder = 'Player name';
+      name.autocomplete = 'off';
+      name.autocapitalize = 'words';
+      nameRow.appendChild(name);
+      form.appendChild(nameRow);
+
+      var ptsRow = el('label', 'addfield');
+      ptsRow.appendChild(el('span', 'addfield-label', 'Projected points'));
+      var pts = el('input', 'addfield-input');
+      pts.type = 'number';
+      pts.inputMode = 'decimal';
+      pts.step = '1';
+      pts.min = '0';
+      pts.value = String(DEFAULT_CUSTOM_POINTS);
+      ptsRow.appendChild(pts);
+      form.appendChild(ptsRow);
+
+      body.appendChild(form);
+
+      var warn = el('p', 'sheet-warn');
+      warn.hidden = true;
+      body.appendChild(warn);
+
+      var go = el('button', 'btn btn-primary',
+        'Draft to ' + c.onClockTeam.name + ' · ' + Draft.pickLabel(c.currentPick));
+      go.type = 'button';
+      go.style.marginTop = '12px';
+      go.addEventListener('click', function () {
+        submitAddPick(name.value, pos.value, pts.value, c.onClockTeam, warn);
+      });
+      body.appendChild(go);
+
+      name.focus();
+    });
+  }
+
+  function submitAddPick(rawName, position, rawPoints, team, warn) {
+    var name = String(rawName).trim().replace(/\s+/g, ' ');
+    var points = parseFloat(rawPoints);
+
+    function reject(msg) {
+      warn.textContent = msg;
+      warn.hidden = false;
+    }
+
+    if (!name) return reject('Give the player a name.');
+    if (!isFinite(points) || points < 0) return reject('Projected points must be a number of 0 or more.');
+
+    // If the name is already in the rankings, use that player rather than
+    // creating a second entry for the same person.
+    var key = normalize(name);
+    var existing = null;
+    for (var i = 0; i < players.length; i++) {
+      if (normalize(players[i].name) === key) { existing = players[i]; break; }
+    }
+    if (existing) {
+      var owner = Draft.ownerMap(state)[existing.id];
+      if (owner != null) {
+        return reject(existing.name + ' is already on ' + state.teams[owner].name + "'s roster.");
+      }
+      UI.closeSheet();
+      draftPlayer(existing.id, team.id);
+      UI.showToast(existing.name + ' was already in the rankings — drafted from the board.');
+      return;
+    }
+
+    var player = {
+      id: customId(name),
+      name: name,
+      position: position,
+      team: '—',
+      tier: null,
+      vorp: null,
+      points: points,
+      adp: null,
+      custom: true
+    };
+    state.customPlayers.push(player);
+    playersById[player.id] = player;
+
+    UI.closeSheet();
+    draftPlayer(player.id, team.id);
   }
 
   function openResetSheet() {
@@ -1139,9 +1287,12 @@
         if (!next || next.v !== 1 || !Array.isArray(next.teams) || next.teams.length !== LEAGUE.teamCount) {
           throw new Error('Not a draft state file');
         }
+        state.customPlayers.forEach(function (p) { delete playersById[p.id]; });
         state = next;
         state.keepers = state.keepers || {};
         state.picks = Array.isArray(state.picks) ? state.picks : [];
+        state.customPlayers = Array.isArray(state.customPlayers) ? state.customPlayers : [];
+        registerCustomPlayers();
         Draft.save(state);
         $('#teamSetup').dataset.built = '';
         render();
@@ -1165,6 +1316,9 @@
     });
 
     state = Draft.load();
+    // Must precede the prune below: a saved pick pointing at a hand-entered
+    // player is only resolvable once that player is back in the lookup.
+    registerCustomPlayers();
 
     // Drop any saved reference to a player the data file no longer carries.
     var stale = false;

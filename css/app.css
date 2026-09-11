@@ -85,6 +85,21 @@ button { cursor: pointer; }
   font-variant-numeric: tabular-nums; font-weight: 700; font-size: 13px;
   color: var(--txt-dim); flex: none;
 }
+.onclock-wrap {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  min-width: 0;
+}
+/* Opens the off-board pick dialog for whoever is on the clock. */
+.addpick {
+  flex: none; width: 30px; height: 30px; border-radius: 8px;
+  background: var(--bg-3); border: 1px solid var(--line);
+  color: var(--txt-dim); font-size: 22px; font-weight: 400; line-height: 1;
+  display: inline-flex; align-items: center; justify-content: center;
+  padding: 0 0 2px;
+}
+.addpick:active { background: var(--accent); border-color: var(--accent); color: #0b1220; }
+.topbar.is-mine .addpick { border-color: rgba(255, 255, 255, .35); color: #fff; }
+
 .onclock {
   font-weight: 800; font-size: 26px; text-align: center; min-width: 0;
   letter-spacing: -.01em;
@@ -488,6 +503,23 @@ button { cursor: pointer; }
 .kp-result:disabled { opacity: .4; }
 .kp-result .kr-sub { font-size: 11px; color: var(--txt-faint); }
 .kp-result .kr-pts { font-size: 12px; color: var(--txt-dim); font-variant-numeric: tabular-nums; }
+
+/* Off-board pick form. */
+.addform { display: grid; gap: 10px; }
+.addfield { display: grid; gap: 4px; }
+.addfield-label {
+  font-size: 11px; letter-spacing: .07em; text-transform: uppercase;
+  color: var(--txt-faint);
+}
+.addfield-input {
+  height: 46px; padding: 0 12px; border-radius: 10px; width: 100%;
+  background: var(--bg-3); border: 1px solid var(--line); color: var(--txt);
+  font-size: 16px; /* 16px or iOS zooms the page on focus */
+}
+.addfield-input:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+select.addfield-input { appearance: none; -webkit-appearance: none; }
+
+.rrow .r-tag.is-custom { color: var(--accent); }
 
 .statusgrid { display: grid; gap: 6px; margin-bottom: 10px; font-size: 13px; }
 .statusgrid div { display: flex; justify-content: space-between; gap: 8px; }
@@ -690,6 +722,21 @@ button { cursor: pointer; }
   font-variant-numeric: tabular-nums; font-weight: 700; font-size: 13px;
   color: var(--txt-dim); flex: none;
 }
+.onclock-wrap {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  min-width: 0;
+}
+/* Opens the off-board pick dialog for whoever is on the clock. */
+.addpick {
+  flex: none; width: 30px; height: 30px; border-radius: 8px;
+  background: var(--bg-3); border: 1px solid var(--line);
+  color: var(--txt-dim); font-size: 22px; font-weight: 400; line-height: 1;
+  display: inline-flex; align-items: center; justify-content: center;
+  padding: 0 0 2px;
+}
+.addpick:active { background: var(--accent); border-color: var(--accent); color: #0b1220; }
+.topbar.is-mine .addpick { border-color: rgba(255, 255, 255, .35); color: #fff; }
+
 .onclock {
   font-weight: 800; font-size: 26px; text-align: center; min-width: 0;
   letter-spacing: -.01em;
@@ -1094,6 +1141,23 @@ button { cursor: pointer; }
 .kp-result .kr-sub { font-size: 11px; color: var(--txt-faint); }
 .kp-result .kr-pts { font-size: 12px; color: var(--txt-dim); font-variant-numeric: tabular-nums; }
 
+/* Off-board pick form. */
+.addform { display: grid; gap: 10px; }
+.addfield { display: grid; gap: 4px; }
+.addfield-label {
+  font-size: 11px; letter-spacing: .07em; text-transform: uppercase;
+  color: var(--txt-faint);
+}
+.addfield-input {
+  height: 46px; padding: 0 12px; border-radius: 10px; width: 100%;
+  background: var(--bg-3); border: 1px solid var(--line); color: var(--txt);
+  font-size: 16px; /* 16px or iOS zooms the page on focus */
+}
+.addfield-input:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+select.addfield-input { appearance: none; -webkit-appearance: none; }
+
+.rrow .r-tag.is-custom { color: var(--accent); }
+
 .statusgrid { display: grid; gap: 6px; margin-bottom: 10px; font-size: 13px; }
 .statusgrid div { display: flex; justify-content: space-between; gap: 8px; }
 .statusgrid .ok { color: var(--pos-F); }
@@ -1232,6 +1296,7 @@ button { cursor: pointer; }
   .holdhint { padding: 3px 12px; }
   .tab { padding: 6px 4px; font-size: 13px; }
   .onclock { font-size: 20px; }
+  .addpick { width: 26px; height: 26px; font-size: 19px; }
 }
 
 @media (min-width: 640px) {
