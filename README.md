@@ -3,6 +3,8 @@
 Mobile-first, installable PWA for a 14-team fantasy hockey keeper snake draft.
 Static site, no build step, works fully offline once loaded.
 
+Live @ https://kenpeterson2112.github.io/hockeydraft26/
+
 ## League rules encoded in the app
 
 | | |
