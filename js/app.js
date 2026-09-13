@@ -5,7 +5,7 @@
   var $ = UI.$, $$ = UI.$$, el = UI.el, num = UI.num, normalize = UI.normalize;
   var LEAGUE = Draft.LEAGUE;
 
-  var APP_VERSION = '2.2.0';
+  var APP_VERSION = '2.3.0';
 
   var players = [];              // seeded from data/players.json
   var playersById = {};
@@ -703,9 +703,23 @@
     var host = $('#teamList');
     var frag = document.createDocumentFragment();
 
-    state.teams.forEach(function (t) {
+    // Your team is pinned to the top; everyone else ranks by effective total,
+    // so the card order is the standings. Draft slot breaks ties so the order
+    // stays stable before anyone has scored.
+    var cards = state.teams.map(function (t) {
       var roster = rosters[t.id];
-      var score = Draft.scoreRoster(roster);
+      return { team: t, roster: roster, score: Draft.scoreRoster(roster) };
+    });
+    cards.sort(function (a, b) {
+      var am = a.team.slot === state.mySlot, bm = b.team.slot === state.mySlot;
+      if (am !== bm) return am ? -1 : 1;
+      return (b.score.effective - a.score.effective) || (a.team.slot - b.team.slot);
+    });
+
+    cards.forEach(function (entry) {
+      var t = entry.team;
+      var roster = entry.roster;
+      var score = entry.score;
       var isMine = t.slot === state.mySlot;
 
       var card = el('div', 'teamcard' + (isMine ? ' is-mine' : ''));
@@ -1041,6 +1055,7 @@
       setTab('board');
     });
 
+    $('#updateBtn').addEventListener('click', checkForUpdate);
     $('#exportBtn').addEventListener('click', exportState);
     $('#importBtn').addEventListener('click', function () { $('#importFile').click(); });
     $('#importFile').addEventListener('change', importState);
@@ -1263,6 +1278,68 @@
       var pos = chip.dataset.pos;
       chip.classList.toggle('is-on', pos === 'ALL' ? all : view.positions[pos]);
     });
+  }
+
+  /* ------------------------------------------------------------ app update */
+
+  // Clearing caches while offline would take the app's offline copy with it, so
+  // the network is confirmed before anything is thrown away, and the remote
+  // version is read first so a pointless reload is avoided.
+  function checkForUpdate() {
+    var btn = $('#updateBtn');
+    var reset = function (label) {
+      btn.disabled = false;
+      btn.textContent = label || 'Check for update';
+    };
+
+    if (global.navigator && global.navigator.onLine === false) {
+      UI.showToast("You're offline — the cached version stays put.");
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = 'Checking…';
+
+    fetch('./sw.js?ts=' + Date.now(), { cache: 'no-store' })
+      .then(function (r) {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.text();
+      })
+      .then(function (text) {
+        var m = text.match(/CACHE_VERSION\s*=\s*'v?([^']+)'/);
+        var remote = m ? m[1] : null;
+        if (remote && remote === APP_VERSION) {
+          reset();
+          UI.showToast('Already up to date (v' + APP_VERSION + ').');
+          return null;
+        }
+        btn.textContent = 'Updating to v' + (remote || '?') + '…';
+        return applyUpdate();
+      })
+      .catch(function (err) {
+        console.warn('Update check failed', err);
+        reset();
+        UI.showToast('Could not reach the server. Still on v' + APP_VERSION + '.');
+      });
+  }
+
+  // Drop every cache and the worker itself, so the next load fetches a clean
+  // copy and re-precaches it. Draft state is in localStorage and is untouched.
+  function applyUpdate() {
+    var step = global.caches
+      ? global.caches.keys().then(function (keys) {
+          return Promise.all(keys.map(function (k) { return global.caches.delete(k); }));
+        })
+      : Promise.resolve();
+
+    return step
+      .then(function () {
+        if (!navigator.serviceWorker) return null;
+        return navigator.serviceWorker.getRegistration();
+      })
+      .then(function (reg) { return reg ? reg.unregister() : null; })
+      .catch(function (err) { console.warn('Update cleanup failed', err); })
+      .then(function () { global.location.reload(); });
   }
 
   function exportState() {

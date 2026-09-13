@@ -2,7 +2,7 @@
    Bump CACHE_VERSION on every deploy so clients pick up new assets. */
 'use strict';
 
-var CACHE_VERSION = 'v2.2.0';
+var CACHE_VERSION = 'v2.3.0';
 var CACHE_NAME = 'hockeydraft26-' + CACHE_VERSION;
 
 // Everything the app needs to run with no connection at all.
@@ -51,6 +51,13 @@ self.addEventListener('fetch', function (event) {
 
   var url = new URL(req.url);
   if (url.origin !== self.location.origin) return;
+
+  // Never touch the worker script. The app probes it with a cache-busting
+  // query to read the published version, and the cache-first branch below
+  // matches with ignoreSearch — which would serve the FIRST probe's response to
+  // every later one, freezing the reported version and making the in-app update
+  // check work exactly once. Let these go straight to the network.
+  if (url.pathname === self.location.pathname) return;
 
   // Navigations: serve the shell so a hard refresh mid-draft still works.
   if (req.mode === 'navigate') {

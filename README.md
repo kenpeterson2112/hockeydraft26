@@ -44,8 +44,10 @@ season total and never recomputes it from categories.
    The hold duration is `HOLD_MS` in `js/app.js`.
    When it is your turn the whole header turns purple and the line reads
    **"You're up! Next selection in X picks."** in white.
-5. **Teams.** Live effective total, raw total, and positional counts per team.
-   Tap a card to expand the roster — benched (non-counting) players are dimmed.
+5. **Teams.** Your team is pinned to the top; the other 13 rank by effective
+   total, so the tab reads as live standings and re-orders as picks land. Each
+   card shows effective total, raw total and positional counts. Tap one to
+   expand the roster — benched (non-counting) players are dimmed.
 
 ### Sorting
 
@@ -186,6 +188,27 @@ on every change, so a refresh or a phone lock loses nothing. A service worker
 precaches the whole app including the player data, so once the page has loaded
 one time it runs with no connection at all. **Load it once on wifi before the
 draft.** Setup → Backup exports/imports the state as JSON if you want a copy.
+
+### Updating an installed copy
+
+The service worker is cache-first so the draft works offline, which means an
+installed copy keeps serving its cached build. **Setup → App → Check for
+update** fetches `sw.js`, compares its `CACHE_VERSION` to the running
+`APP_VERSION`, and only then clears the caches, unregisters the worker and
+reloads. Draft state is in `localStorage` and is never touched.
+
+It refuses to clear anything unless the network actually answered — the offline
+check is a fast path, but the real guard is that the teardown only runs inside
+a resolved `fetch`. Tapping it offline, or with the server down, leaves the
+cached copy exactly as it was.
+
+`sw.js` is deliberately excluded from the worker's own fetch handling. The
+cache-first branch matches with `ignoreSearch`, so a cached response to the
+first cache-busted probe would be served to every later one, freezing the
+reported version and making the update check work exactly once.
+
+Keep `APP_VERSION` and `CACHE_VERSION` in step — the unit suite fails if they
+drift, since a mismatch either hides a real update or claims one forever.
 
 ## Data
 
