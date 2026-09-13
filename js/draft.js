@@ -23,7 +23,11 @@
   ];
   var DEFAULT_MY_SLOT = 12; // Ken drafts 12th
 
+  // Live and mock drafts persist under separate keys so a practice run can
+  // never touch the real one. Callers pass the key; omitting it means live.
   var STORAGE_KEY = 'hockeydraft26.state.v1';
+  var MOCK_STORAGE_KEY = 'hockeydraft26.mock.v1';
+  var MODE_KEY = 'hockeydraft26.mode';
 
   /* ---------------------------------------------------------------- snake */
 
@@ -111,9 +115,9 @@
     };
   }
 
-  function load() {
+  function load(key) {
     try {
-      var raw = global.localStorage.getItem(STORAGE_KEY);
+      var raw = global.localStorage.getItem(key || STORAGE_KEY);
       if (!raw) return freshState();
       var s = JSON.parse(raw);
       if (!s || s.v !== 1 || !Array.isArray(s.teams) || s.teams.length !== LEAGUE.teamCount) {
@@ -130,9 +134,9 @@
     }
   }
 
-  function save(state) {
+  function save(state, key) {
     try {
-      global.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      global.localStorage.setItem(key || STORAGE_KEY, JSON.stringify(state));
       return true;
     } catch (err) {
       console.warn('Could not persist draft state.', err);
@@ -219,6 +223,8 @@
     DEFAULT_TEAM_NAMES: DEFAULT_TEAM_NAMES,
     DEFAULT_MY_SLOT: DEFAULT_MY_SLOT,
     STORAGE_KEY: STORAGE_KEY,
+    MOCK_STORAGE_KEY: MOCK_STORAGE_KEY,
+    MODE_KEY: MODE_KEY,
     slotForPick: slotForPick,
     roundForPick: roundForPick,
     pickInRound: pickInRound,
