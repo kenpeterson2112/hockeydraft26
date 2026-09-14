@@ -94,6 +94,11 @@ keeps counting picks, the shading keeps naming players.
 
 ### The position filter chips
 
+The four chips are a **radio group, not toggles**: All, forwards, defence,
+goalies. Tapping one shows that position and nothing else, so "just the
+defencemen" is one tap rather than three. There is no way to end up looking at
+an empty board.
+
 Each F / D / G chip carries three things:
 
 ```
@@ -154,6 +159,18 @@ leaving it orphaned, and every reset scope clears them.
 Name search deliberately **overrides** the position filter and shows drafted
 players too — it is a "jump to this player" action. Accents and punctuation are
 folded, so `stutzle` finds Stützle and `oreilly` finds O'Reilly.
+
+### The board chrome does not scroll
+
+Everything above the list stays put while the list scrolls under it: the mock
+clock, the search box, the position chips and the sort headers. Mid-draft you
+should never have to scroll back up to change what you are looking at.
+
+It is structural, like the pull-to-refresh suppression below — the board view is
+a flex column with `overflow: hidden`, and only `.playerlist` scrolls.
+`position: sticky` on each piece was not enough and was quietly wrong: with the
+mock strip above it, `.controls` slid up by the strip's height before it caught,
+so in mock mode the search box moved after all.
 
 ### No pull-to-refresh
 
@@ -237,6 +254,27 @@ ten.
 Bots respect the roster limits, so nobody ends up with twenty forwards; every
 team finishes 15F/6D/3G exactly. They draft only from the ranked pool —
 off-board picks stay a manual affair.
+
+### Seeing the pick
+
+At two seconds a pick, a toast per pick would be unreadable, so the top bar
+carries a **last-pick line** instead, which replaces itself rather than
+stacking:
+
+```
+1.07  Marc → Tage Thompson                               F T4
+```
+
+It names the team that **made** the pick. That matters: the big name in the
+clock line is whoever picks *next*, so putting the player beside it would read
+as though that team took them.
+
+The line appears with a brief flash and fades over exactly one pick interval —
+tracking the speed slider — so it is spent as the next pick lands. With
+**Drafted** ticked, the player's row flashes in place too; with it unticked the
+row is simply off the board, which is the ordinary case and why the line carries
+the signal. Undo, a mode switch, and every reset scope clear it, and it is held
+outside the saved state so a reload never replays a stale flash.
 
 ### The transcript
 
