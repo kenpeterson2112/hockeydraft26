@@ -110,7 +110,6 @@ Each F / D / G chip carries three things:
 
 The **number** in the badge is
 the lowest-numbered tier that still has at least one unowned player at that
-the lowest-numbered tier that still has at least one unowned player at that
 position. The **ring colour** reports how many players remain in that tier —
 it warns that a run is ending, not which tier it happens to be:
 
@@ -169,11 +168,102 @@ position.
 Nothing would be lost to a refresh anyway — state is in `localStorage` — but
 scroll position and momentum would be.
 
+## Mock draft mode
+
+**Setup → Mock draft → Mock draft** switches the whole app onto a practice
+draft. Everything works exactly as it does live, except the other 13 teams draft
+themselves on a timer.
+
+A mock **cannot touch the live draft**, by construction and not by care:
+
+- The two drafts are separate records in `localStorage` —
+  `hockeydraft26.state.v1` and `hockeydraft26.mock.v1`. Every read and write
+  goes through the key for the mode that is active, so there is no code path
+  from a mock to the live record at all.
+- Starting a mock **copies** the teams, the draft slot and all 42 keepers out of
+  the live draft. Nothing is written back. Re-entering 42 keepers for a practice
+  run would be tedious, and a mock missing them would be wrong — 42 players
+  would be available who are not.
+- Mock mode is unmissable: an amber **MOCK** badge beside the pick number and an
+  amber rule under the whole top bar, deliberately unlike the purple "your turn"
+  treatment.
+
+The active mode is remembered, so a reload mid-mock returns to the mock.
+
+### The clock
+
+The strip above the board is the whole control set:
+
+| | |
+|---|---|
+| **Start / Pause / Resume** | Runs the other teams on the timer |
+| **Step** | Exactly one bot pick, then stop |
+| **Skip to me** | Runs straight through to your next turn with no waiting |
+| **Speed** | 0.5s to 5.0s per pick, default 2.0s, adjustable mid-draft |
+
+**When you are on the clock the timer stops.** It restarts by itself the moment
+you draft — no button. The purple "You're up!" header is the same one the live
+draft uses. An undo pauses the clock, on the assumption that undoing means you
+want a moment.
+
+Three things it deliberately will not do:
+
+- **Draft over a press.** A bot pick rebuilds the rows, which would cancel a
+  hold in progress, so a tick that lands during a press is skipped and the
+  countdown restarts when your finger lifts.
+- **Bank up picks.** The clock is driven by elapsed time and consulted every
+  100ms, so at most one pick happens per tick however long the gap.
+- **Run in your pocket.** It pauses when the tab is hidden and resumes when you
+  come back, so locking the phone does not cost you forty picks.
+
+### How the bots pick
+
+For the team on the clock, over every available ranked player at a position
+that team can still fill (`js/bot.js`):
+
+| Term | Effect |
+|---|---|
+| **ADP** | The base. A player with no ADP is treated as late (360), not missing |
+| **Need** | Unfilled *counting* slots (12F/4D/2G) weigh far more than bench slots — a team at 0/2 G reaches for a goalie |
+| **Scarcity** | The best tier still open at the position: ≤3 left pulls picks forward hard, ≤6 mildly |
+| **Value** | VORP relative to the best on the board, so it is not purely public consensus |
+
+These combine into an *effective draft position* — lower is better — and the
+pick is drawn **weighted-randomly from the best five** rather than always taking
+the top one. That is what makes running a second mock worth the time: with the
+same keepers, two runs from different seeds differ in roughly nine picks out of
+ten.
+
+Bots respect the roster limits, so nobody ends up with twenty forwards; every
+team finishes 15F/6D/3G exactly. They draft only from the ranked pool —
+off-board picks stay a manual affair.
+
+### The transcript
+
+**Copy transcript** is the primary action; a blob download in a standalone iOS
+PWA is unreliable, and the point is to paste it into Claude anyway. **Save
+.txt** is there when a file is wanted.
+
+It is plain text and self-describing — the header states the scoring, the roster
+rule, the keeper rule and which team is yours, so it can be critiqued with no
+other context. It contains the keepers by team, all 294 picks numbered `#1` to
+`#294` with the bot's stated reason for each (`need 0/2 G · 3 left in G tier 4 ·
+ADP 66`), your own picks marked `[your pick]`, your final roster split into
+counting and bench, and the final standings by effective total.
+
+It works mid-draft too, so a partial run can be handed over for a read on the
+first few rounds.
+
+**New mock** starts over with the keepers copied fresh from the live draft.
+
 ## State and offline
 
 ### Resetting between simulated drafts
 
 **Setup → Reset…** opens a modal with three scopes:
+
+Reset, and Backup below it, act on **whichever draft is active**. Resetting or
+importing inside a mock never reaches the live draft, and vice versa.
 
 | Scope | Clears | Keeps |
 |---|---|---|
@@ -254,6 +344,8 @@ service worker.
 index.html          shell: header, tabs, board / teams / setup views
 css/app.css         mobile-first dark theme
 js/draft.js         league rules, snake math, scoring, persistence  (no DOM)
+js/bot.js           how an auto-drafted team picks                  (no DOM)
+js/mock.js          the mock clock: run, pause, step, skip          (no DOM)
 js/ui.js            DOM helpers, toast, bottom sheet
 js/app.js           controller: state, board derivation, rendering, events
 data/players.json   403-player pool

@@ -17,6 +17,7 @@
 <body>
 
 <header class="topbar" id="topbar">
+  <div class="modebadge" id="modeBadge" hidden>Mock draft · the live draft is untouched</div>
   <div class="clockline">
     <span class="pill" id="pickLabel">1.01</span>
     <div class="onclock-wrap">
@@ -37,6 +38,22 @@
 
 <!-- ------------------------------------------------------------- BOARD -->
 <main class="view is-active" id="view-board">
+  <div class="mockstrip" id="mockStrip" hidden>
+    <div class="mockstrip-row">
+      <button class="mbtn mbtn-go" id="mockPlay" type="button">Start</button>
+      <button class="mbtn" id="mockStep" type="button">Step</button>
+      <button class="mbtn" id="mockSkip" type="button">Skip to me</button>
+      <span class="mockstate" id="mockState"></span>
+    </div>
+    <div class="mockstrip-row mockspeed">
+      <label for="mockSpeedInput">Speed</label>
+      <input type="range" id="mockSpeedInput" min="0.5" max="5" step="0.25" value="2">
+      <output id="mockSpeedOut">2.0s</output>
+    </div>
+  </div>
+
+  <section class="card mocksummary" id="mockSummary" hidden></section>
+
   <div class="controls">
     <div class="searchrow">
       <div class="searchwrap">
@@ -103,6 +120,21 @@
   </section>
 
   <section class="card">
+    <h2>Mock draft</h2>
+    <p class="hint">A mock runs on a copy of your teams and keepers and is saved
+      separately, so nothing you do here can touch the live draft.</p>
+    <div class="segmented" id="modeSwitch" role="group" aria-label="Draft mode">
+      <button class="seg is-on" data-mode="live" type="button">Live draft</button>
+      <button class="seg" data-mode="mock" type="button">Mock draft</button>
+    </div>
+    <div class="btnrow" id="mockActions" hidden>
+      <button class="btn" id="mockRestart" type="button">New mock</button>
+      <button class="btn" id="mockCopy" type="button">Copy transcript</button>
+      <button class="btn" id="mockDownload" type="button">Save .txt</button>
+    </div>
+  </section>
+
+  <section class="card">
     <h2>Backup</h2>
     <p class="hint">Everything is saved on this device automatically. Export a copy if you want a safety net.</p>
     <div class="btnrow">
@@ -157,6 +189,8 @@
 </div>
 
 <script src="./js/draft.js"></script>
+<script src="./js/bot.js"></script>
+<script src="./js/mock.js"></script>
 <script src="./js/ui.js"></script>
 <script src="./js/app.js"></script>
 </body>
