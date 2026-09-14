@@ -55,7 +55,10 @@
   }
 
   // Scarcity of the best tier still open at each position, as a multiplier.
-  // A tier about to empty pulls picks forward — the run is the reason.
+  // A tier about to empty pulls picks forward — the run is the reason. The
+  // multiplier is only ever applied to players who are *in* that tier; see
+  // scoreCandidate. Boosting the whole position instead would reach for its
+  // worst player on the strength of a run he has no part in.
   function scarcityBoost(scarcity) {
     var boost = { F: 1, D: 1, G: 1 };
     ['F', 'D', 'G'].forEach(function (pos) {
@@ -67,15 +70,38 @@
     return boost;
   }
 
+  // Best VORP still on the board at each position. Value has to be judged
+  // against the position a candidate actually competes in: a single global
+  // best is almost always a forward, and measuring a goalie against him
+  // flattens every goalie to roughly the same near-zero value.
+  function bestVorpByPosition(eligible) {
+    var best = { F: 0, D: 0, G: 0 };
+    for (var i = 0; i < eligible.length; i++) {
+      var p = eligible[i];
+      if (p.vorp != null && p.vorp > best[p.position]) best[p.position] = p.vorp;
+    }
+    return best;
+  }
+
   // Lower is better, like ADP itself: the number is "effective draft position".
   // Need and scarcity pull a player earlier; poor value pushes them later.
-  function scoreCandidate(p, need, boost, bestVorp) {
+  function scoreCandidate(p, need, boost, scarcity, bestVorp) {
     var base = p.adp == null ? NO_ADP : p.adp;
-    var value = bestVorp > 0 && p.vorp != null ? (p.vorp / bestVorp) : 0;
+
+    // Value against the best man left at his own position, floored at zero so
+    // a below-replacement player is merely worthless rather than pushed later
+    // than his ADP — the need term would otherwise drag him back up anyway.
+    var top = bestVorp[p.position];
+    var value = top > 0 && p.vorp != null ? Math.max(0, p.vorp / top) : 0;
+
+    // The run only pulls forward the players who are in it. Everyone else at
+    // the position is judged on need and value alone.
+    var s = scarcity[p.position];
+    var factor = (s && p.tier === s.tier) ? boost[p.position] : 1;
 
     // Need and scarcity both shrink the effective ADP.
-    var pull = need[p.position] * boost[p.position];
-    return base / (1 + 0.45 * pull + 0.35 * value);
+    var pull = need[p.position] * factor;
+    return base / (1 + 0.45 * pull + 0.60 * value);
   }
 
   function reasonFor(p, need, scarcity, counts) {
@@ -108,13 +134,10 @@
     var eligible = available.filter(function (p) { return need[p.position] != null; });
     if (!eligible.length) return null; // every position full — cannot happen in 21 rounds
 
-    var bestVorp = 0;
-    for (var i = 0; i < eligible.length; i++) {
-      if (eligible[i].vorp != null && eligible[i].vorp > bestVorp) bestVorp = eligible[i].vorp;
-    }
+    var bestVorp = bestVorpByPosition(eligible);
 
     var scored = eligible.map(function (p) {
-      return { player: p, score: scoreCandidate(p, need, boost, bestVorp) };
+      return { player: p, score: scoreCandidate(p, need, boost, scarcity, bestVorp) };
     });
     scored.sort(function (a, b) { return a.score - b.score; });
 
@@ -146,6 +169,7 @@
     seededRandom: seededRandom,
     positionalNeed: positionalNeed,
     scarcityBoost: scarcityBoost,
+    bestVorpByPosition: bestVorpByPosition,
     choose: choose
   };
 })(window);
