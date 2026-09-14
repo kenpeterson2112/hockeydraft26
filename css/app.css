@@ -154,6 +154,38 @@ button { cursor: pointer; }
   padding-bottom: calc(28px + var(--safe-b));
 }
 
+/* The board's chrome does not scroll. Every control stays reachable mid-draft:
+   the mock clock, the search box, the position chips and the sort headers.
+
+   Structural rather than `position: sticky` on each piece, for the same reason
+   the document itself is unscrollable rather than merely `overscroll-behavior`
+   — a guarantee beats a per-element rule. Sticky was also quietly wrong here:
+   with the mock strip above it, `.controls` slid up by the strip's height
+   before it caught, so the search box moved after all. */
+#view-board.is-active {
+  display: flex; flex-direction: column;
+  overflow: hidden;    /* the view no longer scrolls; the list does */
+  padding-bottom: 0;   /* moves onto the scrolling child */
+}
+#view-board > .mockstrip,
+#view-board > .mocksummary,
+#view-board > .controls,
+#view-board > .searchnote,
+#view-board > .holdhint,
+#view-board > .listhead,
+#view-board > .emptymsg { flex: none; }
+
+#view-board > .playerlist {
+  flex: 1 1 auto;
+  /* Without this the list refuses to shrink below its content height and
+     pushes the whole view past the viewport instead of scrolling. */
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  padding-bottom: calc(28px + var(--safe-b));
+}
+
 /* ----------------------------------------------------------- controls */
 
 .controls {
@@ -680,6 +712,32 @@ body.is-mock .topbar { border-bottom: 3px solid var(--mock); }
 .seg.is-on { background: var(--bg-3); color: var(--txt); }
 .seg[data-mode="mock"].is-on { background: rgba(245, 158, 11, .18); color: var(--mock); }
 
+/* The last pick made, in mock mode. Its own line, because the big name in the
+   clock line is the team picking NEXT — putting the player beside it would read
+   as though that team took them. */
+.lastpick {
+  display: flex; align-items: baseline; gap: 6px;
+  margin-top: 5px; padding: 3px 8px; border-radius: 6px;
+  font-size: 13px; line-height: 1.3;
+  white-space: nowrap; overflow: hidden;
+  border: 1px solid rgba(245, 158, 11, .35);
+  background: rgba(245, 158, 11, .10);
+}
+.lp-pick {
+  flex: none; font-variant-numeric: tabular-nums;
+  font-size: 11px; font-weight: 700; color: var(--txt-faint);
+}
+.lp-team { flex: none; font-weight: 800; color: var(--mock); }
+.lp-arrow { flex: none; color: var(--txt-faint); }
+.lp-name {
+  min-width: 0; font-weight: 700; color: var(--txt);
+  overflow: hidden; text-overflow: ellipsis;
+}
+.lp-meta {
+  flex: none; margin-left: auto; padding-left: 8px;
+  font-size: 11px; font-weight: 700; color: var(--txt-faint);
+}
+
 /* ------------------------------------------------------------ toast */
 
 /* During a press this is the only thing that matters on screen, so it is sized
@@ -806,4 +864,28 @@ body.is-mock .topbar { border-bottom: 3px solid var(--mock); }
   .toast { animation: rise .16s ease-out; }
   .sheet { animation: rise .18s ease-out; }
   @keyframes rise { from { transform: translateY(12px); opacity: 0; } }
+
+  /* A mock pick announces itself, then spends itself over exactly one pick
+     interval, so the flash is done as the next pick lands. The 2s here is only
+     a fallback — the real duration is set from the live speed slider in JS.
+     Only the motion is gated on reduced motion; the line itself still appears
+     and reads correctly without it. */
+  @keyframes pickflash {
+    0%   { opacity: 1;   background-color: rgba(245, 158, 11, .38); }
+    12%  { opacity: 1;   background-color: rgba(245, 158, 11, .20); }
+    100% { opacity: .45; background-color: rgba(245, 158, 11, 0); }
+  }
+  .lastpick.is-flash { animation: pickflash 2s ease-out both; }
+
+  /* The row flashes but must return to normal: no opacity change and no
+     fill-mode, or a drafted row would sit permanently dimmed and stripped of
+     its position tint. Only background-color moves, so the tint — which is a
+     gradient, i.e. background-image — survives underneath. */
+  @keyframes rowflash {
+    0%   { background-color: rgba(245, 158, 11, .38); }
+    12%  { background-color: rgba(245, 158, 11, .22); }
+    100% { background-color: rgba(245, 158, 11, 0); }
+  }
+  .prow.is-justpicked { animation: rowflash 2s ease-out; }
 }
+

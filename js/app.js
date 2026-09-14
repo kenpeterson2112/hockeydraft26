@@ -5,7 +5,7 @@
   var $ = UI.$, $$ = UI.$$, el = UI.el, num = UI.num, normalize = UI.normalize;
   var LEAGUE = Draft.LEAGUE;
 
-  var APP_VERSION = '2.4.0';
+  var APP_VERSION = '2.5.0';
 
   var players = [];              // seeded from data/players.json
   var playersById = {};
@@ -31,14 +31,19 @@
   // Transient view state — deliberately not persisted.
   var view = {
     tab: 'board',
-    positions: { F: true, D: true, G: true },
+    // One position at a time: 'ALL' | 'F' | 'D' | 'G'. The chips are a radio
+    // group, not three independent toggles.
+    position: 'ALL',
     search: '',
     sort: 'rank',
     sortDir: 'asc',
     showDrafted: false,
     expandedTeams: {},
     keeperTeam: 0,
-    keeperSearch: ''
+    keeperSearch: '',
+    // The most recent bot pick, for the top-bar readout and the row flash.
+    // Deliberately transient: a reload should not replay a stale flash.
+    lastPick: null
   };
 
   /* ------------------------------------------------------------ board data */
@@ -97,7 +102,7 @@
   // looking someone up depends on having the right chips selected.
   function matchesFilters(p, board) {
     if (view.search) return searchKeys[p.id].indexOf(view.search) !== -1;
-    if (!view.positions[p.position]) return false;
+    if (view.position !== 'ALL' && p.position !== view.position) return false;
     if (!view.showDrafted && board.owners[p.id] != null) return false;
     return true;
   }
@@ -119,6 +124,7 @@
     var n = state.picks.length + 1;
 
     state.picks.push({ playerId: playerId, teamId: teamId, n: n });
+    if (isMock()) view.lastPick = { playerId: playerId, teamId: teamId, n: n };
     saveState();
     render();
     if (isMock()) mock.nudge();
@@ -137,6 +143,7 @@
     if (!state.picks.length) return;
     // Undoing mid-mock means he wants a moment; do not let the clock run on.
     if (isMock() && mock.isRunning()) mock.pause();
+    view.lastPick = null;
     var last = state.picks.pop();
     var p = playersById[last.playerId];
     var name = p ? p.name : 'pick';
@@ -154,6 +161,7 @@
   // Removes a player from whichever team holds them. A live pick can only be
   // pulled back if it is the most recent one, so the snake stays consistent.
   function releasePlayer(playerId) {
+    if (view.lastPick && view.lastPick.playerId === playerId) view.lastPick = null;
     if (state.keepers[playerId] != null) {
       delete state.keepers[playerId];
       saveState();
@@ -267,7 +275,7 @@
         badge.hidden = true;
         delete badge.dataset.level;
         chip.setAttribute('aria-label',
-          'Filter ' + POS_WORD[pos] + ', you have ' + have + ' of ' + limit + ', none left');
+          'Show only ' + POS_WORD[pos] + ', you have ' + have + ' of ' + limit + ', none left');
         return;
       }
 
@@ -278,7 +286,7 @@
       chip.title = 'You have ' + have + ' of ' + limit + ' ' + POS_WORD[pos] + ' · ' +
         s.count + ' tier ' + s.tier + ' left';
       chip.setAttribute('aria-label',
-        'Filter ' + POS_WORD[pos] + ', you have ' + have + ' of ' + limit +
+        'Show only ' + POS_WORD[pos] + ', you have ' + have + ' of ' + limit +
         ', best tier available ' + s.tier + ', ' + s.count + ' left, ' + LEVEL_WORD[level]);
     });
   }
@@ -455,9 +463,16 @@
     // the rows says it exactly — the divider alone can only approximate it once
     // the display order stops matching board rank.
     var projectedGone = ownerId == null && horizon > 0 && rank < horizon;
+    // Only visible with "Drafted" ticked — the row is off the board otherwise,
+    // which is the ordinary case and why the top-bar line carries the signal.
+    var justPicked = view.lastPick && view.lastPick.playerId === p.id;
     var li = el('li', 'prow pos-' + p.position +
       (ownerId != null ? ' is-taken' : '') +
       (projectedGone ? ' is-projected-gone' : ''));
+    if (justPicked && isMock()) {
+      li.classList.add('is-justpicked');
+      li.style.animationDuration = mock.getSpeed() + 's';
+    }
 
     li.appendChild(el('span', 'p-rank', ownerId == null ? String(rank + 1) : '–'));
 
@@ -1038,16 +1053,9 @@
 
     $$('.chip').forEach(function (chip) {
       chip.addEventListener('click', function () {
-        var pos = chip.dataset.pos;
-        if (pos === 'ALL') {
-          view.positions = { F: true, D: true, G: true };
-        } else {
-          view.positions[pos] = !view.positions[pos];
-          // Never leave the board with nothing selected.
-          if (!view.positions.F && !view.positions.D && !view.positions.G) {
-            view.positions[pos] = true;
-          }
-        }
+        // A radio, so a tap always selects — there is no way to end up with an
+        // empty board, and no guard is needed against one.
+        view.position = chip.dataset.pos;
         syncChips();
         renderBoard(buildBoard());
       });
@@ -1093,6 +1101,7 @@
     state.customPlayers.forEach(function (p) { delete playersById[p.id]; });
     state.customPlayers = [];
     state.picks = [];
+    view.lastPick = null;
     saveState();
     render();
     UI.showToast('Cleared ' + n + ' pick' + (n === 1 ? '' : 's') + '. Keepers and teams kept.');
@@ -1103,6 +1112,7 @@
     state.customPlayers.forEach(function (p) { delete playersById[p.id]; });
     state.customPlayers = [];
     state.picks = [];
+    view.lastPick = null;
     state.setupDone = false;
     saveState();
     setTab('setup');
@@ -1113,6 +1123,7 @@
   function resetEverything() {
     state.customPlayers.forEach(function (p) { delete playersById[p.id]; });
     state = Draft.freshState();
+    view.lastPick = null;
     saveState();
     $('#teamSetup').dataset.built = '';
     view.keeperTeam = 0;
@@ -1292,10 +1303,10 @@
   }
 
   function syncChips() {
-    var all = view.positions.F && view.positions.D && view.positions.G;
     $$('.chip').forEach(function (chip) {
-      var pos = chip.dataset.pos;
-      chip.classList.toggle('is-on', pos === 'ALL' ? all : view.positions[pos]);
+      var on = chip.dataset.pos === view.position;
+      chip.classList.toggle('is-on', on);
+      chip.setAttribute('aria-checked', on ? 'true' : 'false');
     });
   }
 
@@ -1388,6 +1399,7 @@
         state.keepers = state.keepers || {};
         state.picks = Array.isArray(state.picks) ? state.picks : [];
         state.customPlayers = Array.isArray(state.customPlayers) ? state.customPlayers : [];
+        view.lastPick = null;
         registerCustomPlayers();
         saveState();
         $('#teamSetup').dataset.built = '';
@@ -1428,6 +1440,11 @@
       n: c.currentPick,
       why: choice.reason
     });
+    // Drives the top-bar readout and the row flash. Recorded before render()
+    // so both land in the same paint as the pick itself.
+    view.lastPick = {
+      playerId: choice.player.id, teamId: c.onClockTeam.id, n: c.currentPick
+    };
     saveState();
     if (!mockBulk) render();
     return true;
@@ -1476,6 +1493,7 @@
     if (next === mode && !(opts && opts.force)) return;
 
     mock.stop();
+    view.lastPick = null;
     // Hand-entered players belong to the draft that created them.
     state.customPlayers.forEach(function (p) { delete playersById[p.id]; });
 
@@ -1503,6 +1521,7 @@
   function renderMockChrome(board) {
     var on = isMock();
     $('#modeBadge').hidden = !on;
+    renderLastPick();
     // Once the draft is done every control is dead; the summary card is what
     // the screen is for.
     var done = state.picks.length >= LEAGUE.totalPicks;
@@ -1532,6 +1551,44 @@
     $('#mockSpeedOut').textContent = mock.getSpeed().toFixed(1) + 's';
 
     renderMockSummary(board, c);
+  }
+
+  // Who just went. At two seconds a pick a toast per pick would be unreadable,
+  // so this replaces itself instead of stacking, and names the team that MADE
+  // the pick — never the one on the clock, which by now is the next team along.
+  function renderLastPick() {
+    var host = $('#lastPick');
+    var lp = view.lastPick;
+
+    if (!isMock() || !lp) {
+      host.hidden = true;
+      host.classList.remove('is-flash');
+      return;
+    }
+
+    var p = playersById[lp.playerId];
+    var team = state.teams[lp.teamId];
+    if (!p || !team) { host.hidden = true; return; }
+
+    host.hidden = false;
+    host.innerHTML = '';
+    host.appendChild(el('span', 'lp-pick', Draft.pickLabel(lp.n)));
+    host.appendChild(el('span', 'lp-team', team.name));
+    host.appendChild(el('span', 'lp-arrow', '\u2192'));
+    host.appendChild(el('span', 'lp-name', p.name));
+    host.appendChild(el('span', 'lp-meta', p.position + ' T' + p.tier));
+
+    flash(host);
+  }
+
+  // Spend the flash over exactly one pick interval, so it is done as the next
+  // pick lands. Re-adding a class that is already there will not restart an
+  // animation, hence the forced reflow between.
+  function flash(node) {
+    node.classList.remove('is-flash');
+    void node.offsetWidth;
+    node.style.animationDuration = mock.getSpeed() + 's';
+    node.classList.add('is-flash');
   }
 
   function renderMockSummary(board, c) {
