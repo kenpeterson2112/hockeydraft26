@@ -5,13 +5,57 @@
   var $ = UI.$, $$ = UI.$$, el = UI.el, num = UI.num, normalize = UI.normalize;
   var LEAGUE = Draft.LEAGUE;
 
-  var APP_VERSION = '2.5.0';
+  var APP_VERSION = '2.6.0';
 
   var players = [];              // seeded from data/players.json
   var playersById = {};
   var searchKeys = {};           // playerId -> normalized name, built once
 
   var state = Draft.freshState();
+
+  /* ---------------------------------------------------------------- notes
+     Scouting notes are research, not draft state: they are imported from a
+     file on this device and kept under their own key, so no scope of the reset
+     modal touches them and nothing is ever committed to the public repo. */
+
+  var NOTES_KEY = 'hockeydraft26.notes.v1';
+  var notes = {};   // playerId -> { age, ht, shoots, gp, g, a, pts, note, src, updated }
+
+  function loadNotes() {
+    try {
+      var raw = global.localStorage.getItem(NOTES_KEY);
+      if (!raw) return {};
+      var parsed = JSON.parse(raw);
+      return (parsed && parsed.notes) || {};
+    } catch (err) {
+      console.warn('Could not load player notes.', err);
+      return {};
+    }
+  }
+
+  function saveNotes(map) {
+    try {
+      global.localStorage.setItem(NOTES_KEY, JSON.stringify({ v: 1, notes: map }));
+      return true;
+    } catch (err) {
+      // The pool is ~160KB, well inside the quota, but a full origin should
+      // report honestly rather than silently drop the import.
+      console.warn('Could not save player notes.', err);
+      UI.showToast('Could not save notes — this device is out of storage.');
+      return false;
+    }
+  }
+
+  function noteFor(playerId) {
+    var n = notes[playerId];
+    return n && (n.note || n.age != null || n.gp != null) ? n : null;
+  }
+
+  function notesCoverage() {
+    var n = 0;
+    for (var i = 0; i < players.length; i++) if (noteFor(players[i].id)) n++;
+    return n;
+  }
 
   /* ------------------------------------------------------------------ mode
      'live' and 'mock' are two complete drafts persisted under two different
@@ -482,6 +526,9 @@
     sub.appendChild(el('span', 'p-pos', p.position));
     sub.appendChild(el('span', 'p-tier-chip', 'T' + p.tier));
     sub.appendChild(el('span', null, p.team));
+    // Only where there is something to read, so the button doubles as "I have
+    // research on this guy" and there are no dead taps.
+    if (noteFor(p.id)) sub.appendChild(buildNotesButton(p));
     if (ownerId != null) {
       var isKeeper = state.keepers[p.id] != null;
       sub.appendChild(el('span', 'p-owner' + (isKeeper ? ' is-keeper' : ''),
@@ -506,6 +553,86 @@
     return li;
   }
 
+  /* --------------------------------------------------------- player notes */
+
+  // The row is already a press target, so this button must never reach the
+  // hold. Two guards, deliberately redundant: it stops its own events here,
+  // and attachHold bails on anything inside .p-notes — that second one cannot
+  // be defeated by event ordering once the global hold listeners are live.
+  function buildNotesButton(p) {
+    var btn = el('button', 'p-notes', 'i');
+    btn.type = 'button';
+    btn.setAttribute('aria-label', 'Notes on ' + p.name);
+    btn.addEventListener('pointerdown', function (ev) { ev.stopPropagation(); });
+    btn.addEventListener('click', function (ev) {
+      ev.stopPropagation();
+      ev.preventDefault();
+      openNotes(p);
+    });
+    return btn;
+  }
+
+  // A top-level element rather than a child of the row: a mock draft rebuilds
+  // every row on each pick, which would otherwise tear an open modal down.
+  function openNotes(p) {
+    var n = notes[p.id] || {};
+    var modal = $('#noteModal');
+
+    $('#noteName').textContent = p.name;
+    $('#noteSub').textContent = p.position + ' · ' + p.team + ' · Tier ' + p.tier +
+      ' · ADP ' + formatAdp(p.adp) + ' · ' + num(p.points) + ' pts';
+
+    var facts = $('#noteFacts');
+    facts.innerHTML = '';
+    addFact(facts, 'Age', n.age);
+    addFact(facts, 'Ht', n.ht);
+    // A goalie catches rather than shoots, and wins and shutouts are the only
+    // two numbers that score for him in this league — showing his goal total
+    // instead would be showing the wrong stat line entirely.
+    if (p.position === 'G') {
+      addFact(facts, 'Catches', n.shoots);
+      addFact(facts, 'GP', n.gp);
+      addFact(facts, 'W', n.w);
+      addFact(facts, 'SO', n.so);
+    } else {
+      addFact(facts, 'Shoots', n.shoots);
+      addFact(facts, 'GP', n.gp);
+      addFact(facts, 'G', n.g);
+      addFact(facts, 'A', n.a);
+      addFact(facts, 'Pts', n.pts);
+    }
+    facts.hidden = !facts.childNodes.length;
+
+    $('#noteText').textContent = n.note || 'No summary for this player yet.';
+    $('#noteText').classList.toggle('is-empty', !n.note);
+
+    var meta = [];
+    if (n.src) meta.push(n.src);
+    if (n.updated) meta.push('updated ' + n.updated);
+    $('#noteMeta').textContent = meta.join(' · ');
+    $('#noteMeta').hidden = !meta.length;
+
+    $('#sheetBackdrop').hidden = false;
+    modal.hidden = false;
+    $('#noteClose').focus();
+  }
+
+  function addFact(host, label, value) {
+    if (value == null || value === '') return;
+    var f = el('span', 'note-fact');
+    f.appendChild(el('span', 'nf-label', label));
+    f.appendChild(el('span', 'nf-value', String(value)));
+    host.appendChild(f);
+  }
+
+  function closeNotes() {
+    $('#noteModal').hidden = true;
+    // The draft sheet shares this backdrop; only clear it if nothing else is up.
+    if (!UI.sheetIsOpen()) $('#sheetBackdrop').hidden = true;
+  }
+
+  function notesAreOpen() { return !$('#noteModal').hidden; }
+
   /* ------------------------------------------------------- hold-to-draft */
 
   var HOLD_MS = 1500;      // full press duration before the pick commits
@@ -518,6 +645,9 @@
   function attachHold(li, p, team) {
     li.addEventListener('pointerdown', function (ev) {
       if (!ev.isPrimary || (ev.pointerType === 'mouse' && ev.button !== 0)) return;
+      // The notes button lives inside the row; pressing it must never begin a
+      // draft, however long the press is held.
+      if (ev.target.closest && ev.target.closest('.p-notes')) return;
       startHold(ev, li, p, team);
     });
     // Keyboard users get the team chooser, which is fully operable.
@@ -829,6 +959,7 @@
     renderTeamSetup();
     renderKeeperSetup(board);
     renderSetupStatus();
+    renderNotesStatus();
   }
 
   function renderTeamSetup() {
@@ -1071,9 +1202,14 @@
     });
 
     $('#sheetClose').addEventListener('click', UI.closeSheet);
-    $('#sheetBackdrop').addEventListener('click', UI.closeSheet);
+    $('#sheetBackdrop').addEventListener('click', function () {
+      if (notesAreOpen()) closeNotes();
+      else UI.closeSheet();
+    });
     document.addEventListener('keydown', function (e) {
-      if (e.key === 'Escape' && UI.sheetIsOpen()) UI.closeSheet();
+      if (e.key !== 'Escape') return;
+      if (notesAreOpen()) closeNotes();
+      else if (UI.sheetIsOpen()) UI.closeSheet();
     });
 
     $('#startBtn').addEventListener('click', function () {
@@ -1088,6 +1224,11 @@
     $('#importFile').addEventListener('change', importState);
 
     $('#resetBtn').addEventListener('click', openResetSheet);
+
+    $('#notesImportBtn').addEventListener('click', function () { $('#notesFile').click(); });
+    $('#notesFile').addEventListener('change', importNotes);
+    $('#notesClearBtn').addEventListener('click', clearNotes);
+    $('#noteClose').addEventListener('click', closeNotes);
   }
 
   /* ----------------------------------------------------------------- reset */
@@ -1382,6 +1523,60 @@
     a.click();
     document.body.removeChild(a);
     setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+  }
+
+  // Validated the same way a saved draft is on boot: ids the pool does not
+  // carry are dropped and counted, never silently absorbed.
+  function importNotes(ev) {
+    var file = ev.target.files && ev.target.files[0];
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function () {
+      try {
+        var parsed = JSON.parse(reader.result);
+        var incoming = parsed && parsed.notes;
+        if (!incoming || typeof incoming !== 'object' || Array.isArray(incoming)) {
+          throw new Error('Not a notes file');
+        }
+
+        var kept = {}, matched = 0, dropped = 0;
+        for (var id in incoming) {
+          if (playersById[id]) { kept[id] = incoming[id]; matched++; }
+          else dropped++;
+        }
+
+        notes = kept;
+        saveNotes(notes);
+        render();
+
+        var msg = 'Imported notes for ' + matched + ' of ' + players.length + ' players.';
+        if (dropped) msg += ' ' + dropped + ' unknown id' + (dropped === 1 ? '' : 's') + ' dropped.';
+        UI.showToast(msg);
+      } catch (err) {
+        UI.showToast('That file is not a valid notes file.');
+      }
+      ev.target.value = '';
+    };
+    reader.readAsText(file);
+  }
+
+  function clearNotes() {
+    var had = notesCoverage();
+    notes = {};
+    try { global.localStorage.removeItem(NOTES_KEY); } catch (err) { /* private mode */ }
+    closeNotes();
+    render();
+    UI.showToast('Cleared notes for ' + had + ' player' + (had === 1 ? '' : 's') + '.');
+  }
+
+  function renderNotesStatus() {
+    var line = $('#notesStatus');
+    if (!line) return;
+    var have = notesCoverage();
+    line.textContent = have
+      ? have + ' of ' + players.length + ' players have notes.'
+      : 'No notes on this device yet.';
+    $('#notesClearBtn').disabled = !have;
   }
 
   function importState(ev) {
@@ -1811,6 +2006,8 @@
       playersById[p.id] = p;
       searchKeys[p.id] = normalize(p.name + p.team);
     });
+
+    notes = loadNotes();
 
     // Come back in whichever draft he left, so a reload mid-mock is not a trap.
     try {

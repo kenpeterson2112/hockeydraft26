@@ -738,6 +738,78 @@ body.is-mock .topbar { border-bottom: 3px solid var(--mock); }
   font-size: 11px; font-weight: 700; color: var(--txt-faint);
 }
 
+/* ---------------------------------------------------------- player notes */
+
+/* Sits in the sub line, so it costs the name no width — the row grid is
+   already tight at 320px. The hit area is grown with padding and pulled back
+   with negative margins, so the row height (and the 10-row density target)
+   is unchanged. */
+.p-notes {
+  flex: none;
+  /* A thumb needs ~30px square. The glyph is ~4px wide, so the target is made
+     of padding and a min-width, and the negative margins pull the row height
+     back to what it was — the 10-row density target is unaffected. */
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 30px; min-height: 30px;
+  margin: -8px 0 -8px 2px;
+  padding: 0;
+  background: none; border: 0;
+  font-family: Georgia, "Times New Roman", serif;
+  font-style: italic; font-weight: 700; font-size: 14px; line-height: 1;
+  color: var(--accent);
+  -webkit-touch-callout: none; user-select: none; -webkit-user-select: none;
+  /* The row uses pan-y for its press gesture; this is a plain tap target. */
+  touch-action: manipulation;
+}
+.p-notes:active { color: #fff; }
+
+/* Above the sheet (41) because it can be opened while nothing else is, and
+   must win the shared backdrop if both ever coincide. */
+.notemodal {
+  position: fixed; z-index: 45;
+  left: 50%; top: 50%; transform: translate(-50%, -50%);
+  width: min(400px, calc(100vw - 24px));
+  max-height: min(78vh, 560px); overflow-y: auto;
+  background: var(--bg-2);
+  border: 1px solid var(--line); border-radius: 14px;
+  box-shadow: 0 20px 56px rgba(0, 0, 0, .65);
+  padding: 14px 16px 16px;
+}
+.note-head { display: flex; align-items: flex-start; gap: 10px; }
+.note-title { min-width: 0; }
+.note-head h3 {
+  margin: 0; font-size: 20px; line-height: 1.2;
+  overflow: hidden; text-overflow: ellipsis;
+}
+.note-sub {
+  margin: 3px 0 0; font-size: 12px; color: var(--txt-faint);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+
+.note-facts {
+  display: flex; flex-wrap: wrap; gap: 6px;
+  margin-top: 12px;
+}
+.note-fact {
+  display: inline-flex; align-items: baseline; gap: 4px;
+  background: var(--bg-3); border: 1px solid var(--line);
+  border-radius: 6px; padding: 3px 7px;
+}
+.nf-label {
+  font-size: 10px; letter-spacing: .07em; text-transform: uppercase;
+  color: var(--txt-faint);
+}
+.nf-value { font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+.note-text {
+  margin: 12px 0 0; font-size: 14px; line-height: 1.5; color: var(--txt);
+}
+.note-text.is-empty { color: var(--txt-faint); font-style: italic; }
+
+.note-meta {
+  margin: 10px 0 0; font-size: 11px; color: var(--txt-faint);
+}
+
 /* ------------------------------------------------------------ toast */
 
 /* During a press this is the only thing that matters on screen, so it is sized

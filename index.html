@@ -136,6 +136,20 @@
   </section>
 
   <section class="card">
+    <h2>Player notes</h2>
+    <p class="hint">Scouting notes live only on this device — they are never
+      committed to the repo or published with the app. Import a
+      <code>notes.json</code> built by <code>tools/build-notes.mjs</code>; an
+      <b>i</b> appears on every player it covers.</p>
+    <p class="hint" id="notesStatus"></p>
+    <div class="btnrow">
+      <button class="btn" id="notesImportBtn" type="button">Import notes</button>
+      <button class="btn btn-danger" id="notesClearBtn" type="button">Clear notes</button>
+    </div>
+    <input type="file" id="notesFile" accept="application/json,.json" hidden>
+  </section>
+
+  <section class="card">
     <h2>Backup</h2>
     <p class="hint">Everything is saved on this device automatically. Export a copy if you want a safety net.</p>
     <div class="btnrow">
@@ -173,6 +187,19 @@
     <button class="sheet-close" id="sheetClose" type="button" aria-label="Close">&times;</button>
   </div>
   <div class="sheet-body" id="sheetBody"></div>
+</div>
+
+<div class="notemodal" id="noteModal" hidden role="dialog" aria-modal="true" aria-labelledby="noteName">
+  <div class="note-head">
+    <div class="note-title">
+      <h3 id="noteName">Player</h3>
+      <p class="note-sub" id="noteSub"></p>
+    </div>
+    <button class="sheet-close" id="noteClose" type="button" aria-label="Close">&times;</button>
+  </div>
+  <div class="note-facts" id="noteFacts" hidden></div>
+  <p class="note-text" id="noteText"></p>
+  <p class="note-meta" id="noteMeta" hidden></p>
 </div>
 
 <div class="holdpop" id="holdPop" hidden aria-hidden="true">
