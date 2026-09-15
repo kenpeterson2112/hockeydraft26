@@ -154,6 +154,57 @@ creating a second copy of them; if that player is already owned, it says so and
 does nothing. Undoing the pick removes the hand-entered player rather than
 leaving it orphaned, and every reset scope clears them.
 
+### Player notes
+
+An **i** beside a player's team opens a small modal with what you know about
+him: age, height, shoots/catches, last season's line, and a two-or-three
+sentence summary. Goalies show **W** and **SO** rather than a skater line, since
+those are the only two numbers that score for them here.
+
+The **i** appears only on players you actually have notes for, so it doubles as
+"I have research on this guy" and there are no dead taps. A covered player who
+is already drafted or kept still carries his — reach him by search, which shows
+owned players.
+
+The row is already a press target, so the button is fenced off from it twice:
+it stops its own pointer events, and `attachHold` bails on anything inside
+`.p-notes`. Press it for five seconds and nothing is drafted. Neither mis-tap
+is destructive either — aiming at the row and hitting the **i** shows
+information; aiming at the **i** and missing opens the team chooser.
+
+#### The notes never ship with the app
+
+They live in `localStorage` on your device, imported via **Setup → Player
+notes**, and `data/notes.json` is gitignored. This is deliberate: much of what
+is worth writing down comes from sources like Dobber that are subscriptions
+licensed to *you*, not to everyone who can open a public GitHub Pages site.
+Keeping the file off the repo means you can research however you like without
+republishing anyone's paid product.
+
+No reset scope touches them, and an import reports both how many players
+matched and how many unknown ids were dropped rather than failing quietly.
+
+#### Building the file
+
+```sh
+cp tools/notes-source.example.json tools/notes-source.json   # write summaries here
+node tools/build-notes.mjs                                   # → data/notes.json
+node tools/build-notes.mjs --offline                         # summaries only
+node tools/build-notes.mjs --limit 120                       # top 120 by ADP
+```
+
+It pulls age, height, shoots and last season's line from the NHL public API,
+merges your summaries, and caches every response under `tools/.cache/` so
+re-runs are free. Names that do not resolve to exactly one NHL player are
+**printed for you to fix by hand rather than guessed** — a wrong match is worse
+than a gap, and this pool has two Elias Petterssons. A summary written against
+an id the pool does not carry is reported too, with the nearest match
+suggested, since `tim-stutzle` vs `tim-st-tzle` is an easy slip.
+
+Writing the summaries is the real work, and it is not code. Starting with
+`--limit 120` covers everyone actually in play through the rounds that decide
+your draft; the **i** simply does not appear for the rest.
+
 ### Search
 
 Name search deliberately **overrides** the position filter and shows drafted
@@ -387,5 +438,7 @@ js/mock.js          the mock clock: run, pause, step, skip          (no DOM)
 js/ui.js            DOM helpers, toast, bottom sheet
 js/app.js           controller: state, board derivation, rendering, events
 data/players.json   403-player pool
+data/notes.json     scouting notes — gitignored, imported on device
+tools/build-notes.mjs   builds notes.json from the NHL API + your summaries
 sw.js               offline precache
 ```
