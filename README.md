@@ -368,7 +368,28 @@ Everything (team names, keepers, picks, progress) is written to `localStorage`
 on every change, so a refresh or a phone lock loses nothing. A service worker
 precaches the whole app including the player data, so once the page has loaded
 one time it runs with no connection at all. **Load it once on wifi before the
-draft.** Setup → Backup exports/imports the state as JSON if you want a copy.
+draft.**
+
+### Backup
+
+**Setup → Backup → Export backup** writes **one dated file holding all three
+things worth keeping**: the live draft, the mock draft, and every player note.
+Restore puts all three back. The file is plain JSON — share it to Drive from
+the download and the copy is off-device.
+
+Earlier builds exported only the active draft, which meant the notes were not
+backed up at all and hitting Export in mock mode quietly saved the practice
+draft. A bare state file from one of those builds still restores, and restoring
+one leaves your notes alone.
+
+Nothing is written until the whole file has been validated, so a corrupt or
+truncated backup cannot leave one draft restored and the other clobbered.
+
+The app also asks the browser for **persistent storage** on load. Chrome's
+default is "best-effort", which it may clear when the device runs low on space;
+persistent storage is exempt, and Chrome grants it silently for an installed
+PWA. It is strictly an upgrade — a refusal, or a browser without the API,
+leaves behaviour exactly as it was. Export a backup anyway.
 
 ### Updating an installed copy
 

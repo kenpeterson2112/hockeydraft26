@@ -151,10 +151,13 @@
 
   <section class="card">
     <h2>Backup</h2>
-    <p class="hint">Everything is saved on this device automatically. Export a copy if you want a safety net.</p>
+    <p class="hint">Everything is saved on this device automatically, but only on
+      this device. <b>Export backup</b> writes one dated file holding the live
+      draft, the mock draft and every player note — share it to Drive from the
+      download and you have an off-device copy. Restore puts all three back.</p>
     <div class="btnrow">
-      <button class="btn" id="exportBtn" type="button">Export state</button>
-      <button class="btn" id="importBtn" type="button">Import state</button>
+      <button class="btn" id="exportBtn" type="button">Export backup</button>
+      <button class="btn" id="importBtn" type="button">Restore backup</button>
     </div>
     <div class="btnrow">
       <button class="btn btn-danger" id="resetBtn" type="button">Reset…</button>
