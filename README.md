@@ -414,6 +414,41 @@ drift, since a mismatch either hides a real update or claims one forever.
 
 ## Data
 
+### VORP and replacement baselines
+
+`vorp` is not an independent projection — it is `points` minus a
+**replacement baseline** for that position:
+
+| Position | Baseline |
+|---|---|
+| F | 35.0 |
+| D | 25.5 |
+| G | 36.5 |
+
+The baseline is what a replacement-level player at that position is expected to
+score — what is actually sitting on the wire. A **lower** baseline means a
+shallower pool behind the position, which makes every starter there worth more,
+so VORP goes up.
+
+`python3 tools/recompute-vorp.py` rebuilds every value from the baselines at the
+top of that script; `--dry-run` reports without writing. It touches `vorp` and
+nothing else, and enforces that rather than asserting it — it diffs every other
+field and refuses to write if one moved. Ids especially: they are the join key
+for every saved keeper, pick and note, so a change there would silently drop
+them on the next load.
+
+It is Python rather than Node for one specific reason. This file is minified
+with no trailing newline and carries values like `"adp":19.0`;
+`JSON.stringify` collapses that to `19` — the same number, but a rewrite of
+bytes the script has no business touching. Python with
+`separators=(',', ':')` and `ensure_ascii=False` round-trips the file
+byte-for-byte, accented names included, and the script verifies that before it
+writes anything.
+
+Bump `APP_VERSION` and `CACHE_VERSION` after any change here, or installed
+copies keep serving the old numbers and the update check correctly reports
+"up to date".
+
 `data/players.json` — 403 rated players (239 F / 100 D / 64 G):
 
 ```json
@@ -461,5 +496,6 @@ js/app.js           controller: state, board derivation, rendering, events
 data/players.json   403-player pool
 data/notes.json     scouting notes — gitignored, imported on device
 tools/build-notes.mjs   builds notes.json from the NHL API + your summaries
+tools/recompute-vorp.py rebuilds vorp from points and per-position baselines
 sw.js               offline precache
 ```
