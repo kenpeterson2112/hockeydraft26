@@ -68,6 +68,37 @@ sits on the real board while you look at an ADP- or points-ordered view.
 Players with no ADP sort to the bottom in **both** directions — an absent value
 is not a good one, and it is not a bad one either.
 
+### The value heat map
+
+Whichever of **ADP** and **VORP** is *not* the sort key is colour-ramped by
+percentile among the players **still remaining**: green at the top, amber
+around the 66th percentile, red at the 33rd and below.
+
+That pairing is the point. Sorted by ADP, the VORP colour says what consensus
+is missing — a red number beside an early ADP is the market overpaying, a green
+number beside a late one is the bargain. Sorted by VORP, the ADP colour says
+the same thing from the other side. Under the **#** or **Pts** sort neither is
+the key, so both are coloured.
+
+Three deliberate choices:
+
+- **The ramp reads desirability, not magnitude.** Low ADP and high VORP are
+  both good, so both columns are green at their best end.
+- **The scale is the whole remaining pool, not the filtered view.** Filter to
+  goalies and the best one does not jump to green — the question the colour
+  answers is "is this good for what is still out there", and that does not
+  change because a chip is selected. It does re-scale as picks land: the best
+  player left is always green.
+- **A missing ADP gets no colour at all**, the same rule the sort follows — an
+  absent value is not a good one and it is not a bad one.
+
+Drafted players are off the scale entirely, since the scale is defined over
+what remains.
+
+The colour is applied inline rather than through a class, which cannot collide
+with the sorted-column rule below — and never has to, because the ramped column
+is by definition not the sorted one.
+
 ### The "next pick" divider
 
 Two things are shown, because they answer different questions.
