@@ -5,7 +5,7 @@
   var $ = UI.$, $$ = UI.$$, el = UI.el, num = UI.num, normalize = UI.normalize;
   var LEAGUE = Draft.LEAGUE;
 
-  var APP_VERSION = '2.6.0';
+  var APP_VERSION = '2.7.0';
 
   var players = [];              // seeded from data/players.json
   var playersById = {};
@@ -1513,16 +1513,47 @@
       .then(function () { global.location.reload(); });
   }
 
+  var BACKUP_KIND = 'hockeydraft26.backup';
+
+  function isDraftState(s) {
+    return !!s && s.v === 1 && Array.isArray(s.teams) && s.teams.length === LEAGUE.teamCount;
+  }
+
+  // Everything that would be painful to recreate, in one file: both drafts and
+  // the notes. The active draft is written to storage first, so an export taken
+  // mid-draft includes the pick that just landed rather than the last save.
+  function buildBackup() {
+    saveState();
+    return {
+      v: 1,
+      kind: BACKUP_KIND,
+      app: APP_VERSION,
+      exported: new Date().toISOString(),
+      live: Draft.load(Draft.STORAGE_KEY),
+      mock: Draft.load(Draft.MOCK_STORAGE_KEY),
+      notes: notes
+    };
+  }
+
   function exportState() {
-    var blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+    var backup = buildBackup();
+    // Dated, so successive backups sit beside each other instead of the newest
+    // silently replacing the one that was actually good.
+    var stamp = backup.exported.slice(0, 16).replace(/[:T]/g, '-');
+    var blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
     var url = URL.createObjectURL(blob);
     var a = el('a');
     a.href = url;
-    a.download = 'hockeydraft26-state.json';
+    a.download = 'hockeydraft26-backup-' + stamp + '.json';
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+
+    var kept = notesCoverage();
+    UI.showToast('Backed up ' + backup.live.picks.length + ' live picks, ' +
+      Draft.keeperCount(backup.live) + ' keepers and ' + kept +
+      ' player note' + (kept === 1 ? '' : 's') + '.');
   }
 
   // Validated the same way a saved draft is on boot: ids the pool does not
@@ -1579,6 +1610,15 @@
     $('#notesClearBtn').disabled = !have;
   }
 
+  function tidyState(next) {
+    next.keepers = next.keepers || {};
+    next.picks = Array.isArray(next.picks) ? next.picks : [];
+    next.customPlayers = Array.isArray(next.customPlayers) ? next.customPlayers : [];
+    return next;
+  }
+
+  // Accepts a full backup, and still accepts a bare draft state exported by an
+  // older build — a backup taken before this change must not become unreadable.
   function importState(ev) {
     var file = ev.target.files && ev.target.files[0];
     if (!file) return;
@@ -1586,23 +1626,50 @@
     reader.onload = function () {
       try {
         var next = JSON.parse(reader.result);
-        if (!next || next.v !== 1 || !Array.isArray(next.teams) || next.teams.length !== LEAGUE.teamCount) {
-          throw new Error('Not a draft state file');
+        var parts;
+
+        if (next && next.kind === BACKUP_KIND) {
+          // Validate everything before writing anything, so a half-bad file
+          // cannot leave one draft restored and the other clobbered.
+          if (!isDraftState(next.live)) throw new Error('Backup has no usable live draft');
+          parts = [];
+
+          state.customPlayers.forEach(function (p) { delete playersById[p.id]; });
+
+          Draft.save(tidyState(next.live), Draft.STORAGE_KEY);
+          parts.push(next.live.picks.length + ' live picks');
+
+          if (isDraftState(next.mock)) {
+            Draft.save(tidyState(next.mock), Draft.MOCK_STORAGE_KEY);
+            if (next.mock.picks.length) parts.push(next.mock.picks.length + ' mock picks');
+          }
+
+          if (next.notes && typeof next.notes === 'object' && !Array.isArray(next.notes)) {
+            var kept = {}, n = 0;
+            for (var id in next.notes) if (playersById[id]) { kept[id] = next.notes[id]; n++; }
+            notes = kept;
+            saveNotes(notes);
+            parts.push(n + ' note' + (n === 1 ? '' : 's'));
+          }
+
+          state = Draft.load(storageKey());
+          parts.push(Draft.keeperCount(state) + ' keepers');
+        } else if (isDraftState(next)) {
+          state.customPlayers.forEach(function (p) { delete playersById[p.id]; });
+          state = tidyState(next);
+          saveState();
+          parts = [state.picks.length + ' picks', Draft.keeperCount(state) + ' keepers'];
+        } else {
+          throw new Error('Not a draft file');
         }
-        state.customPlayers.forEach(function (p) { delete playersById[p.id]; });
-        state = next;
-        state.keepers = state.keepers || {};
-        state.picks = Array.isArray(state.picks) ? state.picks : [];
-        state.customPlayers = Array.isArray(state.customPlayers) ? state.customPlayers : [];
+
         view.lastPick = null;
         registerCustomPlayers();
-        saveState();
         $('#teamSetup').dataset.built = '';
         render();
-        UI.showToast('State imported — ' + state.picks.length + ' picks, ' +
-          Draft.keeperCount(state) + ' keepers.');
+        UI.showToast('Restored — ' + parts.join(', ') + '.');
       } catch (err) {
-        UI.showToast('That file is not a valid draft state.');
+        UI.showToast('That file is not a valid backup.');
       }
       ev.target.value = '';
     };
@@ -1998,6 +2065,21 @@
     });
   }
 
+  // Chrome's default is "best-effort" storage, which it may clear when the
+  // device runs low on space — a draft and a season's notes are not something
+  // to leave on best effort. Asking marks the origin persistent; Chrome grants
+  // it silently for an installed PWA. Purely an upgrade: a refusal, or a
+  // browser without the API, leaves behaviour exactly as it was.
+  function requestPersistence() {
+    if (!global.navigator.storage || !global.navigator.storage.persist) return;
+    global.navigator.storage.persisted().then(function (already) {
+      if (already) return true;
+      return global.navigator.storage.persist();
+    }).then(function (granted) {
+      if (!granted) console.info('Storage is best-effort; export a backup before draft day.');
+    }).catch(function () { /* nothing to do, and nothing lost */ });
+  }
+
   /* ------------------------------------------------------------------ boot */
 
   function boot(data) {
@@ -2008,6 +2090,7 @@
     });
 
     notes = loadNotes();
+    requestPersistence();
 
     // Come back in whichever draft he left, so a reload mid-mock is not a trap.
     try {
