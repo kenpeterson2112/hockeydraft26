@@ -68,6 +68,37 @@ sits on the real board while you look at an ADP- or points-ordered view.
 Players with no ADP sort to the bottom in **both** directions — an absent value
 is not a good one, and it is not a bad one either.
 
+### The value heat map
+
+Whichever of **ADP** and **VORP** is *not* the sort key is colour-ramped by
+percentile among the players **still remaining**: green at the top, amber
+around the 66th percentile, red at the 33rd and below.
+
+That pairing is the point. Sorted by ADP, the VORP colour says what consensus
+is missing — a red number beside an early ADP is the market overpaying, a green
+number beside a late one is the bargain. Sorted by VORP, the ADP colour says
+the same thing from the other side. Under the **#** or **Pts** sort neither is
+the key, so both are coloured.
+
+Three deliberate choices:
+
+- **The ramp reads desirability, not magnitude.** Low ADP and high VORP are
+  both good, so both columns are green at their best end.
+- **The scale is the whole remaining pool, not the filtered view.** Filter to
+  goalies and the best one does not jump to green — the question the colour
+  answers is "is this good for what is still out there", and that does not
+  change because a chip is selected. It does re-scale as picks land: the best
+  player left is always green.
+- **A missing ADP gets no colour at all**, the same rule the sort follows — an
+  absent value is not a good one and it is not a bad one.
+
+Drafted players are off the scale entirely, since the scale is defined over
+what remains.
+
+The colour is applied inline rather than through a class, which cannot collide
+with the sorted-column rule below — and never has to, because the ramped column
+is by definition not the sorted one.
+
 ### The "next pick" divider
 
 Two things are shown, because they answer different questions.
@@ -414,6 +445,41 @@ drift, since a mismatch either hides a real update or claims one forever.
 
 ## Data
 
+### VORP and replacement baselines
+
+`vorp` is not an independent projection — it is `points` minus a
+**replacement baseline** for that position:
+
+| Position | Baseline |
+|---|---|
+| F | 35.0 |
+| D | 25.5 |
+| G | 36.5 |
+
+The baseline is what a replacement-level player at that position is expected to
+score — what is actually sitting on the wire. A **lower** baseline means a
+shallower pool behind the position, which makes every starter there worth more,
+so VORP goes up.
+
+`python3 tools/recompute-vorp.py` rebuilds every value from the baselines at the
+top of that script; `--dry-run` reports without writing. It touches `vorp` and
+nothing else, and enforces that rather than asserting it — it diffs every other
+field and refuses to write if one moved. Ids especially: they are the join key
+for every saved keeper, pick and note, so a change there would silently drop
+them on the next load.
+
+It is Python rather than Node for one specific reason. This file is minified
+with no trailing newline and carries values like `"adp":19.0`;
+`JSON.stringify` collapses that to `19` — the same number, but a rewrite of
+bytes the script has no business touching. Python with
+`separators=(',', ':')` and `ensure_ascii=False` round-trips the file
+byte-for-byte, accented names included, and the script verifies that before it
+writes anything.
+
+Bump `APP_VERSION` and `CACHE_VERSION` after any change here, or installed
+copies keep serving the old numbers and the update check correctly reports
+"up to date".
+
 `data/players.json` — 403 rated players (239 F / 100 D / 64 G):
 
 ```json
@@ -461,5 +527,6 @@ js/app.js           controller: state, board derivation, rendering, events
 data/players.json   403-player pool
 data/notes.json     scouting notes — gitignored, imported on device
 tools/build-notes.mjs   builds notes.json from the NHL API + your summaries
+tools/recompute-vorp.py rebuilds vorp from points and per-position baselines
 sw.js               offline precache
 ```

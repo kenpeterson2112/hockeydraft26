@@ -5,7 +5,7 @@
   var $ = UI.$, $$ = UI.$$, el = UI.el, num = UI.num, normalize = UI.normalize;
   var LEAGUE = Draft.LEAGUE;
 
-  var APP_VERSION = '2.7.0';
+  var APP_VERSION = '2.8.0';
 
   var players = [];              // seeded from data/players.json
   var playersById = {};
@@ -413,11 +413,12 @@
     });
 
     var splitAt = horizon > 0 ? dividerIndex(shown, board, horizon) : null;
+    var heat = buildHeat(board.available);
 
     for (var i = 0; i < shown.length; i++) {
       if (splitAt === i) frag.appendChild(buildDivider(horizon, c));
       var p = shown[i];
-      frag.appendChild(buildPlayerRow(p, board.owners[p.id], board.rankById[p.id], c, horizon));
+      frag.appendChild(buildPlayerRow(p, board.owners[p.id], board.rankById[p.id], c, horizon, heat));
     }
     if (splitAt === shown.length) frag.appendChild(buildDivider(horizon, c));
 
@@ -496,12 +497,65 @@
   // One decimal below 10, where the gap between the first and second pick
   // actually means something, and whole numbers above it, where it does not —
   // which also keeps the column narrow enough to leave room for the name.
+  /* ------------------------------------------------ value-column heat map */
+
+  // Percentile anchors the user asked for: best remaining is green, the 66th
+  // percentile amber, the 33rd and below red.
+  var HEAT_STOPS = [{ at: 0.33, h: 0 }, { at: 0.66, h: 45 }, { at: 1, h: 150 }];
+
+  // Where each remaining player sits on a metric, 1 = best, 0 = worst.
+  // Measured over the whole remaining pool rather than the filtered view: the
+  // question the colour answers is "is this good for what is still out there",
+  // and that does not change because a position chip is selected.
+  function percentiles(available, valueOf, bestIs) {
+    var rows = [];
+    for (var i = 0; i < available.length; i++) {
+      var v = valueOf(available[i]);
+      if (v != null) rows.push({ id: available[i].id, v: v });
+    }
+    rows.sort(function (a, b) { return bestIs === 'asc' ? a.v - b.v : b.v - a.v; });
+
+    var out = Object.create(null);
+    for (var j = 0; j < rows.length; j++) {
+      out[rows[j].id] = rows.length > 1 ? 1 - (j / (rows.length - 1)) : 1;
+    }
+    return out;
+  }
+
+  function buildHeat(available) {
+    return {
+      // Low ADP is good, high VORP is good — the ramp reads desirability, not
+      // magnitude, so both columns are green at the top.
+      adp: percentiles(available, function (p) { return p.adp; }, 'asc'),
+      vorp: percentiles(available, function (p) { return p.vorp; }, 'desc')
+    };
+  }
+
+  function heatColor(pct) {
+    if (pct == null) return null;
+    var hue = HEAT_STOPS[0].h;
+    for (var i = 1; i < HEAT_STOPS.length; i++) {
+      var lo = HEAT_STOPS[i - 1], hi = HEAT_STOPS[i];
+      if (pct <= lo.at) break;
+      var t = Math.min(1, (pct - lo.at) / (hi.at - lo.at));
+      hue = lo.h + t * (hi.h - lo.h);
+    }
+    return 'hsl(' + Math.round(hue) + ', 78%, 62%)';
+  }
+
+  // Colour the value column the list is NOT ordered by: sorted by ADP, the VORP
+  // number tells you what consensus is missing, and vice versa. Under the # or
+  // Pts sort neither is the key, so both are coloured.
+  function heatFor(key) {
+    return view.sort !== key;
+  }
+
   function formatAdp(v) {
     if (v == null) return '–';
     return v < 10 ? v.toFixed(1) : String(Math.round(v));
   }
 
-  function buildPlayerRow(p, ownerId, rank, c, horizon) {
+  function buildPlayerRow(p, ownerId, rank, c, horizon, heat) {
     var available = ownerId == null && state.setupDone && !c.complete;
     // Whether a player is projected gone is a fact about the board, so shading
     // the rows says it exactly — the divider alone can only approximate it once
@@ -537,8 +591,18 @@
     main.appendChild(sub);
     li.appendChild(main);
 
-    li.appendChild(el('span', 'p-num p-adp', formatAdp(p.adp)));
-    li.appendChild(el('span', 'p-num p-vorp', num(p.vorp)));
+    var adpCell = el('span', 'p-num p-adp', formatAdp(p.adp));
+    var vorpCell = el('span', 'p-num p-vorp', num(p.vorp));
+    // Only for players still on the board: the scale is defined over what is
+    // remaining, so a drafted row has no place on it. Inline rather than a
+    // class so it cannot collide with the sorted-column rule — and it never
+    // has to, since the coloured column is by definition not the sorted one.
+    if (heat && ownerId == null) {
+      if (heatFor('adp')) tint(adpCell, heat.adp[p.id]);
+      if (heatFor('vorp')) tint(vorpCell, heat.vorp[p.id]);
+    }
+    li.appendChild(adpCell);
+    li.appendChild(vorpCell);
     li.appendChild(el('span', 'p-num p-pts', num(p.points)));
 
     if (available) {
@@ -632,6 +696,15 @@
   }
 
   function notesAreOpen() { return !$('#noteModal').hidden; }
+
+  // A missing ADP gets no colour at all. It is not a good value and it is not
+  // a bad one — the same rule the sort follows.
+  function tint(cell, pct) {
+    var c = heatColor(pct);
+    if (!c) return;
+    cell.style.color = c;
+    cell.style.fontWeight = '700';
+  }
 
   /* ------------------------------------------------------- hold-to-draft */
 
