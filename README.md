@@ -109,9 +109,34 @@ The colour is applied inline rather than through a class, which cannot collide
 with the sorted-column rule below — and never has to, because the ramped column
 is by definition not the sorted one.
 
+### The queue
+
+A shortlist you order yourself, ported from Yahoo's. Tap a player, then **Add
+to queue**; the row then carries **★n** showing where he sits in it. The **★**
+chip filters the board to your queue **in your order** — no column sorts it,
+because the order is the whole point — and each row gets ▲▼ to move him.
+
+It stays honest without you tending it: anyone drafted, by you or by a bot in a
+mock, drops out automatically, and so does anyone you make a keeper. The sheet
+will not offer to queue a player who is already owned.
+
+Queueing is done from the player sheet rather than a button on the row. The row
+is already a press target for hold-to-draft plus the notes **i**, and a third
+target on it would be a mis-draft waiting to happen. The ▲▼ buttons that do sit
+on a row are fenced off the same way the **i** is — `attachHold` bails on
+anything inside them, so a long press on one drafts nobody.
+
 ### The "next pick" divider
 
 Two things are shown, because they answer different questions.
+
+**There are two rulers.** The solid one is your next pick; the fainter one below
+is the pick after it. They answer different questions — the first is what you
+can still get this turn, the second is what survives to the turn after, which
+is what decides whether you can afford to wait. On the wheel those two come
+close together; deep in a round they are far apart. The second is deliberately
+subordinate: the pick in front of you is the decision being made now, and two
+lines shouting equally would flatten that.
 
 **The dashed purple line is a ruler.** It sits exactly N rows down, N being the
 picks between now and Ken's next turn, so the wait can be counted straight off

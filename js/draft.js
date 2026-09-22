@@ -178,6 +178,7 @@
       mySlot: DEFAULT_MY_SLOT,
       keepers: {},       // playerId -> teamId
       picks: [],         // [{ playerId, teamId, n }] in pick order
+      queue: [],         // playerIds you mean to take, in your own order
       customPlayers: [], // players entered by hand, absent from the rankings
       setupDone: false
     };
@@ -198,6 +199,7 @@
       s.keepers = s.keepers || {};
       s.picks = Array.isArray(s.picks) ? s.picks : [];
       s.customPlayers = Array.isArray(s.customPlayers) ? s.customPlayers : [];
+      s.queue = Array.isArray(s.queue) ? s.queue : [];  // absent in pre-2.10 saves
       return s;
     } catch (err) {
       // Corrupt or unavailable storage should never block draft day.
@@ -254,6 +256,9 @@
     // that is the horizon worth drawing on the board.
     var from = onClockIsMe ? current + 1 : current;
     var target = complete ? null : nextPickForSlot(state.mySlot, from, teams);
+    // The pick after that one. On the wheel your two picks come back to back,
+    // so knowing where the second lands is what decides whether you can wait.
+    var second = target ? nextPickForSlot(state.mySlot, target + 1, teams) : null;
 
     return {
       picksMade: made,
@@ -264,7 +269,9 @@
       onClockIsMe: onClockIsMe,
       targetPick: target,
       // Picks other teams get to make before Ken is up again.
-      picksUntilMine: target ? target - current : 0
+      picksUntilMine: target ? target - current : 0,
+      secondPick: second,
+      picksUntilSecond: second ? second - current : 0
     };
   }
 

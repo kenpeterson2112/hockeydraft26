@@ -402,6 +402,17 @@ button { cursor: pointer; }
   border-top: 2px dashed var(--me);
   display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap;
 }
+
+/* The second ruler is subordinate on purpose: the pick in front of you is the
+   decision being made now, and two lines shouting equally would flatten that. */
+.divider.is-second {
+  background: linear-gradient(90deg, rgba(167, 139, 250, .07), transparent 55%);
+  border-top-width: 1px;
+  border-top-color: rgba(167, 139, 250, .55);
+  padding-top: 3px; padding-bottom: 3px;
+}
+.divider.is-second .divider-label { color: rgba(167, 139, 250, .8); font-size: 11px; }
+.divider.is-second .divider-note { opacity: .75; }
 .divider-label {
   font-size: 11px; font-weight: 800; letter-spacing: .06em;
   text-transform: uppercase; color: var(--me);
@@ -752,6 +763,43 @@ body.is-mock .topbar { border-bottom: 3px solid var(--mock); }
   flex: none; margin-left: auto; padding-left: 8px;
   font-size: 11px; font-weight: 700; color: var(--txt-faint);
 }
+
+/* ---------------------------------------------------------------- queue */
+
+/* Narrow on purpose: it is the fifth chip in a row that already only just fits
+   at 320px, so it carries a star and a count and nothing else. */
+.chip-queue {
+  flex: 0 0 auto; gap: 3px; padding: 0 8px;
+  background: var(--bg-3); border-color: var(--line); color: var(--me);
+}
+.chip-queue.is-on { background: var(--me); border-color: var(--me); color: #16112b; }
+.chip-queue.is-empty { color: var(--txt-faint); }
+.chip-star { font-size: 13px; line-height: 1; }
+.chip-qn { font-size: 12px; font-weight: 800; font-variant-numeric: tabular-nums; }
+
+/* The board marker. Carries its position in the queue, so the order you set is
+   readable without opening the queue view. */
+.p-queued {
+  flex: none; margin-left: 2px;
+  font-size: 11px; font-weight: 800; letter-spacing: .02em;
+  color: var(--me);
+}
+
+/* Reorder controls, only in the queue view. */
+.prow.has-qmove { grid-template-columns: 28px 1fr 46px 60px 62px 26px; }
+.q-move { display: flex; flex-direction: column; gap: 2px; justify-self: end; }
+.q-btn {
+  width: 26px; height: 22px; padding: 0;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: var(--bg-3); border: 1px solid var(--line); border-radius: 5px;
+  color: var(--txt-dim); font-size: 9px; line-height: 1;
+  touch-action: manipulation;
+}
+.q-btn:disabled { opacity: .3; }
+.q-btn:active { background: var(--me); color: #16112b; }
+
+.btn-queue { width: 100%; margin-bottom: 10px; }
+.btn-queue.is-on { border-color: var(--me); color: var(--me); }
 
 /* ---------------------------------------------------------- player notes */
 
