@@ -9,7 +9,7 @@ Live @ https://kenpeterson2112.github.io/hockeydraft26/
 
 | | |
 |---|---|
-| Teams | 14, snake order |
+| Teams | 14 by default, editable 2–20 |
 | Ken's slot | 12th |
 | Keepers | 3 per team (42 total), pre-owned, **cost no pick** |
 | Drafted rounds | 21 (24 roster spots − 3 keepers) |
@@ -26,6 +26,16 @@ season total and never recomputes it from categories.
 
 1. **Setup → Draft order.** The 14 names are pre-filled in order (Eric … Rick,
    Ken 12th). Edit any name; the radio marks which team is yours.
+   **If someone pulls out**, tap the **×** on their row. The slots below close
+   up, their keepers go back in the pool, and your own slot follows you rather
+   than pointing at whoever inherited the number. **Add team** puts one back.
+   The totals move with it — 13 teams is 273 picks and 39 keepers.
+
+   You cannot drop your own team (move your slot first), and the whole control
+   locks once a pick exists: every pick was made under a snake order that
+   renumbering would invalidate, so 2.03 would quietly become a different pick.
+   Reset → *Cancel the current draft* reopens it.
+
 2. **Setup → Keepers.** Pick a team chip, search a player, tap to assign. The
    search box clears and keeps focus after each pick, so 42 keepers can be typed
    straight through. Three slots per team; the counter tracks progress.
@@ -442,6 +452,23 @@ reported version and making the update check work exactly once.
 
 Keep `APP_VERSION` and `CACHE_VERSION` in step — the unit suite fails if they
 drift, since a mismatch either hides a real update or claims one forever.
+
+## Draft size
+
+The team count is **not** a constant — it lives in each draft's own state, and
+the live and mock drafts can differ. That matters more than it sounds:
+
+- Every snake function takes the size explicitly — `slotForPick(n, teams)`,
+  `pickLabel(n, teams)`. They used to read a module constant, which was fine
+  while 14 was the only answer, but the app now holds two drafts at once and a
+  shared mutable count would compute one draft's order at the other's width.
+- `Draft.totalPicks(state)` and `Draft.totalKeepers(state)` derive from
+  `state.teams.length`, so the stored size and the derived totals cannot drift
+  apart.
+- `load()` accepts any width between `minTeams` and `maxTeams`. It used to
+  reject anything that was not exactly 14 **and silently replace it with a
+  blank draft** — harmless while the number was fixed, a data-loss bug the
+  moment it became editable.
 
 ## Data
 
