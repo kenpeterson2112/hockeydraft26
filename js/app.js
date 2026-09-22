@@ -5,7 +5,7 @@
   var $ = UI.$, $$ = UI.$$, el = UI.el, num = UI.num, normalize = UI.normalize;
   var LEAGUE = Draft.LEAGUE;
 
-  var APP_VERSION = '2.9.0';
+  var APP_VERSION = '2.10.0';
 
   var players = [];              // seeded from data/players.json
   var playersById = {};
@@ -153,6 +153,7 @@
   // looking someone up depends on having the right chips selected.
   function matchesFilters(p, board) {
     if (view.search) return searchKeys[p.id].indexOf(view.search) !== -1;
+    if (view.position === 'QUEUE') return queued(p.id) !== -1;
     if (view.position !== 'ALL' && p.position !== view.position) return false;
     if (!view.showDrafted && board.owners[p.id] != null) return false;
     return true;
@@ -175,6 +176,7 @@
     var n = state.picks.length + 1;
 
     state.picks.push({ playerId: playerId, teamId: teamId, n: n });
+    dropFromQueue(playerId);
     if (isMock()) view.lastPick = { playerId: playerId, teamId: teamId, n: n };
     saveState();
     render();
@@ -267,6 +269,10 @@
       return false;
     }
     state.keepers[playerId] = teamId;
+    // A keeper is owned before the draft starts, so he is no longer a plan.
+    // The sheet will not offer to queue an owned player, but queueing someone
+    // and THEN keepering him is a path the sheet cannot see.
+    dropFromQueue(playerId);
     saveState();
     render();
     return true;
@@ -346,6 +352,7 @@
     var board = buildBoard();
     renderTopbar(board);
     renderTierBadges(board);
+    syncChips();
     renderMockChrome(board);
     if (view.tab === 'board') renderBoard(board);
     if (view.tab === 'teams') renderTeams(board);
@@ -412,22 +419,42 @@
     renderHoldHint(c);
     renderSortHeader();
 
+    var inQueue = view.position === 'QUEUE' && !view.search;
     var shown = players.filter(function (p) { return matchesFilters(p, board); });
     shown.sort(function (a, b) {
+      // Your queue is an ordering you made on purpose; no column overrules it.
+      if (inQueue) return queued(a.id) - queued(b.id);
       var ao = board.owners[a.id] != null, bo = board.owners[b.id] != null;
       if (ao !== bo) return ao ? 1 : -1; // drafted players sink to the bottom
       return displayCompare(a, b);
     });
 
-    var splitAt = horizon > 0 ? dividerIndex(shown, board, horizon) : null;
+    // Two rulers, because they answer different questions: the first is what
+    // you can still get this turn, the second is what survives to the pick
+    // after it — which is what decides whether you can afford to wait.
+    var marks = [];
+    if (horizon > 0 && !inQueue) {
+      marks.push({ at: dividerIndex(shown, board, horizon), horizon: horizon,
+                   pick: c.targetPick, second: false });
+      if (c.picksUntilSecond > 0) {
+        marks.push({ at: dividerIndex(shown, board, c.picksUntilSecond),
+                     horizon: c.picksUntilSecond, pick: c.secondPick, second: true });
+      }
+    }
     var heat = buildHeat(board.available);
 
+    var emit = function (idx) {
+      for (var m = 0; m < marks.length; m++) {
+        if (marks[m].at === idx) frag.appendChild(buildDivider(marks[m], c));
+      }
+    };
+
     for (var i = 0; i < shown.length; i++) {
-      if (splitAt === i) frag.appendChild(buildDivider(horizon, c));
+      emit(i);
       var p = shown[i];
       frag.appendChild(buildPlayerRow(p, board.owners[p.id], board.rankById[p.id], c, horizon, heat));
     }
-    if (splitAt === shown.length) frag.appendChild(buildDivider(horizon, c));
+    emit(shown.length);
 
     // Drives which value column is emphasised, so the eye lands on the column
     // the list is actually ordered by.
@@ -493,11 +520,13 @@
     return null; // fewer rows on screen than picks to count
   }
 
-  function buildDivider(horizon, c) {
-    var li = el('li', 'divider');
-    li.appendChild(el('span', 'divider-label', 'Your pick · ' + label(c.targetPick)));
+  function buildDivider(mark, c) {
+    var li = el('li', 'divider' + (mark.second ? ' is-second' : ''));
+    li.appendChild(el('span', 'divider-label',
+      (mark.second ? 'Your 2nd pick · ' : 'Your pick · ') + label(mark.pick)));
     li.appendChild(el('span', 'divider-note',
-      horizon + ' pick' + (horizon === 1 ? '' : 's') + " until you're up"));
+      mark.horizon + ' pick' + (mark.horizon === 1 ? '' : 's') +
+      (mark.second ? ' away' : " until you're up")));
     return li;
   }
 
@@ -590,6 +619,12 @@
     // Only where there is something to read, so the button doubles as "I have
     // research on this guy" and there are no dead taps.
     if (noteFor(p.id)) sub.appendChild(buildNotesButton(p));
+    var qAt = queued(p.id);
+    if (qAt !== -1) {
+      var star = el('span', 'p-queued', '\u2605' + (qAt + 1));
+      star.title = 'Number ' + (qAt + 1) + ' in your queue';
+      sub.appendChild(star);
+    }
     if (ownerId != null) {
       var isKeeper = state.keepers[p.id] != null;
       sub.appendChild(el('span', 'p-owner' + (isKeeper ? ' is-keeper' : ''),
@@ -612,6 +647,25 @@
     li.appendChild(vorpCell);
     li.appendChild(el('span', 'p-num p-pts', num(p.points)));
 
+    // Reordering lives only in the queue view, where the order is the point.
+    if (view.position === 'QUEUE' && !view.search && qAt !== -1) {
+      li.classList.add('has-qmove');
+      var moves = el('span', 'q-move');
+      [['\u25b2', -1, 'up'], ['\u25bc', 1, 'down']].forEach(function (spec) {
+        var b = el('button', 'q-btn', spec[0]);
+        b.type = 'button';
+        b.disabled = spec[1] < 0 ? qAt === 0 : qAt === state.queue.length - 1;
+        b.setAttribute('aria-label', 'Move ' + p.name + ' ' + spec[2] + ' the queue');
+        b.addEventListener('pointerdown', function (ev) { ev.stopPropagation(); });
+        b.addEventListener('click', function (ev) {
+          ev.stopPropagation(); ev.preventDefault();
+          moveInQueue(p.id, spec[1]);
+        });
+        moves.appendChild(b);
+      });
+      li.appendChild(moves);
+    }
+
     if (available) {
       li.classList.add('is-actionable');
       li.setAttribute('role', 'button');
@@ -622,6 +676,42 @@
     }
 
     return li;
+  }
+
+  /* ---------------------------------------------------------------- queue */
+
+  function queued(playerId) { return (state.queue || []).indexOf(playerId); }
+
+  function toggleQueue(playerId) {
+    if (!state.queue) state.queue = [];
+    var at = state.queue.indexOf(playerId);
+    if (at === -1) state.queue.push(playerId);
+    else state.queue.splice(at, 1);
+    saveState();
+    render();
+    return at === -1;
+  }
+
+  // Up and down rather than drag: a drag handle on a row that is also a
+  // press-to-draft target is a mis-draft waiting to happen, and reordering a
+  // shortlist of five is not worth that risk.
+  function moveInQueue(playerId, delta) {
+    var at = state.queue.indexOf(playerId);
+    var to = at + delta;
+    if (at === -1 || to < 0 || to >= state.queue.length) return;
+    state.queue.splice(to, 0, state.queue.splice(at, 1)[0]);
+    saveState();
+    render();
+  }
+
+  // Someone else took him, so he is no longer a plan. Called on every pick,
+  // including the bots' during a mock.
+  function dropFromQueue(playerId) {
+    if (!state.queue) return false;
+    var at = state.queue.indexOf(playerId);
+    if (at === -1) return false;
+    state.queue.splice(at, 1);
+    return true;
   }
 
   /* --------------------------------------------------------- player notes */
@@ -727,7 +817,7 @@
       if (!ev.isPrimary || (ev.pointerType === 'mouse' && ev.button !== 0)) return;
       // The notes button lives inside the row; pressing it must never begin a
       // draft, however long the press is held.
-      if (ev.target.closest && ev.target.closest('.p-notes')) return;
+      if (ev.target.closest && ev.target.closest('.p-notes, .q-btn')) return;
       startHold(ev, li, p, team);
     });
     // Keyboard users get the team chooser, which is fully operable.
@@ -867,6 +957,24 @@
       num(p.points) + ' pts';
 
     UI.openSheet(p.name, sub, function (body) {
+      // Offered for anyone still available, whatever else the sheet shows —
+      // queueing is planning, and it is useful before setup is even finished.
+      if (ownerId == null) {
+        var at = queued(p.id);
+        var q = el('button', 'btn btn-queue' + (at !== -1 ? ' is-on' : ''),
+          at !== -1 ? '\u2605 In your queue (' + (at + 1) + ') · tap to remove'
+                    : '\u2606 Add to queue');
+        q.type = 'button';
+        q.addEventListener('click', function () {
+          UI.closeSheet();
+          var added = toggleQueue(p.id);
+          UI.showToast(added
+            ? p.name + ' queued at ' + state.queue.length + '.'
+            : p.name + ' removed from the queue.');
+        });
+        body.appendChild(q);
+      }
+
       if (ownerId != null) {
         body.appendChild(el('div', 'sheet-section-label',
           (state.keepers[p.id] != null ? 'Keeper for' : 'Drafted by')));
@@ -1335,6 +1443,10 @@
       chip.addEventListener('click', function () {
         // A radio, so a tap always selects — there is no way to end up with an
         // empty board, and no guard is needed against one.
+        if (chip.dataset.pos === 'QUEUE' && !(state.queue || []).length) {
+          UI.showToast('Your queue is empty — tap a player, then Add to queue.');
+          return;
+        }
         view.position = chip.dataset.pos;
         syncChips();
         renderBoard(buildBoard());
@@ -1392,6 +1504,7 @@
     state.customPlayers.forEach(function (p) { delete playersById[p.id]; });
     state.customPlayers = [];
     state.picks = [];
+    state.queue = [];
     view.lastPick = null;
     saveState();
     render();
@@ -1403,6 +1516,7 @@
     state.customPlayers.forEach(function (p) { delete playersById[p.id]; });
     state.customPlayers = [];
     state.picks = [];
+    state.queue = [];
     view.lastPick = null;
     state.setupDone = false;
     saveState();
@@ -1599,6 +1713,14 @@
       chip.classList.toggle('is-on', on);
       chip.setAttribute('aria-checked', on ? 'true' : 'false');
     });
+    var n = (state.queue || []).length;
+    var qc = $('#queueCount');
+    if (qc) qc.textContent = n ? String(n) : '';
+    var chip = $('.chip-queue');
+    if (chip) {
+      chip.classList.toggle('is-empty', n === 0);
+      chip.setAttribute('aria-label', n ? 'Show your queue of ' + n : 'Your queue is empty');
+    }
   }
 
   /* ------------------------------------------------------------ app update */
@@ -1853,6 +1975,7 @@
       n: c.currentPick,
       why: choice.reason
     });
+    dropFromQueue(choice.player.id);
     // Drives the top-bar readout and the row flash. Recorded before render()
     // so both land in the same paint as the pick itself.
     view.lastPick = {
