@@ -5,13 +5,20 @@
   var $ = UI.$, $$ = UI.$$, el = UI.el, num = UI.num, normalize = UI.normalize;
   var LEAGUE = Draft.LEAGUE;
 
-  var APP_VERSION = '2.8.0';
+  var APP_VERSION = '2.9.0';
 
   var players = [];              // seeded from data/players.json
   var playersById = {};
   var searchKeys = {};           // playerId -> normalized name, built once
 
   var state = Draft.freshState();
+
+  // The draft's size is state, not a constant — the live and mock drafts can
+  // differ, and a team can drop out before either starts.
+  function nTeams() { return state.teams.length; }
+  function nPicks() { return Draft.totalPicks(state); }
+  function nKeepers() { return Draft.totalKeepers(state); }
+  function label(n) { return Draft.pickLabel(n, state.teams.length); }
 
   /* ---------------------------------------------------------------- notes
      Scouting notes are research, not draft state: they are imported from a
@@ -154,8 +161,8 @@
   /* --------------------------------------------------------------- actions */
 
   function draftPlayer(playerId, teamId) {
-    if (state.picks.length >= LEAGUE.totalPicks) {
-      UI.showToast('All ' + LEAGUE.totalPicks + ' picks are in.');
+    if (state.picks.length >= nPicks()) {
+      UI.showToast('All ' + nPicks() + ' picks are in.');
       return;
     }
     if (Draft.ownerMap(state)[playerId] != null) {
@@ -175,7 +182,7 @@
 
     var counts = Draft.rosterCounts(state, teamId, playersById);
     var over = counts[p.position] > LEAGUE.slots[p.position];
-    var msg = Draft.pickLabel(n) + ' · ' + team.name + ' take ' + p.name;
+    var msg = label(n) + ' · ' + team.name + ' take ' + p.name;
     if (over) {
       msg += ' — over the ' + p.position + ' limit (' +
         counts[p.position] + '/' + LEAGUE.slots[p.position] + ')';
@@ -198,7 +205,7 @@
 
     saveState();
     render();
-    UI.showToast('Undid ' + Draft.pickLabel(last.n) + ' — ' + name +
+    UI.showToast('Undid ' + label(last.n) + ' — ' + name +
       (wasCustom ? ' removed.' : ' is back on the board.'));
   }
 
@@ -355,14 +362,14 @@
     if (c.complete) {
       $('#pickLabel').textContent = 'Done';
       $('#onClockText').textContent = 'Draft complete';
-      $('#turnLine').textContent = LEAGUE.totalPicks + ' picks made · ' +
+      $('#turnLine').textContent = nPicks() + ' picks made · ' +
         Draft.keeperCount(state) + ' keepers';
       topbar.classList.remove('is-mine');
       $('#turnLine').classList.remove('is-mine');
       return;
     }
 
-    $('#pickLabel').textContent = Draft.pickLabel(c.currentPick);
+    $('#pickLabel').textContent = label(c.currentPick);
     $('#onClockText').innerHTML = '';
     $('#onClockText').appendChild(document.createTextNode(c.onClockTeam.name));
     if (c.onClockIsMe) {
@@ -389,7 +396,7 @@
       turn.appendChild(document.createTextNode('Your pick '));
       turn.appendChild(b2);
       turn.appendChild(document.createTextNode(
-        ' pick' + (c.picksUntilMine === 1 ? '' : 's') + ' away · ' + Draft.pickLabel(c.targetPick)
+        ' pick' + (c.picksUntilMine === 1 ? '' : 's') + ' away · ' + label(c.targetPick)
       ));
     }
   }
@@ -488,7 +495,7 @@
 
   function buildDivider(horizon, c) {
     var li = el('li', 'divider');
-    li.appendChild(el('span', 'divider-label', 'Your pick · ' + Draft.pickLabel(c.targetPick)));
+    li.appendChild(el('span', 'divider-label', 'Your pick · ' + label(c.targetPick)));
     li.appendChild(el('span', 'divider-note',
       horizon + ' pick' + (horizon === 1 ? '' : 's') + " until you're up"));
     return li;
@@ -885,7 +892,7 @@
       }
 
       var primary = el('button', 'btn btn-primary',
-        'Draft to ' + c.onClockTeam.name + ' · ' + Draft.pickLabel(c.currentPick));
+        'Draft to ' + c.onClockTeam.name + ' · ' + label(c.currentPick));
       primary.type = 'button';
       primary.addEventListener('click', function () {
         UI.closeSheet();
@@ -1078,15 +1085,84 @@
       mine.appendChild(radio);
       row.appendChild(mine);
 
+      var drop = el('button', 'ts-drop', '\u00d7');
+      drop.type = 'button';
+      drop.setAttribute('aria-label', 'Remove ' + t.name + ' from the draft');
+      drop.title = 'Remove ' + t.name;
+      drop.addEventListener('click', function () { dropTeam(t.id); });
+      row.appendChild(drop);
+
       frag.appendChild(row);
     });
     host.innerHTML = '';
     host.appendChild(frag);
     host.dataset.built = '1';
+    syncTeamCount();
+  }
+
+  // The count is only editable before the draft starts: every existing pick was
+  // made under a snake order that renumbering would invalidate, so 2.03 would
+  // quietly become a different pick.
+  function teamsLocked() { return state.picks.length > 0; }
+
+  function syncTeamCount() {
+    var locked = teamsLocked();
+    var n = state.teams.length;
+    $$('.ts-drop').forEach(function (b) {
+      b.disabled = locked || n <= LEAGUE.minTeams;
+    });
+    $('#addTeamBtn').disabled = locked || n >= LEAGUE.maxTeams;
+    $('#teamCountNote').textContent = locked
+      ? n + ' teams · clear the picks to change this'
+      : n + ' teams · ' + Draft.totalPicks(state) + ' picks over ' +
+        LEAGUE.draftRounds + ' rounds';
+  }
+
+  function dropTeam(teamId) {
+    var team = state.teams[teamId];
+    if (!team) return;
+
+    var res = Draft.removeTeam(state, teamId);
+    if (!res.ok) {
+      UI.showToast(
+        res.why === 'picks' ? 'Clear the picks before changing the teams.'
+        : res.why === 'mine' ? 'That is your own team — move your slot first.'
+        : res.why === 'min' ? 'A draft needs at least ' + LEAGUE.minTeams + ' teams.'
+        : 'Could not remove that team.');
+      return;
+    }
+
+    afterTeamChange();
+    UI.showToast('Removed ' + res.removed + '.' +
+      (res.released ? ' ' + res.released + ' keeper' + (res.released === 1 ? '' : 's') +
+        ' back in the pool.' : '') +
+      ' Now ' + state.teams.length + ' teams.');
+  }
+
+  function addTeamRow() {
+    var res = Draft.addTeam(state);
+    if (!res.ok) {
+      UI.showToast(res.why === 'picks' ? 'Clear the picks before changing the teams.'
+        : 'A draft tops out at ' + LEAGUE.maxTeams + ' teams.');
+      return;
+    }
+    afterTeamChange();
+    UI.showToast('Added ' + res.added + '. Now ' + state.teams.length + ' teams.');
+  }
+
+  // Team ids shift, so anything holding one has to be rebuilt rather than
+  // patched: the setup list, the keeper panel's selected team, and the board.
+  function afterTeamChange() {
+    if (view.keeperTeam >= state.teams.length) view.keeperTeam = 0;
+    view.expandedTeams = {};
+    view.lastPick = null;
+    saveState();
+    $('#teamSetup').dataset.built = '';
+    render();
   }
 
   function renderKeeperSetup(board) {
-    $('#keeperCounter').textContent = Draft.keeperCount(state) + ' / ' + LEAGUE.totalKeepers;
+    $('#keeperCounter').textContent = Draft.keeperCount(state) + ' / ' + nKeepers();
 
     var picker = $('#keeperTeamPicker');
     picker.innerHTML = '';
@@ -1213,11 +1289,11 @@
       host.appendChild(d);
     }
 
-    row('Keepers assigned', kc + ' / ' + LEAGUE.totalKeepers,
-      kc === LEAGUE.totalKeepers ? 'ok' : 'warn');
+    row('Keepers assigned', kc + ' / ' + nKeepers(),
+      kc === nKeepers() ? 'ok' : 'warn');
     row('Your team', me ? me.name + ' (slot ' + me.slot + ')' : '—', 'ok');
     row('Draft rounds', String(LEAGUE.draftRounds), 'ok');
-    row('Total picks', String(LEAGUE.totalPicks), 'ok');
+    row('Total picks', String(nPicks()), 'ok');
     row('Picks made', String(state.picks.length), 'ok');
 
     $('#startBtn').textContent = state.setupDone ? 'Back to board' : 'Start draft';
@@ -1297,6 +1373,7 @@
     $('#importFile').addEventListener('change', importState);
 
     $('#resetBtn').addEventListener('click', openResetSheet);
+    $('#addTeamBtn').addEventListener('click', addTeamRow);
 
     $('#notesImportBtn').addEventListener('click', function () { $('#notesFile').click(); });
     $('#notesFile').addEventListener('change', importNotes);
@@ -1393,7 +1470,7 @@
       body.appendChild(warn);
 
       var go = el('button', 'btn btn-primary',
-        'Draft to ' + c.onClockTeam.name + ' · ' + Draft.pickLabel(c.currentPick));
+        'Draft to ' + c.onClockTeam.name + ' · ' + label(c.currentPick));
       go.type = 'button';
       go.style.marginTop = '12px';
       go.addEventListener('click', function () {
@@ -1589,7 +1666,8 @@
   var BACKUP_KIND = 'hockeydraft26.backup';
 
   function isDraftState(s) {
-    return !!s && s.v === 1 && Array.isArray(s.teams) && s.teams.length === LEAGUE.teamCount;
+    return !!s && s.v === 1 && Array.isArray(s.teams) &&
+      s.teams.length >= LEAGUE.minTeams && s.teams.length <= LEAGUE.maxTeams;
   }
 
   // Everything that would be painful to recreate, in one file: both drafts and
@@ -1786,7 +1864,7 @@
   }
 
   var mock = Mock.create({
-    isComplete: function () { return state.picks.length >= LEAGUE.totalPicks; },
+    isComplete: function () { return state.picks.length >= nPicks(); },
     isMyTurn: function () {
       var c = Draft.clock(state);
       return !c.complete && c.onClockIsMe;
@@ -1800,7 +1878,7 @@
       renderMockChrome(buildBoard());
       if (why === 'complete') {
         setTab('board');
-        UI.showToast('Mock draft complete — ' + LEAGUE.totalPicks + ' picks.');
+        UI.showToast('Mock draft complete — ' + nPicks() + ' picks.');
       }
     }
   });
@@ -1820,7 +1898,7 @@
       if (playersById[id]) seeded.keepers[id] = live.keepers[id];
     }
     // A mock is for drafting, so skip straight past setup if the league is ready.
-    seeded.setupDone = Draft.keeperCount(seeded) === LEAGUE.totalKeepers;
+    seeded.setupDone = Draft.keeperCount(seeded) === Draft.totalKeepers(seeded);
     return seeded;
   }
 
@@ -1859,7 +1937,7 @@
     renderLastPick();
     // Once the draft is done every control is dead; the summary card is what
     // the screen is for.
-    var done = state.picks.length >= LEAGUE.totalPicks;
+    var done = state.picks.length >= nPicks();
     $('#mockStrip').hidden = !on || !state.setupDone || done;
     $('#mockActions').hidden = !on;
     $$('#modeSwitch .seg').forEach(function (b) {
@@ -1907,7 +1985,7 @@
 
     host.hidden = false;
     host.innerHTML = '';
-    host.appendChild(el('span', 'lp-pick', Draft.pickLabel(lp.n)));
+    host.appendChild(el('span', 'lp-pick', label(lp.n)));
     host.appendChild(el('span', 'lp-team', team.name));
     host.appendChild(el('span', 'lp-arrow', '\u2192'));
     host.appendChild(el('span', 'lp-name', p.name));
@@ -1944,7 +2022,7 @@
 
     var line = el('p', 'ms-place');
     line.appendChild(el('b', null, ordinal(meIndex + 1)));
-    line.appendChild(document.createTextNode(' of ' + LEAGUE.teamCount + ' · '));
+    line.appendChild(document.createTextNode(' of ' + nTeams() + ' · '));
     line.appendChild(el('b', null, num(mine.score.effective)));
     line.appendChild(document.createTextNode(' effective pts · ' +
       num(ranked[0].score.effective) + ' leads'));
@@ -2000,14 +2078,14 @@
     var out = [];
 
     out.push('Draft Day 26 — ' + (isMock() ? 'mock' : 'live') + ' draft transcript');
-    out.push(LEAGUE.teamCount + '-team snake. ' + (me ? me.name : 'I') +
+    out.push(nTeams() + '-team snake. ' + (me ? me.name : 'I') +
       ' picks ' + ordinal(state.mySlot) + ' and is marked KEN below.');
     out.push('Scoring: skaters 1 pt per goal and 1 per assist; goalies 2 per win, +3 per shutout.');
     out.push('Roster ' + LEAGUE.slots.F + 'F / ' + LEAGUE.slots.D + 'D / ' + LEAGUE.slots.G +
       'G = ' + LEAGUE.rosterSize + '. Only the best ' + LEAGUE.counting.F + 'F + ' +
       LEAGUE.counting.D + 'D + ' + LEAGUE.counting.G + 'G score.');
     out.push(LEAGUE.keepersPerTeam + ' keepers per team, owned before the draft and costing no pick, so ' +
-      LEAGUE.draftRounds + ' rounds are drafted (' + LEAGUE.totalPicks + ' picks).');
+      LEAGUE.draftRounds + ' rounds are drafted (' + nPicks() + ' picks).');
     out.push('"why" is the bot\'s stated reason for the pick. Projected points follow each name.');
     out.push('');
 
@@ -2029,7 +2107,7 @@
       var isMine = t && t.slot === state.mySlot;
       out.push(
         padLeft('#' + (i + 1), 5) + '  ' +
-        pad(Draft.pickLabel(pick.n), 6) +
+        pad(label(pick.n), 6) +
         pad(isMine ? 'KEN' : (t ? t.name : '?'), 10) +
         pad(p ? p.name : pick.playerId, 24) +
         pad(p ? p.position : '?', 3) +
@@ -2231,8 +2309,8 @@
     // ends the loop rather than hanging the page.
     runToEnd: function () {
       mockBulk = true;
-      var guard = LEAGUE.totalPicks + 5;
-      while (guard-- > 0 && state.picks.length < LEAGUE.totalPicks) {
+      var guard = nPicks() + 5;
+      while (guard-- > 0 && state.picks.length < nPicks()) {
         var c = Draft.clock(state);
         if (c.onClockIsMe) {
           var board = buildBoard();

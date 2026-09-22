@@ -138,7 +138,10 @@
       // by the pick count so a misbehaving host cannot spin forever.
       skipToMine: function () {
         var made = 0;
-        var guard = global.Draft.LEAGUE.totalPicks + 1;
+        // A generous upper bound rather than the exact total: this controller
+        // has no state, and the draft it drives may be any legal size.
+        var L = global.Draft.LEAGUE;
+        var guard = L.draftRounds * L.maxTeams + 1;
         while (guard-- > 0 && !host.isComplete() && !host.isMyTurn()) {
           if (!host.pick()) break;
           made++;
