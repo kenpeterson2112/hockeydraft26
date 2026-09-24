@@ -8,3 +8,5 @@ tools/.cache/
 # The summaries themselves, which may be derived from sources licensed to you
 # alone. Only the .example file is committed.
 tools/notes-source.json
+
+__pycache__/

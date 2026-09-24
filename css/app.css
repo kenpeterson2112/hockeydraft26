@@ -393,6 +393,28 @@ button { cursor: pointer; }
   padding: 0 4px; line-height: 16px;
 }
 
+/* Injury status from ESPN. Solid, like the position badge, because a hurt
+   player is a thing to notice before drafting, not after. Red for anything
+   that means he is not playing, amber for day-to-day, grey for a suspension. */
+.p-inj {
+  font-weight: 900; font-size: 11px; letter-spacing: .04em;
+  border-radius: 4px; padding: 0 4px; line-height: 16px;
+  color: #0b1220; background: var(--danger);
+}
+.p-inj.inj-dtd { background: var(--pos-G); }
+.p-inj.inj-susp { background: var(--txt-dim); }
+
+.injbox {
+  margin-bottom: 10px; padding: 8px 10px; border-radius: 8px;
+  background: rgba(248, 113, 113, .10); border: 1px solid rgba(248, 113, 113, .35);
+  font-size: 13px;
+}
+.injbox.inj-dtd { background: rgba(251, 191, 36, .10); border-color: rgba(251, 191, 36, .35); }
+.injbox.inj-susp { background: var(--bg-3); border-color: var(--line); }
+.injbox-head { display: flex; align-items: center; gap: 8px; font-weight: 700; }
+.injbox-note { margin: 6px 0 0; color: var(--txt-dim); line-height: 1.4; }
+.injbox-meta { margin: 4px 0 0; font-size: 11px; color: var(--txt-faint); }
+
 /* The column the board is sorted by gets the emphasis. */
 .playerlist[data-sort="adp"]    .p-adp,
 .playerlist[data-sort="vorp"]   .p-vorp,

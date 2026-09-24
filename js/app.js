@@ -5,7 +5,7 @@
   var $ = UI.$, $$ = UI.$$, el = UI.el, num = UI.num, normalize = UI.normalize;
   var LEAGUE = Draft.LEAGUE;
 
-  var APP_VERSION = '2.11.0';
+  var APP_VERSION = '2.12.0';
 
   var players = [];              // seeded from data/players.json
   var playersById = {};
@@ -62,6 +62,79 @@
     var n = 0;
     for (var i = 0; i < players.length; i++) if (noteFor(players[i].id)) n++;
     return n;
+  }
+
+  /* ------------------------------------------------------------- injuries
+     data/injuries.json is ESPN's injury report cut down to this pool, built by
+     tools/fetch-injuries.py and published with the app. Optional: a missing or
+     unreadable file just means no badges. */
+
+  var injuryDoc = null;   // { source, url, fetched, players: { id: {...} } }
+
+  // Short code for the row, word for the sheet, and a severity for the colour.
+  var INJURY = {
+    'O':     { code: 'OUT',  word: 'Out',             sev: 'out' },
+    'IR':    { code: 'IR',   word: 'Injured reserve', sev: 'out' },
+    'IR-LT': { code: 'LTIR', word: 'Long-term IR',    sev: 'out' },
+    'DTD':   { code: 'DTD',  word: 'Day-to-day',      sev: 'dtd' },
+    'SUSP':  { code: 'SUSP', word: 'Suspended',       sev: 'susp' }
+  };
+
+  function injuryFor(playerId) {
+    var i = injuryDoc && injuryDoc.players && injuryDoc.players[playerId];
+    return i && INJURY[i.status] ? i : null;
+  }
+
+  var MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+                'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+  // "2026-10-02" -> "Oct 2". Parsed by hand: new Date() would read it as UTC
+  // midnight and show the day before anywhere west of Greenwich.
+  function shortDate(iso) {
+    var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso || '');
+    return m ? MONTHS[Number(m[2]) - 1] + ' ' + Number(m[3]) : '';
+  }
+
+  // The badge beside it already says OUT, so the box drops a word that only
+  // repeats it; "Long-term IR" says more than LTIR and stays.
+  function injurySummary(i, besideBadge) {
+    var kind = INJURY[i.status];
+    var parts = besideBadge && kind.word.toUpperCase() === kind.code ? [] : [kind.word];
+    if (i.injury && i.injury.toLowerCase() !== 'suspension') parts.push(i.injury);
+    if (i.return) parts.push('back ' + shortDate(i.return));
+    return parts.join(' \u00b7 ');
+  }
+
+  function buildInjuryBadge(i) {
+    var b = el('span', 'p-inj inj-' + INJURY[i.status].sev, INJURY[i.status].code);
+    b.title = injurySummary(i);
+    return b;
+  }
+
+  function buildInjuryBox(i) {
+    var box = el('div', 'injbox inj-' + INJURY[i.status].sev);
+    var head = el('div', 'injbox-head');
+    head.appendChild(el('span', 'p-inj inj-' + INJURY[i.status].sev, INJURY[i.status].code));
+    head.appendChild(el('span', null, injurySummary(i, true)));
+    box.appendChild(head);
+    if (i.note) box.appendChild(el('p', 'injbox-note', i.note));
+    box.appendChild(el('p', 'injbox-meta', 'ESPN' +
+      (i.updated ? ' \u00b7 ' + shortDate(i.updated) : '')));
+    return box;
+  }
+
+  function renderInjuryStatus() {
+    var line = $('#injuryStatus');
+    if (!line) return;
+    if (!injuryDoc) {
+      line.textContent = 'No injury report loaded.';
+      return;
+    }
+    var n = Object.keys(injuryDoc.players || {}).length;
+    var when = injuryDoc.fetched || '';
+    line.textContent = 'Injuries: ' + n + ' player' + (n === 1 ? '' : 's') +
+      ' flagged, from ESPN as of ' + shortDate(when) +
+      (when.length >= 16 ? ', ' + when.slice(11, 16) + ' UTC' : '') + '.';
   }
 
   /* ------------------------------------------------------------------ mode
@@ -620,6 +693,8 @@
     sub.appendChild(el('span', 'p-pos', p.position));
     sub.appendChild(el('span', 'p-tier-chip', 'T' + p.tier));
     sub.appendChild(el('span', null, p.team));
+    var hurt = injuryFor(p.id);
+    if (hurt) sub.appendChild(buildInjuryBadge(hurt));
     // Only where there is something to read, so the button doubles as "I have
     // research on this guy" and there are no dead taps.
     if (noteFor(p.id)) sub.appendChild(buildNotesButton(p));
@@ -961,6 +1036,9 @@
       num(p.points) + ' pts';
 
     UI.openSheet(p.name, sub, function (body) {
+      var hurt = injuryFor(p.id);
+      if (hurt) body.appendChild(buildInjuryBox(hurt));
+
       // Offered for anyone still available, whatever else the sheet shows —
       // queueing is planning, and it is useful before setup is even finished.
       if (ownerId == null) {
@@ -1153,6 +1231,7 @@
     renderLeagueLine();
     renderTrades();
     renderNotesStatus();
+    renderInjuryStatus();
   }
 
   function renderTeamSetup() {
@@ -2307,6 +2386,10 @@
       LEAGUE.counting.D + 'D + ' + LEAGUE.counting.G + 'G score.');
     out.push(LEAGUE.keepersPerTeam + ' keepers per team, owned before the draft and costing no pick, so ' +
       LEAGUE.draftRounds + ' rounds are drafted (' + nPicks() + ' picks).');
+    if (injuryDoc) {
+      out.push('Injury flags (OUT/IR/LTIR/DTD/SUSP) are ESPN\'s report as of ' +
+        shortDate(injuryDoc.fetched) + '.');
+    }
     var trades = Draft.tradedPicks(state);
     if (trades.length) {
       out.push('Traded picks: ' + trades.map(function (t) {
@@ -2342,7 +2425,8 @@
         pad(p && p.adp != null ? 'ADP ' + p.adp.toFixed(1) : 'no ADP', 11) +
         padLeft(p ? num(p.points) : '', 7) +
         (isMine ? '   [your pick]' : (pick.why ? '   [' + pick.why + ']' : '')) +
-        (state.pickOwners && state.pickOwners[pick.n] ? '   (traded pick)' : '')
+        (state.pickOwners && state.pickOwners[pick.n] ? '   (traded pick)' : '') +
+        (injuryFor(pick.playerId) ? '   ' + INJURY[injuryFor(pick.playerId).status].code : '')
       );
     });
     out.push('');
@@ -2504,12 +2588,23 @@
   }
 
   function start() {
+    // The injury report is optional: a missing or broken file must never
+    // stop the board from loading, so its failure resolves to null.
+    var injuriesLoad = fetch('./data/injuries.json', { cache: 'no-cache' })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .catch(function () { return null; });
+
     fetch('./data/players.json', { cache: 'no-cache' })
       .then(function (r) {
         if (!r.ok) throw new Error('HTTP ' + r.status);
         return r.json();
       })
-      .then(boot)
+      .then(function (data) {
+        return injuriesLoad.then(function (doc) {
+          injuryDoc = doc && doc.players ? doc : null;
+          boot(data);
+        });
+      })
       .catch(function (err) {
         console.error('Could not load player data', err);
         $('#playerList').innerHTML = '';

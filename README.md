@@ -256,9 +256,10 @@ it warns that a run is ending, not which tier it happens to be:
 Keepers count as owned, so the badges reflect keeper losses on pick 1. Long-press
 or hover a chip for the exact count ("6 tier 1 forwards left").
 
-With a full pool nothing starts red — the deepest a tier ever opens is 6 at
-tier 1 forwards, so red only appears once a run is genuinely ending, which is
-when it matters.
+With the real keepers in, **all three start red**, and correctly so. The 42
+keepers take four of the six tier 1 forwards and all four tier 1 defencemen, so
+pick 1 opens on 2 tier 2 forwards, 1 tier 2 defenceman and 2 tier 1 goalies.
+That is the board telling the truth about the top of this draft.
 
 The badge is a thick coloured ring over a constant dark fill, with a dark halo
 outside it. A solid fill, or a bare ring, collides with the chip's own position
@@ -268,7 +269,7 @@ chip state.
 
 ### Off-board picks
 
-Someone will take a player who is not in the 403. The **+** next to the team on
+Someone will take a player who is not in the 407. The **+** next to the team on
 the clock opens a short form — position, name, projected points, defaulting to
 45 — and drafts them immediately.
 
@@ -595,16 +596,99 @@ Bump `APP_VERSION` and `CACHE_VERSION` after any change here, or installed
 copies keep serving the old numbers and the update check correctly reports
 "up to date".
 
-`data/players.json` — 403 rated players (239 F / 100 D / 64 G):
+`data/players.json` — 407 rated players (237 F / 106 D / 64 G):
 
 ```json
 { "id": "connor-mcdavid", "name": "Connor McDavid", "position": "F",
-  "team": "EDM", "tier": 1, "vorp": 95.69, "points": 130.69, "adp": 1.6 }
+  "team": "EDM", "tier": 1, "vorp": 95.41, "points": 130.41, "adp": 1.5 }
 ```
 
-Draft state is not stored in this file; the app owns it separately. To refresh
-projections, replace the file keeping the same `id` values — any saved keeper or
-pick whose id disappears is dropped on load rather than corrupting the draft.
+Draft state is not stored in this file; the app owns it separately.
+
+### Refreshing projections
+
+```sh
+pip install openpyxl
+python3 tools/import-projections.py projections.xlsx --dry-run   # report only
+python3 tools/import-projections.py projections.xlsx             # rewrite the pool
+```
+
+The workbook is the one in the Fantasy folder on Drive. It has a `skaters`
+sheet (NAME, POS, TEAM, ADP, …, G, A, PTS) and a `goalies` sheet (NAME, POS,
+TEAM, AGE, ADP, W, SO). ADP comes from the same workbook. Columns are found by
+header, so a reordered sheet still reads.
+
+| Field | From |
+|---|---|
+| `points` | Skaters: PTS. Goalies: 2 × W + 3 × SO, the league's scoring |
+| `vorp` | points − the baselines above |
+| `tier` | Fixed point bands per position, below |
+| `adp` | ADP; "—" becomes no ADP |
+
+| Tier lower bound | 1 | 2 | 3 | 4 | 5 | 6 | 7 |
+|---|---|---|---|---|---|---|---|
+| F | 100 | 90 | 80 | 70 | 61 | 50 | 42 |
+| D | 80 | 65 | 55.5 | 50 | 45.5 | 40 | 31 |
+| G | 72 | 65 | 61 | 50 | 41 | 36 | 32 |
+
+Anything below the last band is tier 8. The bands are the previous pool's cut
+lines, so "tier 3" keeps its meaning across refreshes and the scarcity rings read
+the same.
+
+**Who is in the pool:** every goalie, every skater with an ADP, and skaters with
+no ADP who project at least 32 (F) or 22.5 (D). That is roughly the depth a
+14-team draft reaches.
+
+**Ids never move.** They are the join key for every saved keeper, pick, queue
+entry and note, so a player already in the pool keeps his id and only a new
+player gets one. The script lists who arrived, who left and who changed team.
+It refuses to write if any keeper in `js/league.js` would go missing.
+
+**Errata** in the source are fixed in the script, not by hand afterwards. The
+workbook lists the Canucks *forward* Elias Pettersson as a D (his line is 20 G
+/ 41 A). The real defenceman is the row named "Elias Pettersson (D)".
+
+This workbook's ADP only runs to about pick 153, so later picks have none. The
+bots treat a missing ADP as late (360), so in those rounds they choose on need
+and VORP instead of consensus.
+
+## Injuries
+
+```sh
+python3 tools/fetch-injuries.py            # fetch ESPN, write data/injuries.json
+python3 tools/fetch-injuries.py --dry-run  # report only
+```
+
+This pulls the report behind <https://www.espn.com/nhl/injuries> (the page is
+rendered from ESPN's JSON feed, which is what the script reads). It keeps only
+players in the pool and writes `data/injuries.json`, keyed by the same ids.
+Commit and push it to publish, since the file ships with the app like
+`players.json`, and installed copies pick it up through **Check for update**.
+
+On the board, an injured player's row carries a solid badge beside his team:
+
+| Badge | Meaning |
+|---|---|
+| **OUT** (red) | Out |
+| **IR** (red) | Injured reserve |
+| **LTIR** (red) | Long-term IR |
+| **DTD** (amber) | Day-to-day |
+| **SUSP** (grey) | Suspended |
+
+Tap the player for the injury, expected return, and ESPN's one-line note and
+date. Setup → App says when the report was fetched, and the mock transcript tags
+injured picks. The file is optional: if it is missing or unreadable, the board
+loads without badges.
+
+Matching is by accent-free name. Position then team decide between two players
+with the same name. If no full name fits, the script tries last name + team +
+position, and uses that only when exactly one player fits. ESPN writes
+"Alexander Nikishin" where the projections say "Alex". An ambiguous name is
+skipped and listed, never guessed, because a wrong match puts an injury on a
+healthy player.
+
+The bots do not avoid injured players. That is deliberate for now: whether a
+two-week injury matters in a full-season league is a judgement, not a rule.
 
 ## Deploying
 
@@ -640,9 +724,12 @@ js/bot.js           how an auto-drafted team picks                  (no DOM)
 js/mock.js          the mock clock: run, pause, step, skip          (no DOM)
 js/ui.js            DOM helpers, toast, bottom sheet
 js/app.js           controller: state, board derivation, rendering, events
-data/players.json   403-player pool
+data/players.json   407-player pool
+data/injuries.json  ESPN injury report for the pool
 data/notes.json     scouting notes — gitignored, imported on device
 tools/build-notes.mjs   builds notes.json from the NHL API + your summaries
 tools/recompute-vorp.py rebuilds vorp from points and per-position baselines
+tools/import-projections.py  rebuilds players.json from the projections workbook
+tools/fetch-injuries.py      writes injuries.json from ESPN
 sw.js               offline precache
 ```

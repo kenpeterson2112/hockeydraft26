@@ -1,0 +1,210 @@
+{
+ "source": "ESPN",
+ "url": "https://www.espn.com/nhl/injuries",
+ "fetched": "2026-09-24T04:38Z",
+ "players": {
+  "adam-fantilli": {
+   "status": "O",
+   "injury": "Contract Dispute",
+   "return": "2026-10-01",
+   "updated": "2026-09-16",
+   "note": ""
+  },
+  "alex-nikishin": {
+   "status": "O",
+   "injury": "Contract Dispute",
+   "return": "2026-09-26",
+   "updated": "2026-09-16",
+   "note": ""
+  },
+  "alex-ovechkin": {
+   "status": "O",
+   "injury": "Lower Body",
+   "return": "2026-10-02",
+   "updated": "2026-09-23",
+   "note": "Ovechkin (lower body) skated for about 15 minutes before leaving Wednesday's practice session, Tom Gulitti of NHL.com reports."
+  },
+  "artem-zub": {
+   "status": "O",
+   "injury": "Knee",
+   "return": "2026-10-05",
+   "updated": "2026-09-23",
+   "note": "Zub (knee) isn't expected to be ready for Ottawa's season opener in Toronto on Oct. 3, per TSN 1200 Ottawa on Wednesday."
+  },
+  "ben-kindel": {
+   "status": "O",
+   "injury": "Lower Body",
+   "return": "2026-09-26",
+   "updated": "2026-09-23",
+   "note": ""
+  },
+  "brad-marchand": {
+   "status": "IR-LT",
+   "injury": "Lower Body",
+   "return": "2026-11-02",
+   "updated": "2026-09-17",
+   "note": "Marchand (lower body) is expected to spend October rehabbing, per Panthers TV Rinkside Reporter Katie Engleson on Thursday."
+  },
+  "brady-tkachuk": {
+   "status": "O",
+   "injury": "Undisclosed",
+   "return": "2026-09-29",
+   "updated": "2026-09-23",
+   "note": "Tkachuk (undisclosed) is considered day-to-day, Jameson Olive of the Panthers' official site reports Wednesday."
+  },
+  "cale-makar": {
+   "status": "O",
+   "injury": "Lower Body",
+   "return": "2026-09-26",
+   "updated": "2026-09-22",
+   "note": "Makar (lower body) was a full participant in Tuesday's training camp session and could suit up for one of Colorado's upcoming preseason games, per Evan Rawal of the Denver Gazette."
+  },
+  "charlie-mcavoy": {
+   "status": "SUSP",
+   "injury": "Suspension",
+   "return": "2026-10-13",
+   "updated": "2026-09-21",
+   "note": "McAvoy logged an even-strength goal on three shots and four PIM in a game-high 28:35 of ice time during Sunday's 3-2 shootout win over the Capitals in preseason play."
+  },
+  "connor-bedard": {
+   "status": "O",
+   "injury": "Shoulder",
+   "return": "2026-11-07",
+   "updated": "2026-09-23",
+   "note": "Head coach Jeff Blashill said Wednesday that Bedard (shoulder) isn't yet close to joining the Blackhawks for practice, Scott Powers of The Athletic reports."
+  },
+  "connor-hellebuyck": {
+   "status": "SUSP",
+   "injury": "Suspension",
+   "return": "2026-10-02",
+   "updated": "2026-09-17",
+   "note": "suspension"
+  },
+  "dan-vladar": {
+   "status": "DTD",
+   "injury": "Upper Body",
+   "return": "2026-09-24",
+   "updated": "2026-09-23",
+   "note": "Vladar is day-to-day because of an upper-body injury, Jackie Spiegel of The Philadelphia Inquirer reports Wednesday."
+  },
+  "drew-helleson": {
+   "status": "O",
+   "injury": "Lower Body",
+   "return": "2026-10-02",
+   "updated": "2026-09-22",
+   "note": "Helleson (lower body) will be out for at least one week, but he could be available for the start of the regular season, Zach Cavanagh of The Sporting Tribune reports."
+  },
+  "dylan-larkin": {
+   "status": "O",
+   "injury": "Upper Body",
+   "return": "2026-10-02",
+   "updated": "2026-09-23",
+   "note": "Larkin (upper body) participated in Wednesday's practice session but won't play in Thursday's preseason matchup against the Sabres, Ted Kulfan of The Detroit News reports."
+  },
+  "filip-gustavsson": {
+   "status": "O",
+   "injury": "Hip",
+   "return": "2026-11-01",
+   "updated": "2026-09-18",
+   "note": "Gustavsson (hip) is expected to return around early November, Joe Smith of The Athletic reports Friday."
+  },
+  "jake-oettinger": {
+   "status": "O",
+   "injury": "Lower Body",
+   "return": "2026-09-25",
+   "updated": "2026-09-24",
+   "note": "Oettinger is dealing with lower-body tightness and is questionable to play Friday in a preseason road game versus the Wild, Lia Assimakopoulos of The Dallas Morning News reports."
+  },
+  "jake-sanderson": {
+   "status": "O",
+   "injury": "Undisclosed",
+   "return": "2026-09-26",
+   "updated": "2026-09-23",
+   "note": ""
+  },
+  "jason-zucker": {
+   "status": "O",
+   "injury": "Abdomen",
+   "return": "2026-10-15",
+   "updated": "2026-09-16",
+   "note": ""
+  },
+  "jonathan-huberdeau": {
+   "status": "IR",
+   "injury": "Hip",
+   "return": "2026-10-08",
+   "updated": "2026-09-20",
+   "note": ""
+  },
+  "jordan-spence": {
+   "status": "O",
+   "injury": "Undisclosed",
+   "return": "2026-09-26",
+   "updated": "2026-09-23",
+   "note": ""
+  },
+  "kevin-fiala": {
+   "status": "IR",
+   "injury": "Lower Leg",
+   "return": "2026-10-03",
+   "updated": "2026-09-17",
+   "note": "Fiala (lower leg fracture) is at least three weeks away from being ready to play, Zach Dooley of the Kings' official site reports Thursday."
+  },
+  "mason-lohrei": {
+   "status": "O",
+   "injury": "Undisclosed",
+   "return": "2026-09-25",
+   "updated": "2026-09-23",
+   "note": ""
+  },
+  "mathew-barzal": {
+   "status": "O",
+   "injury": "Knee",
+   "return": "2026-09-30",
+   "updated": "2026-09-16",
+   "note": ""
+  },
+  "mats-zuccarello": {
+   "status": "O",
+   "injury": "Shoulder",
+   "return": "2026-09-26",
+   "updated": "2026-09-22",
+   "note": ""
+  },
+  "mattias-samuelsson": {
+   "status": "O",
+   "injury": "Lower Body",
+   "return": "2026-10-08",
+   "updated": "2026-09-23",
+   "note": ""
+  },
+  "olen-zellweger": {
+   "status": "O",
+   "injury": "Concussion",
+   "return": "2026-10-01",
+   "updated": "2026-09-23",
+   "note": "Head coach Lindy Ruff said Wednesday that Zellweger has entered the concussion protocol, Paul Hamilton of WGR Sports Radio 550 reports."
+  },
+  "seth-jarvis": {
+   "status": "O",
+   "injury": "Shoulder",
+   "return": "2026-10-24",
+   "updated": "2026-09-17",
+   "note": "Jarvis (shoulder) was on the ice for practice Thursday, Ryan Henkel of The Hockey News reports."
+  },
+  "thatcher-demko": {
+   "status": "O",
+   "injury": "Hip",
+   "return": "2026-09-29",
+   "updated": "2026-09-16",
+   "note": "General manager Ryan Johnson said Wednesday that Demko (hip) won't be a full participant in training camp, Canucks play-by-play announcer Brendan Batchelor reports."
+  },
+  "troy-terry": {
+   "status": "O",
+   "injury": "Hip",
+   "return": "2026-11-21",
+   "updated": "2026-09-19",
+   "note": "Terry (hip) is slated to be out for another 2-3 months, according to Zach Cavanagh of The Sporting Tribune on Saturday."
+  }
+ }
+}
