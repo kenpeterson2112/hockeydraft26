@@ -284,23 +284,37 @@ creating a second copy of them; if that player is already owned, it says so and
 does nothing. Undoing the pick removes the hand-entered player rather than
 leaving it orphaned, and every reset scope clears them.
 
-### Player notes
+### Player notes and the injury badge
 
-An **i** beside a player's team opens a small modal with what you know about
+An **i** beside a player's team opens a small popover with what you know about
 him: age, height, shoots/catches, last season's line, and a two-or-three
 sentence summary. Goalies show **W** and **SO** rather than a skater line, since
-those are the only two numbers that score for them here.
+those are the only two numbers that score for them here. The injury badge (see
+below) opens the same popover, with the injury sitting above the notes, so
+either icon gets you the full picture on that player.
 
 The **i** appears only on players you actually have notes for, so it doubles as
 "I have research on this guy" and there are no dead taps. A covered player who
 is already drafted or kept still carries his — reach him by search, which shows
 owned players.
 
-The row is already a press target, so the button is fenced off from it twice:
+Both icons sit together at the very end of the row's sub-line, past the team
+and (if he's owned or queued) that too — grouped, so there is one place on the
+row that is always safe to tap regardless of how it is filled in. The row
+itself is a press-to-draft target, so each icon is fenced off from it twice:
 it stops its own pointer events, and `attachHold` bails on anything inside
-`.p-notes`. Press it for five seconds and nothing is drafted. Neither mis-tap
-is destructive either — aiming at the row and hitting the **i** shows
-information; aiming at the **i** and missing opens the team chooser.
+`.p-infobtn`, the class both share. Hold either one for five seconds and
+nothing is drafted — the popover opens instead, however long the press.
+Neither mis-tap is destructive either — aiming at the row and hitting an icon
+shows information; aiming at an icon and missing opens the team chooser.
+
+The popover carries its own **Draft to *team* · pick** button, so checking on
+a player never has to end in closing it and finding him again in what may
+already be a different list underneath. **Choose another team** falls through
+to the full sheet's team grid. Both are only offered while he is actually
+available to draft; an owned player's popover is read-only. Opening it while a
+mock is running pauses the clock — the same call `undoLastPick` makes — so the
+button's team and pick number can never go stale while you're reading.
 
 #### The notes never ship with the app
 
@@ -687,10 +701,12 @@ On the board, an injured player's row carries a solid badge beside his team:
 | **DTD** (amber) | Day-to-day |
 | **SUSP** (grey) | Suspended |
 
-Tap the player for the injury, expected return, and ESPN's one-line note and
-date. Setup → App says when the report was fetched, and the mock transcript tags
-injured picks. The file is optional: if it is missing or unreadable, the board
-loads without badges.
+The badge is its own tap target — see [Player notes and the injury
+badge](#player-notes-and-the-injury-badge) — and opens a popover with the
+injury, expected return, ESPN's one-line note and date, and a button to draft
+him right from there. Setup → App says when the report was fetched, and the
+mock transcript tags injured picks. The file is optional: if it is missing or
+unreadable, the board loads without badges.
 
 Matching is by accent-free name. Position then team decide between two players
 with the same name. If no full name fits, the script tries last name + team +

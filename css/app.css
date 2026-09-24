@@ -393,6 +393,22 @@ button { cursor: pointer; }
   padding: 0 4px; line-height: 16px;
 }
 
+/* Shared plumbing for the row's info buttons (injury badge, notes "i"): a
+   real tap target that must never be swallowed by the row's own
+   press-to-draft gesture. attachHold fences every .p-infobtn out of that
+   gesture entirely; this is only the sizing and touch handling, not the
+   look — each button's own class (.p-inj, .p-notes) supplies that, and can
+   freely override background/padding since this rule never sets them. */
+.p-infobtn {
+  flex: none;
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 30px; min-height: 30px;
+  margin: -8px -4px;
+  background: none; border: 0;
+  -webkit-touch-callout: none; user-select: none; -webkit-user-select: none;
+  touch-action: manipulation;
+}
+
 /* Injury status from ESPN. Solid, like the position badge, because a hurt
    player is a thing to notice before drafting, not after. Red for anything
    that means he is not playing, amber for day-to-day, grey for a suspension. */
@@ -884,25 +900,13 @@ body.is-mock .topbar { border-bottom: 3px solid var(--mock); }
 /* ---------------------------------------------------------- player notes */
 
 /* Sits in the sub line, so it costs the name no width — the row grid is
-   already tight at 320px. The hit area is grown with padding and pulled back
-   with negative margins, so the row height (and the 10-row density target)
-   is unchanged. */
+   already tight at 320px. Sizing and tap handling are .p-infobtn's job
+   (shared with the injury badge); this is only the glyph. */
 .p-notes {
-  flex: none;
-  /* A thumb needs ~30px square. The glyph is ~4px wide, so the target is made
-     of padding and a min-width, and the negative margins pull the row height
-     back to what it was — the 10-row density target is unaffected. */
-  display: inline-flex; align-items: center; justify-content: center;
-  min-width: 30px; min-height: 30px;
-  margin: -8px 0 -8px 2px;
-  padding: 0;
-  background: none; border: 0;
+  margin-left: 2px;
   font-family: Georgia, "Times New Roman", serif;
   font-style: italic; font-weight: 700; font-size: 14px; line-height: 1;
   color: var(--accent);
-  -webkit-touch-callout: none; user-select: none; -webkit-user-select: none;
-  /* The row uses pan-y for its press gesture; this is a plain tap target. */
-  touch-action: manipulation;
 }
 .p-notes:active { color: #fff; }
 
@@ -952,6 +956,19 @@ body.is-mock .topbar { border-bottom: 3px solid var(--mock); }
 .note-meta {
   margin: 10px 0 0; font-size: 11px; color: var(--txt-faint);
 }
+
+/* The injury box (shared with the player sheet — .injbox itself) sits right
+   under the header when this popover was opened from the injury badge. */
+#noteInj { margin-top: 12px; }
+#noteInj .injbox { margin-bottom: 0; }
+
+/* Lets a hurt or otherwise-checked-on player be drafted straight from here,
+   without closing this to re-find him in what may already be a rebuilt list
+   underneath. Same primary-button-plus-alternate shape as the player sheet. */
+.note-actions {
+  display: flex; gap: 8px; margin-top: 14px;
+}
+.note-actions .btn { flex: 1 1 auto; }
 
 /* ------------------------------------------------------------ toast */
 

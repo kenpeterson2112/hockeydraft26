@@ -5,7 +5,7 @@
   var $ = UI.$, $$ = UI.$$, el = UI.el, num = UI.num, normalize = UI.normalize;
   var LEAGUE = Draft.LEAGUE;
 
-  var APP_VERSION = '2.12.1';
+  var APP_VERSION = '2.13.0';
 
   var players = [];              // seeded from data/players.json
   var playersById = {};
@@ -103,12 +103,6 @@
     if (i.injury && i.injury.toLowerCase() !== 'suspension') parts.push(i.injury);
     if (i.return) parts.push('back ' + shortDate(i.return));
     return parts.join(' \u00b7 ');
-  }
-
-  function buildInjuryBadge(i) {
-    var b = el('span', 'p-inj inj-' + INJURY[i.status].sev, INJURY[i.status].code);
-    b.title = injurySummary(i);
-    return b;
   }
 
   function buildInjuryBox(i) {
@@ -693,11 +687,6 @@
     sub.appendChild(el('span', 'p-pos', p.position));
     sub.appendChild(el('span', 'p-tier-chip', 'T' + p.tier));
     sub.appendChild(el('span', null, p.team));
-    var hurt = injuryFor(p.id);
-    if (hurt) sub.appendChild(buildInjuryBadge(hurt));
-    // Only where there is something to read, so the button doubles as "I have
-    // research on this guy" and there are no dead taps.
-    if (noteFor(p.id)) sub.appendChild(buildNotesButton(p));
     var qAt = queued(p.id);
     if (qAt !== -1) {
       var star = el('span', 'p-queued', '\u2605' + (qAt + 1));
@@ -709,6 +698,14 @@
       sub.appendChild(el('span', 'p-owner' + (isKeeper ? ' is-keeper' : ''),
         (isKeeper ? 'K · ' : '') + state.teams[ownerId].name));
     }
+    // Icon buttons go last, at the true end of the row -- away from the name
+    // and team text a thumb is actually aiming at, and grouped together so
+    // there is one place to learn they are both safe to tap mid-press.
+    var hurt = injuryFor(p.id);
+    if (hurt) sub.appendChild(buildInjuryBadge(hurt, p));
+    // Only where there is something to read, so the button doubles as "I have
+    // research on this guy" and there are no dead taps.
+    if (noteFor(p.id)) sub.appendChild(buildNotesButton(p));
     main.appendChild(sub);
     li.appendChild(main);
 
@@ -795,32 +792,69 @@
 
   /* --------------------------------------------------------- player notes */
 
-  // The row is already a press target, so this button must never reach the
-  // hold. Two guards, deliberately redundant: it stops its own events here,
-  // and attachHold bails on anything inside .p-notes — that second one cannot
+  // The row is already a press target, so a button living inside it — the
+  // notes "i" and the injury badge alike — must never reach the hold. Two
+  // guards, deliberately redundant: it stops its own events here, and
+  // attachHold bails on anything inside .p-infobtn — that second one cannot
   // be defeated by event ordering once the global hold listeners are live.
-  function buildNotesButton(p) {
-    var btn = el('button', 'p-notes', 'i');
+  function buildRowIconButton(content, ariaLabel, onClick) {
+    var btn = el('button', 'p-infobtn');
     btn.type = 'button';
-    btn.setAttribute('aria-label', 'Notes on ' + p.name);
+    btn.setAttribute('aria-label', ariaLabel);
+    if (typeof content === 'string') btn.textContent = content;
+    else btn.appendChild(content);
     btn.addEventListener('pointerdown', function (ev) { ev.stopPropagation(); });
     btn.addEventListener('click', function (ev) {
       ev.stopPropagation();
       ev.preventDefault();
-      openNotes(p);
+      onClick();
     });
+    return btn;
+  }
+
+  function buildNotesButton(p) {
+    var btn = buildRowIconButton('i', 'Notes on ' + p.name, function () { openNotes(p); });
+    btn.classList.add('p-notes');
+    return btn;
+  }
+
+  // Tapping it opens the same info popover as the notes "i" — the injury box
+  // rides at the top of it — so checking on a hurt player never risks landing
+  // mid-press on the row underneath.
+  function buildInjuryBadge(i, p) {
+    var pill = el('span', 'p-inj inj-' + INJURY[i.status].sev, INJURY[i.status].code);
+    var btn = buildRowIconButton(pill,
+      injurySummary(i) + ' — tap for details', function () { openNotes(p); });
+    btn.title = injurySummary(i);
     return btn;
   }
 
   // A top-level element rather than a child of the row: a mock draft rebuilds
   // every row on each pick, which would otherwise tear an open modal down.
+  //
+  // Doubles as the injury popover (opened from the badge) and carries a
+  // draft action of its own, so checking on a player never has to end with
+  // closing this and re-finding him in a rebuilt list to actually take him.
+  //
+  // That draft action names a team and a pick number as of right now; a mock
+  // left running underneath could move the clock while this sits open and
+  // turn it into a mis-draft. Same call as undo: reading this means he wants
+  // a moment, so the clock stops rather than racing him.
   function openNotes(p) {
+    if (isMock() && mock.isRunning()) mock.pause();
+
     var n = notes[p.id] || {};
     var modal = $('#noteModal');
 
     $('#noteName').textContent = p.name;
     $('#noteSub').textContent = p.position + ' · ' + p.team + ' · Tier ' + p.tier +
       ' · ADP ' + formatAdp(p.adp) + ' · ' + num(p.points) + ' pts';
+
+    var injHost = $('#noteInj');
+    injHost.innerHTML = '';
+    var hurt = injuryFor(p.id);
+    if (hurt) injHost.appendChild(buildInjuryBox(hurt));
+    injHost.hidden = !hurt;
 
     var facts = $('#noteFacts');
     facts.innerHTML = '';
@@ -851,6 +885,34 @@
     if (n.updated) meta.push('updated ' + n.updated);
     $('#noteMeta').textContent = meta.join(' · ');
     $('#noteMeta').hidden = !meta.length;
+
+    // Same "can this be drafted right now" test buildPlayerRow uses for the
+    // row itself, so the button appears exactly when the hold would have
+    // worked — and stays silent for an owned player or a draft not running.
+    var c = Draft.clock(state);
+    var ownerId = Draft.ownerMap(state)[p.id];
+    var actions = $('#noteActions');
+    actions.innerHTML = '';
+    var canDraft = ownerId == null && state.setupDone && !c.complete;
+    if (canDraft) {
+      var go = el('button', 'btn btn-primary',
+        'Draft to ' + c.onClockTeam.name + ' · ' + label(c.currentPick));
+      go.type = 'button';
+      go.addEventListener('click', function () {
+        closeNotes();
+        draftPlayer(p.id, c.onClockTeam.id);
+      });
+      actions.appendChild(go);
+
+      var other = el('button', 'btn', 'Choose another team');
+      other.type = 'button';
+      other.addEventListener('click', function () {
+        closeNotes();
+        openPlayerSheet(p);
+      });
+      actions.appendChild(other);
+    }
+    actions.hidden = !canDraft;
 
     $('#sheetBackdrop').hidden = false;
     modal.hidden = false;
@@ -894,9 +956,9 @@
   function attachHold(li, p, team) {
     li.addEventListener('pointerdown', function (ev) {
       if (!ev.isPrimary || (ev.pointerType === 'mouse' && ev.button !== 0)) return;
-      // The notes button lives inside the row; pressing it must never begin a
-      // draft, however long the press is held.
-      if (ev.target.closest && ev.target.closest('.p-notes, .q-btn')) return;
+      // The notes and injury buttons live inside the row; pressing either
+      // must never begin a draft, however long the press is held.
+      if (ev.target.closest && ev.target.closest('.p-infobtn, .q-btn')) return;
       startHold(ev, li, p, team);
     });
     // Keyboard users get the team chooser, which is fully operable.
