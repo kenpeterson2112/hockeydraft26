@@ -609,21 +609,22 @@ Draft state is not stored in this file; the app owns it separately.
 
 ```sh
 pip install openpyxl
-python3 tools/import-projections.py projections.xlsx --dry-run   # report only
-python3 tools/import-projections.py projections.xlsx             # rewrite the pool
+python3 tools/import-projections.py projections.xlsx --adp adp.xlsx --dry-run
+python3 tools/import-projections.py projections.xlsx --adp adp.xlsx
 ```
 
-The workbook is the one in the Fantasy folder on Drive. It has a `skaters`
-sheet (NAME, POS, TEAM, ADP, …, G, A, PTS) and a `goalies` sheet (NAME, POS,
-TEAM, AGE, ADP, W, SO). ADP comes from the same workbook. Columns are found by
-header, so a reordered sheet still reads.
+Both workbooks are in the Fantasy folder on Drive. `projections.xlsx` has a
+`skaters` sheet (NAME, POS, TEAM, ADP, …, G, A, PTS) and a `goalies` sheet
+(NAME, POS, TEAM, AGE, ADP, W, SO). `adp.xlsx` has NAME, YAHOO ADP, FANTRAX ADP
+and **AVG ADP**, and AVG ADP is the one used. Columns are found by header, so a
+reordered sheet still reads.
 
 | Field | From |
 |---|---|
 | `points` | Skaters: PTS. Goalies: 2 × W + 3 × SO, the league's scoring |
 | `vorp` | points − the baselines above |
 | `tier` | Fixed point bands per position, below |
-| `adp` | ADP; "—" becomes no ADP |
+| `adp` | AVG ADP from `adp.xlsx`; "—" becomes no ADP |
 
 | Tier lower bound | 1 | 2 | 3 | 4 | 5 | 6 | 7 |
 |---|---|---|---|---|---|---|---|
@@ -635,9 +636,11 @@ Anything below the last band is tier 8. The bands are the previous pool's cut
 lines, so "tier 3" keeps its meaning across refreshes and the scarcity rings read
 the same.
 
-**Who is in the pool:** every goalie, every skater with an ADP, and skaters with
-no ADP who project at least 32 (F) or 22.5 (D). That is roughly the depth a
-14-team draft reaches.
+**Who is in the pool:** every goalie, every skater with an ADP in
+`projections.xlsx`, and skaters without one who project at least 32 (F) or 22.5
+(D). That is roughly the depth a 14-team draft reaches. Inclusion uses the
+projections' ADP, not `adp.xlsx`, which lists nearly every NHL skater and would
+pull in hundreds of fourth-liners.
 
 **Ids never move.** They are the join key for every saved keeper, pick, queue
 entry and note, so a player already in the pool keeps his id and only a new
@@ -648,9 +651,18 @@ It refuses to write if any keeper in `js/league.js` would go missing.
 workbook lists the Canucks *forward* Elias Pettersson as a D (his line is 20 G
 / 41 A). The real defenceman is the row named "Elias Pettersson (D)".
 
-This workbook's ADP only runs to about pick 153, so later picks have none. The
-bots treat a missing ADP as late (360), so in those rounds they choose on need
-and VORP instead of consensus.
+**Why `--adp`.** The projections workbook's own ADP is Yahoo's alone, and it
+stops around pick 153. That left 158 of the 407 with no ADP. The bots price a
+missing ADP as pick 360, so 60-point forwards like Jared McCann sank below
+30-point players who had one, and the ADP sort buried them. AVG ADP (Yahoo and
+Fantrax averaged, Fantrax alone past Yahoo's range) runs to about 294 and
+covers the whole pool. Across six seeded mocks it moved McCann from about pick
+180 to 130 and Luke Evangelista from 185 to 140, and it left no player worth
+more than 10 VORP undrafted.
+
+The bots still follow the market where it disagrees with the projections. Bo
+Horvat is projected for 41 games, but his ADP is 120, and he goes around 120.
+That is by design: a mock is practice against people who draft by ADP.
 
 ## Injuries
 

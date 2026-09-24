@@ -1,16 +1,22 @@
 #!/usr/bin/env python3
 """import-projections.py — rebuild data/players.json from the projections workbook.
 
-    python3 tools/import-projections.py projections.xlsx --dry-run   report only
-    python3 tools/import-projections.py projections.xlsx             rewrite the pool
+    python3 tools/import-projections.py projections.xlsx --adp adp.xlsx --dry-run
+    python3 tools/import-projections.py projections.xlsx --adp adp.xlsx
 
-The workbook has two sheets, found by name:
+The projections workbook has two sheets, found by name:
 
     skaters   NAME, POS, TEAM, ADP, ..., G, A, PTS
     goalies   NAME, POS, TEAM, AGE, ADP, W, SO
 
+The ADP workbook's first sheet has NAME and AVG ADP (the mean of Yahoo and
+Fantrax). Use it. The projections' own ADP is Yahoo's alone, which stops
+around pick 153 and leaves a third of the pool with none. The bots price a
+missing ADP as pick 360, so a 60-point forward with no ADP sank below
+30-point players who had one. Without --adp the projections' ADP is used.
+
 Columns are found by header, not position, so a reordered or widened sheet
-still reads. ADP comes from the same workbook ("—" means none).
+still reads. "—" or "-" means no value.
 
 What it computes, and why:
 
@@ -22,8 +28,10 @@ What it computes, and why:
           lines the previous pool used, so "tier 3" keeps its meaning across
           refreshes, and the scarcity rings on the board read the same.
 
-Who is in the pool: every goalie; every skater with an ADP; and skaters with
-no ADP who project at or above FLOOR for their position. That keeps the board
+Who is in the pool: every goalie; every skater with a projections-workbook ADP;
+and skaters without one who project at or above FLOOR for their position. This
+uses the projections' ADP even with --adp, because the ADP file lists nearly
+every NHL skater and would pull in hundreds of fourth-liners. That keeps the board
 at roughly the depth of a 14-team draft without a tail of fourth-liners.
 
 Ids are the join key for every saved keeper, pick, queue entry and scouting
@@ -96,7 +104,8 @@ def position(pos):
 
 
 def read_sheet(wb, name):
-    ws = next((s for s in wb.worksheets if s.title.strip().lower() == name), None)
+    ws = (wb.worksheets[0] if name is None else
+          next((s for s in wb.worksheets if s.title.strip().lower() == name), None))
     if ws is None:
         sys.exit('no "%s" sheet in the workbook (found: %s)' %
                  (name, ', '.join(s.title for s in wb.worksheets)))
@@ -128,12 +137,23 @@ def keeper_ids():
     return re.findall(r"'([a-z0-9-]+)'", block)
 
 
-def build(skaters, goalies, existing):
+def read_adp(path):
+    import openpyxl
+    rows = read_sheet(openpyxl.load_workbook(path, read_only=True, data_only=True), None)
+    col = next((c for c in ('AVG ADP', 'ADP') if rows and c in rows[0]), None)
+    if col is None:
+        sys.exit('no AVG ADP or ADP column in %s' % path)
+    return {fold(str(r['NAME'])): num(r.get(col)) for r in rows if r.get('NAME')}
+
+
+def build(skaters, goalies, existing, adp_file=None):
     by_fold = {fold(p['name']): p['id'] for p in existing}
     taken = {p['id'] for p in existing}
     pool = []
 
     def add(name, pos, team, adp, points):
+        if adp_file is not None:
+            adp = adp_file.get(fold(name))
         pid = by_fold.get(fold(name))
         if pid is None:
             pid = slug(name)
@@ -172,7 +192,13 @@ def build(skaters, goalies, existing):
 
 
 def main():
-    args = [a for a in sys.argv[1:] if not a.startswith('--')]
+    argv = sys.argv[1:]
+    adp_path = None
+    if '--adp' in argv:
+        i = argv.index('--adp')
+        adp_path = argv[i + 1]
+        del argv[i:i + 2]
+    args = [a for a in argv if not a.startswith('--')]
     if not args:
         sys.exit(__doc__)
     try:
@@ -185,7 +211,8 @@ def main():
 
     with open(FILE, encoding='utf-8') as fh:
         existing = json.load(fh)
-    pool = build(skaters, goalies, existing)
+    adp_file = read_adp(adp_path) if adp_path else None
+    pool = build(skaters, goalies, existing, adp_file)
 
     old = {p['id']: p for p in existing}
     new = {p['id']: p for p in pool}
