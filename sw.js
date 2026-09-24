@@ -2,7 +2,7 @@
    Bump CACHE_VERSION on every deploy so clients pick up new assets. */
 'use strict';
 
-var CACHE_VERSION = 'v2.11.0';
+var CACHE_VERSION = 'v2.12.0';
 var CACHE_NAME = 'hockeydraft26-' + CACHE_VERSION;
 
 // Everything the app needs to run with no connection at all.
@@ -18,6 +18,7 @@ var PRECACHE = [
   './js/ui.js',
   './js/app.js',
   './data/players.json',
+  './data/injuries.json',
   './icons/icon-192.png',
   './icons/icon-512.png',
   './icons/icon-maskable-512.png',
