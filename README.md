@@ -308,13 +308,18 @@ nothing is drafted — the popover opens instead, however long the press.
 Neither mis-tap is destructive either — aiming at the row and hitting an icon
 shows information; aiming at an icon and missing opens the team chooser.
 
-The popover carries its own **Draft to *team* · pick** button, so checking on
-a player never has to end in closing it and finding him again in what may
-already be a different list underneath. **Choose another team** falls through
-to the full sheet's team grid. Both are only offered while he is actually
-available to draft; an owned player's popover is read-only. Opening it while a
-mock is running pauses the clock — the same call `undoLastPick` makes — so the
-button's team and pick number can never go stale while you're reading.
+**Draft this player…** hands off to the full sheet and its team grid, so
+checking on a player never has to end in closing this and finding him again in
+what may already be a different list underneath — only offered while he is
+actually available; an owned player's popover is read-only. It is deliberately
+a hand-off rather than a one-tap commit: an early build drafted straight from
+here, and a quick run through several players' popovers — the same light tap
+used to just glance at one — was enough to land a stray tap on it and draft
+whoever was on screen. Drafting from the popover now takes the same two steps
+a plain tap on the row always has — one tap here, a second, deliberate one on
+the sheet. Opening the popover while a mock is running pauses the clock — the
+same call `undoLastPick` makes — so nothing changes out from under you while
+you're reading.
 
 #### The notes never ship with the app
 
@@ -703,10 +708,10 @@ On the board, an injured player's row carries a solid badge beside his team:
 
 The badge is its own tap target — see [Player notes and the injury
 badge](#player-notes-and-the-injury-badge) — and opens a popover with the
-injury, expected return, ESPN's one-line note and date, and a button to draft
-him right from there. Setup → App says when the report was fetched, and the
-mock transcript tags injured picks. The file is optional: if it is missing or
-unreadable, the board loads without badges.
+injury, expected return, and ESPN's one-line note and date. Setup → App says
+when the report was fetched, and the mock transcript tags injured picks. The
+file is optional: if it is missing or unreadable, the board loads without
+badges.
 
 Matching is by accent-free name. Position then team decide between two players
 with the same name. If no full name fits, the script tries last name + team +

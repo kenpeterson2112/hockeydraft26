@@ -5,7 +5,7 @@
   var $ = UI.$, $$ = UI.$$, el = UI.el, num = UI.num, normalize = UI.normalize;
   var LEAGUE = Draft.LEAGUE;
 
-  var APP_VERSION = '2.13.0';
+  var APP_VERSION = '2.13.1';
 
   var players = [];              // seeded from data/players.json
   var playersById = {};
@@ -889,28 +889,27 @@
     // Same "can this be drafted right now" test buildPlayerRow uses for the
     // row itself, so the button appears exactly when the hold would have
     // worked — and stays silent for an owned player or a draft not running.
+    //
+    // Deliberately one hop, not a direct commit: this popover is opened with
+    // the same light, repeatable tap used to just glance at a player, and a
+    // one-tap "Draft to X" button living right there turned out to draft
+    // whoever the user was glancing at, the moment a quick run through
+    // several players landed a stray tap on it. Handing off to the sheet
+    // keeps it to a single tap here and a second, deliberate one there — the
+    // same two steps a plain tap on the row itself has always taken.
     var c = Draft.clock(state);
     var ownerId = Draft.ownerMap(state)[p.id];
     var actions = $('#noteActions');
     actions.innerHTML = '';
     var canDraft = ownerId == null && state.setupDone && !c.complete;
     if (canDraft) {
-      var go = el('button', 'btn btn-primary',
-        'Draft to ' + c.onClockTeam.name + ' · ' + label(c.currentPick));
+      var go = el('button', 'btn btn-primary', 'Draft this player…');
       go.type = 'button';
       go.addEventListener('click', function () {
         closeNotes();
-        draftPlayer(p.id, c.onClockTeam.id);
-      });
-      actions.appendChild(go);
-
-      var other = el('button', 'btn', 'Choose another team');
-      other.type = 'button';
-      other.addEventListener('click', function () {
-        closeNotes();
         openPlayerSheet(p);
       });
-      actions.appendChild(other);
+      actions.appendChild(go);
     }
     actions.hidden = !canDraft;
 
