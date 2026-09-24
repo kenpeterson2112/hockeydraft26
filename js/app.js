@@ -5,7 +5,7 @@
   var $ = UI.$, $$ = UI.$$, el = UI.el, num = UI.num, normalize = UI.normalize;
   var LEAGUE = Draft.LEAGUE;
 
-  var APP_VERSION = '2.10.0';
+  var APP_VERSION = '2.11.0';
 
   var players = [];              // seeded from data/players.json
   var playersById = {};
@@ -354,6 +354,7 @@
     renderTierBadges(board);
     syncChips();
     renderMockChrome(board);
+    renderStart();
     if (view.tab === 'board') renderBoard(board);
     if (view.tab === 'teams') renderTeams(board);
     if (view.tab === 'setup') renderSetup(board);
@@ -382,6 +383,9 @@
     if (c.onClockIsMe) {
       $('#onClockText').appendChild(el('span', 'me-tag', 'YOU'));
     }
+    if (c.onClockVia) {
+      $('#onClockText').appendChild(el('span', 'via-tag', 'via ' + c.onClockVia.name));
+    }
 
     topbar.classList.toggle('is-mine', c.onClockIsMe);
     var turn = $('#turnLine');
@@ -389,7 +393,7 @@
     turn.innerHTML = '';
 
     if (!state.setupDone) {
-      turn.textContent = 'Finish setup to start the draft.';
+      turn.textContent = isMock() ? 'Mock not started.' : 'Live draft not started.';
       return;
     }
 
@@ -1146,7 +1150,8 @@
   function renderSetup(board) {
     renderTeamSetup();
     renderKeeperSetup(board);
-    renderSetupStatus();
+    renderLeagueLine();
+    renderTrades();
     renderNotesStatus();
   }
 
@@ -1244,7 +1249,7 @@
     UI.showToast('Removed ' + res.removed + '.' +
       (res.released ? ' ' + res.released + ' keeper' + (res.released === 1 ? '' : 's') +
         ' back in the pool.' : '') +
-      ' Now ' + state.teams.length + ' teams.');
+      ' Now ' + state.teams.length + ' teams.' + tradesClearedNote(res.tradesCleared));
   }
 
   function addTeamRow() {
@@ -1255,7 +1260,15 @@
       return;
     }
     afterTeamChange();
-    UI.showToast('Added ' + res.added + '. Now ' + state.teams.length + ' teams.');
+    UI.showToast('Added ' + res.added + '. Now ' + state.teams.length + ' teams.' +
+      tradesClearedNote(res.tradesCleared));
+  }
+
+  // Traded picks are numbers in a snake of one width; a new width moves every
+  // one of them to a different pick, so they are cleared rather than kept wrong.
+  function tradesClearedNote(n) {
+    return n ? ' ' + n + ' traded pick' + (n === 1 ? '' : 's') +
+      ' cleared — the pick numbers no longer line up.' : '';
   }
 
   // Team ids shift, so anything holding one has to be rebuilt rather than
@@ -1384,27 +1397,119 @@
     if (input) input.focus();
   }
 
-  function renderSetupStatus() {
-    var host = $('#setupStatus');
-    host.innerHTML = '';
-    var kc = Draft.keeperCount(state);
+  function renderLeagueLine() {
     var me = Draft.myTeam(state);
+    var kc = Draft.keeperCount(state);
+    var trades = Draft.tradedPicks(state).length;
+    var line = $('#leagueLine');
+    line.innerHTML = '';
+    line.appendChild(document.createTextNode(nTeams() + ' teams · ' +
+      (me ? me.name + ' picks ' + ordinal(me.slot) : 'no team marked as yours') + ' · '));
+    line.appendChild(el('span', kc === nKeepers() ? 'ok' : 'warn',
+      kc + '/' + nKeepers() + ' keepers'));
+    line.appendChild(document.createTextNode(' · ' + trades + ' traded pick' +
+      (trades === 1 ? '' : 's') + ' · ' + nPicks() + ' picks'));
+  }
 
-    function row(label, value, cls) {
-      var d = el('div');
-      d.appendChild(el('span', null, label));
-      d.appendChild(el('span', cls, value));
-      host.appendChild(d);
+  function renderTrades() {
+    var trades = Draft.tradedPicks(state);
+    $('#tradeCounter').textContent = String(trades.length);
+    var host = $('#tradeList');
+    host.innerHTML = '';
+    if (!trades.length) {
+      host.appendChild(el('li', 'tc-empty', 'No traded picks — every pick follows the snake.'));
+      return;
     }
+    trades.forEach(function (t) {
+      var li = el('li', 'traderow' + (t.to.slot === state.mySlot || t.from.slot === state.mySlot ? ' is-mine' : ''));
+      li.appendChild(el('span', 'tr-pick', label(t.n)));
+      li.appendChild(el('span', 'tr-n', '#' + t.n));
+      li.appendChild(el('span', 'tr-to', t.to.name));
+      li.appendChild(el('span', 'tr-from', 'from ' + t.from.name));
+      host.appendChild(li);
+    });
+  }
 
-    row('Keepers assigned', kc + ' / ' + nKeepers(),
-      kc === nKeepers() ? 'ok' : 'warn');
-    row('Your team', me ? me.name + ' (slot ' + me.slot + ')' : '—', 'ok');
-    row('Draft rounds', String(LEAGUE.draftRounds), 'ok');
-    row('Total picks', String(nPicks()), 'ok');
-    row('Picks made', String(state.picks.length), 'ok');
+  /* ---------------------------------------------------------- start panel
+     Starting is the first thing on Setup and, until a draft is running, on
+     the board as well — two big buttons, live and mock, each saying where that
+     draft stands. The other draft is read straight from storage (never
+     written), so both buttons are accurate whichever mode is active. */
 
-    $('#startBtn').textContent = state.setupDone ? 'Back to board' : 'Start draft';
+  function draftStatus(s) {
+    var total = Draft.totalPicks(s);
+    var made = s.picks.length;
+    return {
+      made: made,
+      total: total,
+      complete: made >= total,
+      started: made > 0 || !!s.setupDone,
+      next: made < total ? Draft.pickLabel(made + 1, s.teams.length) : null
+    };
+  }
+
+  function buildStartButton(kind, title, sub, current, onGo) {
+    var b = el('button', 'startbtn startbtn-' + kind + (current ? ' is-current' : ''));
+    b.type = 'button';
+    var head = el('span', 'sb-title', title);
+    if (current) head.appendChild(el('span', 'sb-tag', 'Active'));
+    b.appendChild(head);
+    b.appendChild(el('span', 'sb-sub', sub));
+    b.addEventListener('click', onGo);
+    return b;
+  }
+
+  function renderStart() {
+    var live = isMock() ? Draft.load(Draft.STORAGE_KEY) : state;
+    var mk = isMock() ? state : Draft.load(Draft.MOCK_STORAGE_KEY);
+    var ls = draftStatus(live), ms = draftStatus(mk);
+    var bots = nTeams() - 1;
+
+    var liveTitle = ls.complete ? 'Live draft complete'
+      : ls.made ? 'Resume live draft'
+      : ls.started ? 'Back to live draft' : 'Start live draft';
+    var liveSub = ls.made
+      ? (ls.complete ? 'All ' + ls.total + ' picks in' : 'Pick ' + ls.next + ' · ' + ls.made + ' of ' + ls.total + ' made')
+      : 'The real one · you pick ' + ordinal(live.mySlot) + ' · you enter every pick';
+
+    var mockLive = ms.made && !ms.complete;
+    var mockTitle = mockLive ? 'Resume mock draft'
+      : ms.complete ? 'Start a new mock' : 'Start a mock draft';
+    var mockSub = mockLive
+      ? 'Pick ' + ms.next + ' · ' + ms.made + ' of ' + ms.total + ' made'
+      : (ms.complete ? 'Last one finished · ' : '') +
+        'Practice against ' + bots + ' bots · starts drafting right away';
+
+    $$('[data-start-host]').forEach(function (host) {
+      host.innerHTML = '';
+      host.appendChild(buildStartButton('live', liveTitle, liveSub,
+        !isMock() && state.setupDone, startLive));
+      host.appendChild(buildStartButton('mock', mockTitle, mockSub,
+        isMock() && state.setupDone, startMock));
+    });
+
+    $('#boardStart').hidden = state.setupDone;
+    $('#mockActions').hidden = !isMock();
+  }
+
+  function startLive() {
+    setMode('live');
+    state.setupDone = true;
+    saveState();
+    setTab('board');
+  }
+
+  // Resumes a mock in progress; otherwise starts a fresh one from the live
+  // league and sets the clock going, since starting is what he just asked for.
+  function startMock() {
+    var existing = isMock() ? state : Draft.load(Draft.MOCK_STORAGE_KEY);
+    var st = draftStatus(existing);
+    var fresh = !st.made || st.complete;
+    setMode('mock', fresh ? { force: true, fresh: true } : null);
+    state.setupDone = true;
+    saveState();
+    setTab('board');
+    if (!state.picks.length && !Draft.clock(state).onClockIsMe) mock.resume();
   }
 
   /* ---------------------------------------------------------------- events */
@@ -1473,12 +1578,6 @@
       else if (UI.sheetIsOpen()) UI.closeSheet();
     });
 
-    $('#startBtn').addEventListener('click', function () {
-      state.setupDone = true;
-      saveState();
-      setTab('board');
-    });
-
     $('#updateBtn').addEventListener('click', checkForUpdate);
     $('#exportBtn').addEventListener('click', exportState);
     $('#importBtn').addEventListener('click', function () { $('#importFile').click(); });
@@ -1527,6 +1626,7 @@
 
   function resetEverything() {
     state.customPlayers.forEach(function (p) { delete playersById[p.id]; });
+    // "Defaults" are the real 2026 league — order, keepers and traded picks.
     state = Draft.freshState();
     view.lastPick = null;
     saveState();
@@ -1535,7 +1635,7 @@
     view.keeperSearch = '';
     view.expandedTeams = {};
     setTab('setup');
-    UI.showToast('Everything reset. Player projections are untouched.');
+    UI.showToast('Reset to the 2026 league — real keepers and traded picks reloaded.');
   }
 
   function openAddPickSheet() {
@@ -2016,6 +2116,8 @@
     var seeded = Draft.freshState();
     seeded.teams = live.teams;
     seeded.mySlot = live.mySlot;
+    seeded.pickOwners = {};
+    for (var n in live.pickOwners || {}) seeded.pickOwners[n] = live.pickOwners[n];
     seeded.keepers = {};
     for (var id in live.keepers) {
       if (playersById[id]) seeded.keepers[id] = live.keepers[id];
@@ -2062,10 +2164,6 @@
     // the screen is for.
     var done = state.picks.length >= nPicks();
     $('#mockStrip').hidden = !on || !state.setupDone || done;
-    $('#mockActions').hidden = !on;
-    $$('#modeSwitch .seg').forEach(function (b) {
-      b.classList.toggle('is-on', b.dataset.mode === mode);
-    });
 
     if (!on) { $('#mockSummary').hidden = true; return; }
 
@@ -2209,6 +2307,12 @@
       LEAGUE.counting.D + 'D + ' + LEAGUE.counting.G + 'G score.');
     out.push(LEAGUE.keepersPerTeam + ' keepers per team, owned before the draft and costing no pick, so ' +
       LEAGUE.draftRounds + ' rounds are drafted (' + nPicks() + ' picks).');
+    var trades = Draft.tradedPicks(state);
+    if (trades.length) {
+      out.push('Traded picks: ' + trades.map(function (t) {
+        return '#' + t.n + ' ' + t.to.name + ' (from ' + t.from.name + ')';
+      }).join(', ') + '.');
+    }
     out.push('"why" is the bot\'s stated reason for the pick. Projected points follow each name.');
     out.push('');
 
@@ -2237,7 +2341,8 @@
         pad(p && p.tier ? 'T' + p.tier : '', 4) +
         pad(p && p.adp != null ? 'ADP ' + p.adp.toFixed(1) : 'no ADP', 11) +
         padLeft(p ? num(p.points) : '', 7) +
-        (isMine ? '   [your pick]' : (pick.why ? '   [' + pick.why + ']' : ''))
+        (isMine ? '   [your pick]' : (pick.why ? '   [' + pick.why + ']' : '')) +
+        (state.pickOwners && state.pickOwners[pick.n] ? '   (traded pick)' : '')
       );
     });
     out.push('');
@@ -2302,13 +2407,9 @@
   }
 
   function wireMock() {
-    $$('#modeSwitch .seg').forEach(function (b) {
-      b.addEventListener('click', function () { setMode(b.dataset.mode); });
-    });
-
     $('#mockRestart').addEventListener('click', function () {
       setMode('mock', { force: true, fresh: true });
-      UI.showToast('New mock — teams and keepers copied from the live draft.');
+      UI.showToast('New mock — teams, keepers and traded picks copied from the live draft.');
     });
     $('#mockCopy').addEventListener('click', copyTranscript);
     $('#mockDownload').addEventListener('click', downloadTranscript);
