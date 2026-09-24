@@ -11,7 +11,8 @@ Live @ https://kenpeterson2112.github.io/hockeydraft26/
 |---|---|
 | Teams | 14 by default, editable 2–20 |
 | Ken's slot | 12th |
-| Keepers | 3 per team (42 total), pre-owned, **cost no pick** |
+| Keepers | 3 per team (42 total), pre-owned, **cost no pick** — the real 2026 list is built in |
+| Traded picks | 8, from four off-season trades — built in |
 | Drafted rounds | 21 (24 roster spots − 3 keepers) |
 | Total live picks | 294 |
 | Roster | 15 F / 6 D / 3 G = 24 |
@@ -21,6 +22,57 @@ Live @ https://kenpeterson2112.github.io/hockeydraft26/
 
 Player projections already reflect that scoring — the app treats `points` as the
 season total and never recomputes it from categories.
+
+## The 2026 league is built in
+
+`js/league.js` holds the real draft order, all 42 declared keepers and the eight
+traded picks, and every fresh draft — live or mock — is seeded from it. Open the
+app and there is nothing to type: **Setup** leads with a *Start a draft* card
+reading `14 teams · Ken picks 12th · 42/42 keepers · 8 traded picks`.
+
+| Pick | Now held by | Originally |
+|---|---|---|
+| 2.10 (#24) | Cory | Matthew |
+| 6.09 (#79) | Eric | Hunter |
+| 9.03 (#115) | Matthew | Cory |
+| 9.11 (#123) | Cory | Ryan |
+| 14.14 (#196) | Hunter | Eric |
+| 15.10 (#206) | Cory | Nick |
+| 17.03 (#227) | Nick | Cory |
+| 18.12 (#250) | Ryan | Cory |
+
+Every team still holds 21 picks, and none of Ken's moved. A traded pick overrides
+the snake in `Draft.ownerSlotForPick`, which the clock, "your pick N away" and
+the dividers all go through, so the board is right about who is on the clock at
+2.10. The top bar says so: **Cory `via Matthew`**. The list sits under the draft
+order in Setup, the mock transcript tags each traded pick, and a mock copies the
+trades along with the keepers.
+
+Traded picks are pick *numbers* in a 14-wide snake, so dropping or adding a team
+clears them (with a toast saying so) rather than leaving them pointing at the
+wrong picks.
+
+Keepers are still editable in Setup. A save from an older build that has **no
+picks** in it is an untouched setup, and is replaced by the built-in league on
+load; one with picks is left exactly as it was. **Reset → Clear everything**
+now resets *to* the 2026 league, not to blanks.
+
+## Starting a draft
+
+**Setup opens with two big buttons**: *Start live draft* in blue and *Start a
+mock draft* in amber, the same colours each mode wears everywhere else. Each one
+says where its draft stands (`Pick 3.04 · 31 of 294 made`), and whichever mode
+is on screen is tagged **Active**. Until a draft is running the same two buttons
+also sit on top of the board, under **No draft running**, so the board is never
+mistaken for a draft in progress.
+
+- **Start live draft** switches to the live draft and opens the board. You
+  enter every pick yourself.
+- **Start a mock draft** resumes a mock in progress. Otherwise it starts a fresh
+  one from the live league **and starts the clock**. Starting is what you just
+  asked for, so there is no second Start button to find.
+- **New mock**, **Copy transcript** and **Save .txt** appear under the buttons
+  while in mock mode.
 
 ## Using it on draft day
 
@@ -36,10 +88,11 @@ season total and never recomputes it from categories.
    renumbering would invalidate, so 2.03 would quietly become a different pick.
    Reset → *Cancel the current draft* reopens it.
 
-2. **Setup → Keepers.** Pick a team chip, search a player, tap to assign. The
+2. **Setup → Keepers.** Already filled from the league file; check it once.
+   To change one, pick a team chip, search a player, tap to assign. The
    search box clears and keeps focus after each pick, so 42 keepers can be typed
    straight through. Three slots per team; the counter tracks progress.
-3. **Start draft.** The board takes over.
+3. **Start live draft**, at the top of Setup. The board takes over.
 4. **Board.**
    - **Press and hold a row for 1.5 seconds** to draft that player to whoever is
      on the clock. It buzzes on press, again at the halfway mark, and twice on
@@ -60,6 +113,16 @@ season total and never recomputes it from categories.
    total, so the tab reads as live standings and re-orders as picks land. Each
    card shows effective total, raw total and positional counts. Tap one to
    expand the roster — benched (non-counting) players are dimmed.
+
+### Position colour
+
+The position has to be readable at a glance, not by reading the letter.
+Each row carries three signals together. There is a 10px edge bar in the
+position colour, and a flat tint across the whole row, so it still shows under
+the number columns. The **F / D / G** letter itself is a solid badge. Forwards
+are green, defence blue, goalies yellow. The goalie tint runs slightly lower and
+is pushed towards yellow, because amber at the other two's strength turns olive
+against the navy.
 
 ### Sorting
 
@@ -304,8 +367,8 @@ scroll position and momentum would be.
 
 ## Mock draft mode
 
-**Setup → Mock draft → Mock draft** switches the whole app onto a practice
-draft. Everything works exactly as it does live, except the other 13 teams draft
+**Start a mock draft** (top of Setup, or on the board before anything is
+running) switches the whole app onto a practice draft. Everything works exactly as it does live, except the other 13 teams draft
 themselves on a timer.
 
 A mock **cannot touch the live draft**, by construction and not by care:
@@ -314,8 +377,8 @@ A mock **cannot touch the live draft**, by construction and not by care:
   `hockeydraft26.state.v1` and `hockeydraft26.mock.v1`. Every read and write
   goes through the key for the mode that is active, so there is no code path
   from a mock to the live record at all.
-- Starting a mock **copies** the teams, the draft slot and all 42 keepers out of
-  the live draft. Nothing is written back. Re-entering 42 keepers for a practice
+- Starting a mock **copies** the teams, the draft slot, all 42 keepers and the
+  traded picks out of the live draft. Nothing is written back. Re-entering 42 keepers for a practice
   run would be tedious, and a mock missing them would be wrong — 42 players
   would be available who are not.
 - Mock mode is unmissable: an amber **MOCK** badge beside the pick number and an
@@ -571,6 +634,7 @@ service worker.
 ```
 index.html          shell: header, tabs, board / teams / setup views
 css/app.css         mobile-first dark theme
+js/league.js        the real 2026 order, keepers and traded picks   (data)
 js/draft.js         league rules, snake math, scoring, persistence  (no DOM)
 js/bot.js           how an auto-drafted team picks                  (no DOM)
 js/mock.js          the mock clock: run, pause, step, skip          (no DOM)
