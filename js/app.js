@@ -5,7 +5,7 @@
   var $ = UI.$, $$ = UI.$$, el = UI.el, num = UI.num, normalize = UI.normalize;
   var LEAGUE = Draft.LEAGUE;
 
-  var APP_VERSION = '2.17.1';
+  var APP_VERSION = '2.17.2';
 
   var players = [];              // seeded from data/players.json
   var playersById = {};
@@ -1803,13 +1803,16 @@
 
     $$('.chip').forEach(function (chip) {
       chip.addEventListener('click', function () {
-        // A radio, so a tap always selects — there is no way to end up with an
-        // empty board, and no guard is needed against one.
-        if (chip.dataset.pos === 'QUEUE' && !(state.queue || []).length) {
+        // One at a time, and tapping the lit chip again turns it off and goes
+        // back to everyone — so no chip lit means "all positions".
+        if (view.position === chip.dataset.pos) {
+          view.position = 'ALL';
+        } else if (chip.dataset.pos === 'QUEUE' && !(state.queue || []).length) {
           UI.showToast('Your queue is empty — tap a player, then Add to queue.');
           return;
+        } else {
+          view.position = chip.dataset.pos;
         }
-        view.position = chip.dataset.pos;
         syncChips();
         renderBoard(buildBoard());
       });
