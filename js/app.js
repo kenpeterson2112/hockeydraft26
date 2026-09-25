@@ -5,7 +5,7 @@
   var $ = UI.$, $$ = UI.$$, el = UI.el, num = UI.num, normalize = UI.normalize;
   var LEAGUE = Draft.LEAGUE;
 
-  var APP_VERSION = '2.14.0';
+  var APP_VERSION = '2.15.0';
 
   var players = [];              // seeded from data/players.json
   var playersById = {};
@@ -614,9 +614,13 @@
   // which also keeps the column narrow enough to leave room for the name.
   /* ------------------------------------------------ value-column heat map */
 
-  // Percentile anchors the user asked for: best remaining is green, the 66th
-  // percentile amber, the 33rd and below red.
-  var HEAT_STOPS = [{ at: 0.33, h: 0 }, { at: 0.66, h: 45 }, { at: 1, h: 150 }];
+  // Value reads as brightness, not hue: the best remaining value is full text
+  // colour, the worst fades toward the background. It used to be a
+  // green/amber/red ramp, which fought the position colours on every row —
+  // green "good value" on a green forward row — and was the loudest thing on
+  // screen. Colour on a row now means position and nothing else.
+  var HEAT_MIN = 0.40;          // opacity of the worst value
+  var HEAT_RGB = '213, 220, 232'; // --txt
 
   // Where each remaining player sits on a metric, 1 = best, 0 = worst.
   // Measured over the whole remaining pool rather than the filtered view: the
@@ -640,7 +644,7 @@
   function buildHeat(available) {
     return {
       // Low ADP is good, high VORP is good — the ramp reads desirability, not
-      // magnitude, so both columns are green at the top.
+      // magnitude, so both columns are brightest at the top.
       adp: percentiles(available, function (p) { return p.adp; }, 'asc'),
       vorp: percentiles(available, function (p) { return p.vorp; }, 'desc')
     };
@@ -648,14 +652,7 @@
 
   function heatColor(pct) {
     if (pct == null) return null;
-    var hue = HEAT_STOPS[0].h;
-    for (var i = 1; i < HEAT_STOPS.length; i++) {
-      var lo = HEAT_STOPS[i - 1], hi = HEAT_STOPS[i];
-      if (pct <= lo.at) break;
-      var t = Math.min(1, (pct - lo.at) / (hi.at - lo.at));
-      hue = lo.h + t * (hi.h - lo.h);
-    }
-    return 'hsl(' + Math.round(hue) + ', 78%, 62%)';
+    return 'rgba(' + HEAT_RGB + ', ' + (HEAT_MIN + (1 - HEAT_MIN) * pct).toFixed(2) + ')';
   }
 
   // Colour the value column the list is NOT ordered by: sorted by ADP, the VORP
@@ -687,12 +684,17 @@
       li.style.animationDuration = mock.getSpeed() + 's';
     }
 
-    li.appendChild(el('span', 'p-rank', ownerId == null ? String(rank + 1) : '–'));
+    // The position tile: solid position colour, full row height, carrying the
+    // letter and the board rank. Down the left edge of the list these read as
+    // one continuous strip, so the mix of F, D and G shows at scrolling speed.
+    var tile = el('span', 'p-tile');
+    tile.appendChild(el('span', 'p-tile-pos', p.position));
+    tile.appendChild(el('span', 'p-rank', ownerId == null ? String(rank + 1) : '–'));
+    li.appendChild(tile);
 
     var main = el('div', 'p-main');
     main.appendChild(el('span', 'p-name', p.name));
     var sub = el('span', 'p-sub');
-    sub.appendChild(el('span', 'p-pos', p.position));
     sub.appendChild(el('span', 'p-tier-chip', 'T' + p.tier));
     sub.appendChild(el('span', null, p.team));
     var qAt = queued(p.id);
@@ -994,7 +996,6 @@
     var c = heatColor(pct);
     if (!c) return;
     cell.style.color = c;
-    cell.style.fontWeight = '700';
   }
 
   /* ------------------------------------------------------- hold-to-draft */

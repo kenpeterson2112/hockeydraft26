@@ -59,8 +59,9 @@ now resets *to* the 2026 league, not to blanks.
 
 ## Starting a draft
 
-**Setup opens with two big buttons**: *Start live draft* in blue and *Start a
-mock draft* in amber, the same colours each mode wears everywhere else. Each one
+**Setup opens with two big buttons**: *Start live draft*, plain, and *Start a
+mock draft* with a dashed border, echoing the stripes mock mode wears everywhere
+else. Each one
 says where its draft stands (`Pick 3.04 · 31 of 294 made`), and whichever mode
 is on screen is tagged **Active**. Until a draft is running the same two buttons
 also sit on top of the board, under **No draft running**, so the board is never
@@ -114,15 +115,41 @@ mistaken for a draft in progress.
    card shows effective total, raw total and positional counts. Tap one to
    expand the roster — benched (non-counting) players are dimmed.
 
-### Position colour
+### Position colour, and colour in general
 
-The position has to be readable at a glance, not by reading the letter.
-Each row carries three signals together. There is a 10px edge bar in the
-position colour, and a flat tint across the whole row, so it still shows under
-the number columns. The **F / D / G** letter itself is a solid badge. Forwards
-are green, defence blue, goalies yellow. The goalie tint runs slightly lower and
-is pushed towards yellow, because amber at the other two's strength turns olive
-against the navy.
+The position has to be readable at scrolling speed, so you can see the mix of
+F, D and G without reading a letter. Every row starts with a **solid position
+tile**, full row height, carrying the **F / D / G** letter and the board rank.
+Down the left edge of the list those tiles form one continuous strip, which
+reads like a stacked bar chart: a run of goalies, then a block of forwards.
+A light wash of the same colour runs across the rest of the row, so the band
+still shows while your eye is over on the numbers.
+
+| Position | Colour | Why |
+|---|---|---|
+| **F** | teal-green | the most common position, so the calmest |
+| **D** | blue | cooler and darker than F |
+| **G** | orange | the rarest position, so the warmest and brightest |
+
+The three differ in lightness as well as hue, so they separate under glare, in
+peripheral vision, and for colour-blind eyes.
+
+**Every colour has exactly one job.** An earlier pass used about 70 colour
+values, and green meant forward, good value, a full position and a deep tier
+all at once. It was loud and hard on the eyes over a long draft. Now:
+
+| Colour | Means | And nothing else |
+|---|---|---|
+| teal / blue / orange | position | not value, not status |
+| purple | you | your turn, your team, your queue, projected-gone ranks |
+| red | not playing | OUT / IR / LTIR, a nearly-gone tier, destructive buttons |
+| yellow | caution | day-to-day, a thinning tier, setup warnings |
+| light neutral | chrome | buttons, active tab, sort header |
+| stripes | mock mode | badge and header rule |
+
+The base is a soft slate with off-white text, not near-black with white, and
+bold is reserved for what should stand out. All of it lives as named tokens at
+the top of `css/app.css`, so a tweak is a one-line change.
 
 ### Sorting
 
@@ -143,32 +170,35 @@ is not a good one, and it is not a bad one either.
 
 ### The value heat map
 
-Whichever of **ADP** and **VORP** is *not* the sort key is colour-ramped by
-percentile among the players **still remaining**: green at the top, amber
-around the 66th percentile, red at the 33rd and below.
+Whichever of **ADP** and **VORP** is *not* the sort key is shaded by
+percentile among the players **still remaining**. The best value shows at full
+brightness, and worse values fade toward the background. It is brightness, not
+hue. It used to be a green/amber/red ramp, but that fought the position colours
+on every row (green "good value" on a green forward row) and was the loudest
+thing on screen.
 
-That pairing is the point. Sorted by ADP, the VORP colour says what consensus
-is missing — a red number beside an early ADP is the market overpaying, a green
-number beside a late one is the bargain. Sorted by VORP, the ADP colour says
-the same thing from the other side. Under the **#** or **Pts** sort neither is
-the key, so both are coloured.
+That pairing is the point. Sorted by ADP, the VORP shading says what consensus
+is missing: a dim number beside an early ADP is the market overpaying, and a
+bright one beside a late ADP is the bargain. Sorted by VORP, the ADP shading
+says the same thing from the other side. Under the **#** or **Pts** sort
+neither is the key, so both are shaded.
 
 Three deliberate choices:
 
 - **The ramp reads desirability, not magnitude.** Low ADP and high VORP are
-  both good, so both columns are green at their best end.
+  both good, so both columns are brightest at their best end.
 - **The scale is the whole remaining pool, not the filtered view.** Filter to
-  goalies and the best one does not jump to green — the question the colour
-  answers is "is this good for what is still out there", and that does not
-  change because a chip is selected. It does re-scale as picks land: the best
-  player left is always green.
-- **A missing ADP gets no colour at all**, the same rule the sort follows — an
+  goalies and the best one does not jump to full brightness. The question the
+  shading answers is "is this good for what is still out there", and that does
+  not change because a chip is selected. It does re-scale as picks land: the
+  best player left is always the brightest.
+- **A missing ADP gets no shading at all**, the same rule the sort follows. An
   absent value is not a good one and it is not a bad one.
 
 Drafted players are off the scale entirely, since the scale is defined over
 what remains.
 
-The colour is applied inline rather than through a class, which cannot collide
+The shade is applied inline rather than through a class, which cannot collide
 with the sorted-column rule below — and never has to, because the ramped column
 is by definition not the sorted one.
 
@@ -215,9 +245,10 @@ the number of picks until your turn does not depend on what you are looking at.
 When Ken is on the clock it counts to the wheel, his *following* pick, which is
 the decision that actually matters.
 
-**The purple rank numbers are the projection.** A player's rank number turns
-purple when their canonical board rank falls inside that horizon — they are
-expected to be gone. (A row tint carried this originally; layered under the
+**The purple rank chips are the projection.** A player's rank number, inside
+his position tile, becomes a small purple chip when his canonical board rank
+falls inside that horizon. He is expected to be gone. It is a chip rather than
+a text colour so it reads on all three tile colours. (A row tint carried this originally; layered under the
 positional tint it muddied the colour that matters more, so only the number
 carries it now.) This is measured against the **full combined board**, not
 the filtered view, because opponents can take any position. Filter to defence
@@ -225,7 +256,7 @@ and you see exactly which defencemen you expect to lose, which is usually fewer
 than N.
 
 On an unfiltered board in the default sort the two coincide: N rows above the
-line, all purple-numbered. They diverge under a filter, and each stays honest — the line
+line, all purple-chipped. They diverge under a filter, and each stays honest — the line
 keeps counting picks, the shading keeps naming players.
 
 ### The position filter chips
@@ -243,10 +274,11 @@ Each F / D / G chip carries three things:
 ```
 
 - **Left** — how many of that position are on *your* roster, out of the limit
-  (15 F / 6 D / 3 G). Keepers count. It turns green once the position is full.
+  (15 F / 6 D / 3 G). Keepers count. It turns bright once the position is full.
   It can read over the limit, e.g. 4/3, because the app warns about an
   over-limit pick but never blocks one.
-- **Centre** — the position letter.
+- **Centre** — the position letter, in its position colour. The chips double
+  as the legend for the row tiles.
 - **Right** — the tier badge, below.
 
 The **number** in the badge is
@@ -256,8 +288,8 @@ it warns that a run is ending, not which tier it happens to be:
 
 | Left in the tier | Ring | Meaning |
 |---|---|---|
-| 7 or more | green | plenty left, you can wait |
-| 4 to 6 | amber | thinning |
+| 7 or more | grey | plenty left, you can wait (not news, so no colour) |
+| 4 to 6 | yellow | thinning |
 | 1 to 3 | red | nearly gone |
 
 Keepers count as owned, so the badges reflect keeper losses on pick 1. Long-press
@@ -270,8 +302,8 @@ That is the board telling the truth about the top of this draft.
 
 The badge is a thick coloured ring over a constant dark fill, with a dark halo
 outside it. A solid fill, or a bare ring, collides with the chip's own position
-colour when the two match — a green ring vanishes on a selected F chip, amber on
-a selected G — losing the signal. Framed by dark on both sides it reads in every
+colour when the two match. A red ring would vanish on a selected chip of a
+similar colour, losing the signal. Framed by dark on both sides it reads in every
 chip state.
 
 ### Off-board picks
@@ -418,9 +450,10 @@ A mock **cannot touch the live draft**, by construction and not by care:
   traded picks out of the live draft. Nothing is written back. Re-entering 42 keepers for a practice
   run would be tedious, and a mock missing them would be wrong — 42 players
   would be available who are not.
-- Mock mode is unmissable: an amber **MOCK** badge beside the pick number and an
-  amber rule under the whole top bar, deliberately unlike the purple "your turn"
-  treatment.
+- Mock mode is unmissable: a striped **MOCK** badge above the pick number and a
+  striped rule under the whole top bar, deliberately unlike the purple "your
+  turn" treatment. It uses stripes rather than a colour, because every colour on
+  the board already means something.
 
 The active mode is remembered, so a reload mid-mock returns to the mock.
 
@@ -713,15 +746,17 @@ players in the pool and writes `data/injuries.json`, keyed by the same ids.
 Commit and push it to publish, since the file ships with the app like
 `players.json`, and installed copies pick it up through **Check for update**.
 
-On the board, an injured player's row carries a solid badge beside his team:
+On the board, an injured player's row carries a badge beside his team. Only
+"not playing" is a solid fill, so the one badge that should stop you is the only
+one that shouts:
 
 | Badge | Meaning |
 |---|---|
-| **OUT** (red) | Out |
-| **IR** (red) | Injured reserve |
-| **LTIR** (red) | Long-term IR |
-| **DTD** (amber) | Day-to-day |
-| **SUSP** (grey) | Suspended |
+| **OUT** (solid red) | Out |
+| **IR** (solid red) | Injured reserve |
+| **LTIR** (solid red) | Long-term IR |
+| **DTD** (yellow outline) | Day-to-day |
+| **SUSP** (grey outline) | Suspended |
 
 The badge is its own tap target — see [Player notes and the injury
 badge](#player-notes-and-the-injury-badge) — and opens a popover with the
