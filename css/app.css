@@ -234,7 +234,6 @@ button { cursor: pointer; }
 }
 /* "All" only needs its label, so it takes just what it needs and leaves the
    rest of the row to the three-part position chips. */
-.chip-all { flex: 0 0 auto; padding: 0 12px; }
 
 /* roster counter | position letter | tier badge — the 1fr flanks keep the
    letter centred whatever the two sides measure. */
@@ -286,7 +285,6 @@ button { cursor: pointer; }
 .tierbadge[data-level="danger"]  { border-color: var(--danger); color: var(--danger); }
 
 .chip.is-on { color: var(--ink); }
-.chip-all.is-on { background: var(--txt); border-color: var(--txt); }
 .chip-F.is-on { background: var(--pos-F); border-color: var(--pos-F); }
 .chip-D.is-on { background: var(--pos-D); border-color: var(--pos-D); }
 .chip-G.is-on { background: var(--pos-G); border-color: var(--pos-G); }
@@ -1137,7 +1135,6 @@ body.is-mock .topbar {
 @media (max-width: 380px) {
   .chips { gap: 4px; }
   .chip { padding: 0 4px; gap: 2px; }
-  .chip-all { padding: 0 8px; }
   .chip-count { font-size: 10px; }
   .chip-letter { font-size: 14px; }
   .tierbadge { width: 20px; height: 20px; font-size: 10px; border-width: 3px; }

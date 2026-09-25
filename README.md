@@ -250,10 +250,11 @@ keeps counting picks, the shading keeps naming players.
 
 ### The position filter chips
 
-The four chips are a **radio group, not toggles**: All, forwards, defence,
-goalies. Tapping one shows that position and nothing else, so "just the
-defencemen" is one tap rather than three. There is no way to end up looking at
-an empty board.
+The chips — forwards, defence, goalies and the queue star — pick **one view at
+a time**. Tapping one shows that position (or your queue) and nothing else, so
+"just the defencemen" is one tap. **Tapping the lit chip again turns it off and
+goes back to everyone**; no chip lit means all positions, so there is no
+separate All button.
 
 Each F / D / G chip carries three things:
 
