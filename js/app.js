@@ -5,7 +5,7 @@
   var $ = UI.$, $$ = UI.$$, el = UI.el, num = UI.num, normalize = UI.normalize;
   var LEAGUE = Draft.LEAGUE;
 
-  var APP_VERSION = '2.13.3';
+  var APP_VERSION = '2.14.0';
 
   var players = [];              // seeded from data/players.json
   var playersById = {};
@@ -696,11 +696,6 @@
     sub.appendChild(el('span', 'p-tier-chip', 'T' + p.tier));
     sub.appendChild(el('span', null, p.team));
     var qAt = queued(p.id);
-    if (qAt !== -1) {
-      var star = el('span', 'p-queued', '\u2605' + (qAt + 1));
-      star.title = 'Number ' + (qAt + 1) + ' in your queue';
-      sub.appendChild(star);
-    }
     if (ownerId != null) {
       var isKeeper = state.keepers[p.id] != null;
       sub.appendChild(el('span', 'p-owner' + (isKeeper ? ' is-keeper' : ''),
@@ -732,6 +727,13 @@
     li.appendChild(adpCell);
     li.appendChild(vorpCell);
     li.appendChild(el('span', 'p-num p-pts', num(p.points)));
+
+    // The board's own queue toggle: a star in its own column, so building a
+    // queue is a tap on the row already being scanned rather than a trip
+    // through the sheet. Only for a player still available to plan for —
+    // the same gate the sheet's own queue button uses; an owned row leaves
+    // the column empty rather than offering a star that does nothing.
+    if (ownerId == null) li.appendChild(buildQueueStar(p, qAt));
 
     // Reordering lives only in the queue view, where the order is the point.
     if (view.position === 'QUEUE' && !view.search && qAt !== -1) {
@@ -767,6 +769,30 @@
   /* ---------------------------------------------------------------- queue */
 
   function queued(playerId) { return (state.queue || []).indexOf(playerId); }
+
+  // The row's own queue button: empty outline, or filled and carrying the
+  // queue position once he's on it. Its own hitbox like the sub-line icons —
+  // stops its own pointerdown, and attachHold fences .p-qstar out of the row
+  // press the same way it fences .p-infobtn and .q-btn — but it gets a full
+  // grid cell rather than their negative-margin trick, since it lives in the
+  // row's own column rather than inline in the sub-line text.
+  function buildQueueStar(p, qAt) {
+    var on = qAt !== -1;
+    var btn = el('button', 'p-qstar' + (on ? ' is-on' : ''),
+      on ? ('★' + (qAt + 1)) : '☆');
+    btn.type = 'button';
+    btn.setAttribute('aria-label', on
+      ? 'Remove ' + p.name + ' from your queue — currently number ' + (qAt + 1)
+      : 'Add ' + p.name + ' to your queue');
+    btn.title = on ? 'Number ' + (qAt + 1) + ' in your queue' : 'Add to queue';
+    btn.addEventListener('pointerdown', function (ev) { ev.stopPropagation(); });
+    btn.addEventListener('click', function (ev) {
+      ev.stopPropagation();
+      ev.preventDefault();
+      toggleQueue(p.id);
+    });
+    return btn;
+  }
 
   function toggleQueue(playerId) {
     if (!state.queue) state.queue = [];
@@ -983,9 +1009,9 @@
   function attachHold(li, p, team) {
     li.addEventListener('pointerdown', function (ev) {
       if (!ev.isPrimary || (ev.pointerType === 'mouse' && ev.button !== 0)) return;
-      // The notes and injury buttons live inside the row; pressing either
-      // must never begin a draft, however long the press is held.
-      if (ev.target.closest && ev.target.closest('.p-infobtn, .q-btn')) return;
+      // The notes, injury and queue-star buttons live inside the row;
+      // pressing any of them must never begin a draft, however long held.
+      if (ev.target.closest && ev.target.closest('.p-infobtn, .p-qstar, .q-btn')) return;
       startHold(ev, li, p, team);
     });
     // Keyboard users get the team chooser, which is fully operable.
