@@ -1,18 +1,34 @@
 :root {
-  --bg: #0b1220;
-  --bg-2: #121c30;
-  --bg-3: #1b2740;
-  --line: #26334d;
-  --txt: #e8eefc;
-  --txt-dim: #93a2c2;
-  --txt-faint: #64749a;
-  --accent: #4da3ff;
-  --pos-F: #34d399;
-  --pos-D: #60a5fa;
-  --pos-G: #fbbf24;
-  --danger: #f87171;
-  --me: #a78bfa;
-  --mock: #f59e0b;   /* mock mode — deliberately unlike the purple 'your turn' */
+  /* A softer slate than near-black, and off-white rather than white text:
+     the high-contrast neon-on-black of the first pass was hard on the eyes
+     over a long draft. */
+  --bg: #121a27;
+  --bg-2: #172131;
+  --bg-3: #1d2839;
+  --line: #263246;
+  --txt: #d5dce8;
+  --txt-dim: #9aa6ba;
+  --txt-faint: #6b788e;
+  --ink: #111826;      /* dark text on any solid fill */
+  /* Chrome accent is a light neutral, not a hue: every hue on the board has
+     exactly one job, and "this is the button" is not one of them. */
+  --accent: #e3e9f3;
+
+  /* One job each. Position is the only thing colour means on a player row, so
+     these three are far apart in hue AND in lightness — F calm, D darker and
+     cooler, G the warmest and brightest as the rarest — and read apart in
+     peripheral vision, under glare, and for colour-blind eyes. The -rgb twins
+     feed the row wash. */
+  --pos-F: #45c4a0;  --pos-F-rgb: 69, 196, 160;
+  --pos-D: #5a87e0;  --pos-D-rgb: 90, 135, 224;
+  --pos-G: #f0a050;  --pos-G-rgb: 240, 160, 80;
+  --me: #a992f2;       /* you: your turn, your team, your queue */
+  --danger: #e5736b;   /* injured / out, and destructive actions */
+  --warn: #d8c35a;     /* day-to-day, a thinning tier, setup warnings */
+  /* Mock mode: a light neutral worn as stripes, so it can never be mistaken
+     for a goalie or a warning. */
+  --mock: #cfd6e3;
+  --mock-stripes: repeating-linear-gradient(135deg, #cfd6e3 0 8px, #8f9aad 8px 16px);
   --tap: 44px;
   --safe-b: env(safe-area-inset-bottom, 0px);
 }
@@ -61,13 +77,13 @@ button { cursor: pointer; }
 
 .topbar {
   flex: none; z-index: 30;
-  background: linear-gradient(180deg, #111c33, #0d1526);
+  background: var(--bg-2);
   border-bottom: 1px solid var(--line);
   padding: max(6px, env(safe-area-inset-top)) 12px 6px;
 }
 /* Ken is on the clock — the one moment in the draft that must not be missed. */
 .topbar.is-mine {
-  background: linear-gradient(180deg, #2b1f52, #1b1533);
+  background: linear-gradient(180deg, #2a2448, #201c37);
   box-shadow: inset 0 4px 0 var(--me);
 }
 
@@ -98,20 +114,20 @@ button { cursor: pointer; }
   display: inline-flex; align-items: center; justify-content: center;
   padding: 0 0 2px;
 }
-.addpick:active { background: var(--accent); border-color: var(--accent); color: #0b1220; }
+.addpick:active { background: var(--accent); border-color: var(--accent); color: var(--ink); }
 .topbar.is-mine .addpick { border-color: rgba(255, 255, 255, .35); color: #fff; }
 
 .onclock {
-  font-weight: 800; font-size: 23px; text-align: center; min-width: 0;
+  font-weight: 700; font-size: 23px; text-align: center; min-width: 0;
   letter-spacing: -.01em;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .onclock .me-tag {
-  color: #0b1220; background: var(--me);
-  font-size: 11px; font-weight: 800; letter-spacing: .06em;
+  color: var(--ink); background: var(--me);
+  font-size: 11px; font-weight: 700; letter-spacing: .06em;
   margin-left: 8px; padding: 2px 6px; border-radius: 4px;
 }
-.topbar.is-mine .onclock { color: #ffffff; }
+.topbar.is-mine .onclock { color: #f4f1ff; }
 
 .undo-btn {
   flex: none; height: 34px; padding: 0 12px;
@@ -125,9 +141,9 @@ button { cursor: pointer; }
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   letter-spacing: -.01em;
 }
-.turnline b { color: var(--accent); font-size: 1.1em; font-weight: 800; }
-.turnline.is-mine { color: #ffffff; font-weight: 800; }
-.turnline.is-mine b { color: #ffffff; }
+.turnline b { color: var(--txt); font-size: 1.1em; font-weight: 700; }
+.turnline.is-mine { color: #f4f1ff; font-weight: 700; }
+.turnline.is-mine b { color: #f4f1ff; }
 
 /* --------------------------------------------------------------- tabs */
 
@@ -232,10 +248,15 @@ button { cursor: pointer; }
   font-size: 11px; font-weight: 700; font-variant-numeric: tabular-nums;
   color: var(--txt-faint); white-space: nowrap;
 }
-.chip-count.is-full { color: var(--pos-F); }
-.chip-pos.is-on .chip-count { color: rgba(11, 18, 32, .65); }
-.chip-pos.is-on .chip-count.is-full { color: #0b1220; }
-.chip-letter { font-size: 15px; font-weight: 800; }
+.chip-count.is-full { color: var(--txt); }
+.chip-pos.is-on .chip-count { color: rgba(17, 24, 38, .65); }
+.chip-pos.is-on .chip-count.is-full { color: var(--ink); }
+.chip-letter { font-size: 15px; font-weight: 700; }
+/* Unselected, the letter wears its position colour: the chips double as the
+   legend for the row tiles below. */
+.chip-F:not(.is-on) .chip-letter { color: var(--pos-F); }
+.chip-D:not(.is-on) .chip-letter { color: var(--pos-D); }
+.chip-G:not(.is-on) .chip-letter { color: var(--pos-G); }
 .chip-pos .tierbadge { justify-self: end; }
 
 /* Shows the best tier still unowned at this position. The RING COLOUR reports
@@ -247,7 +268,7 @@ button { cursor: pointer; }
 .tierbadge {
   flex: none; width: 22px; height: 22px; border-radius: 50%;
   display: inline-flex; align-items: center; justify-content: center;
-  font-size: 11px; font-weight: 800; line-height: 1;
+  font-size: 11px; font-weight: 700; line-height: 1;
   font-variant-numeric: tabular-nums;
   background: var(--bg);
   border: 3px solid var(--txt-faint);
@@ -258,12 +279,14 @@ button { cursor: pointer; }
      dark on both sides, the ring reads against any chip state. */
   box-shadow: 0 0 0 2px var(--bg);
 }
-.tierbadge[data-level="good"]    { border-color: #34d399; color: #6ee7b7; }
-.tierbadge[data-level="concern"] { border-color: #fbbf24; color: #fcd34d; }
-.tierbadge[data-level="danger"]  { border-color: #f43f5e; color: #fda4af; }
+/* Plenty left is not news, so it stays grey; only a thinning or nearly-gone
+   tier earns a colour. Green here would also have read as "forward". */
+.tierbadge[data-level="good"]    { border-color: var(--txt-faint); color: var(--txt-dim); }
+.tierbadge[data-level="concern"] { border-color: var(--warn); color: var(--warn); }
+.tierbadge[data-level="danger"]  { border-color: var(--danger); color: var(--danger); }
 
-.chip.is-on { color: #0b1220; }
-.chip-all.is-on { background: var(--txt-dim); border-color: var(--txt-dim); }
+.chip.is-on { color: var(--ink); }
+.chip-all.is-on { background: var(--txt); border-color: var(--txt); }
 .chip-F.is-on { background: var(--pos-F); border-color: var(--pos-F); }
 .chip-D.is-on { background: var(--pos-D); border-color: var(--pos-D); }
 .chip-G.is-on { background: var(--pos-G); border-color: var(--pos-G); }
@@ -279,14 +302,14 @@ button { cursor: pointer; }
 
 .listhead {
   display: grid; align-items: stretch;
-  grid-template-columns: 28px 1fr 46px 60px 62px 26px;
-  gap: 8px; padding: 0 12px;
+  grid-template-columns: 34px 1fr 42px 52px 52px 26px;
+  gap: 8px; padding: 0 12px 0 0;
   font-size: 10px; letter-spacing: .08em; text-transform: uppercase;
   color: var(--txt-faint); border-bottom: 1px solid var(--line);
 }
 .listhead > span { display: flex; align-items: center; padding: 3px 0; }
 .lh-name { justify-content: flex-start; }
-.lh-sort.lh-rank { justify-content: flex-start; }
+.lh-sort.lh-rank { justify-content: center; }
 .lh-star { justify-content: center; font-size: 12px; color: var(--txt-faint); }
 
 /* Tapping a column sorts by it; tapping the active one reverses. */
@@ -305,10 +328,14 @@ button { cursor: pointer; }
 
 .prow {
   display: grid; align-items: center;
-  grid-template-columns: 28px 1fr 46px 60px 62px 26px;
-  gap: 8px; padding: 6px 12px;
-  border-bottom: 1px solid rgba(38, 51, 77, .55);
-  border-left: 10px solid transparent;
+  grid-template-columns: 34px 1fr 42px 52px 52px 26px;
+  gap: 8px; padding: 0 12px 0 0;
+  border-bottom: 1px solid rgba(38, 50, 70, .85);
+  /* Light wash of the position colour across the whole row, so the band
+     carries over to the numbers; the solid tile on the left does the heavy
+     lifting. Flat, and a background-image, so the mock pick flash (a
+     background-color) still shows underneath it. */
+  background-image: linear-gradient(rgba(var(--pc), .09), rgba(var(--pc), .09));
 }
 /* The row itself is the press target: suppress the OS text-selection and
    callout that a long press would otherwise trigger, while leaving vertical
@@ -318,80 +345,72 @@ button { cursor: pointer; }
   touch-action: pan-y;
   user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
 }
-.prow.is-holding { background: rgba(77, 163, 255, .12); }
+.prow.is-holding { background-color: rgba(227, 233, 243, .10); }
 .prow:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
 
-/* Position tint: FLAT across the row rather than a left-to-right wash, so the
-   colour is still there under the ADP/VORP/Pts columns and position can be read
-   without looking back to the left edge. Only the last fifth softens, to avoid
-   a hard edge at the end of the row.
-
-   Turned up in 2.11 because F / D / G still was not readable at a glance: a
-   10px edge bar, roughly double the tint, and the position letter as a solid
-   badge (below). Goalie amber stays a notch lower than the other two and is
-   pushed towards yellow. Amber at F/D strength goes olive against the navy. */
-.prow.pos-F {
-  border-left-color: #3ee9a4;
-  background-image: linear-gradient(90deg, rgba(62, 233, 164, .20) 0%, rgba(62, 233, 164, .20) 82%, rgba(62, 233, 164, .04) 100%);
+/* Position is the one thing colour means on a row, and it has to read at
+   scrolling speed: a solid tile at the left of every row, full height, so the
+   left edge of the list becomes a continuous strip — runs and ratios of F, D
+   and G read like a stacked bar without reading a single letter. */
+.prow.pos-F { --pc: var(--pos-F-rgb); }
+.prow.pos-D { --pc: var(--pos-D-rgb); }
+.prow.pos-G { --pc: var(--pos-G-rgb); }
+.p-tile {
+  align-self: stretch;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 2px;
+  background: rgb(var(--pc)); color: var(--ink);
 }
-.prow.pos-D {
-  border-left-color: #7ab8ff;
-  background-image: linear-gradient(90deg, rgba(122, 184, 255, .22) 0%, rgba(122, 184, 255, .22) 82%, rgba(122, 184, 255, .04) 100%);
-}
-.prow.pos-G {
-  border-left-color: #ffd23f;
-  background-image: linear-gradient(90deg, rgba(255, 210, 63, .17) 0%, rgba(255, 210, 63, .17) 82%, rgba(255, 210, 63, .03) 100%);
-}
+.p-tile-pos { font-size: 15px; font-weight: 700; line-height: 1; }
 .prow.is-taken { opacity: .4; }
 
 /* Projected to be gone by the time this pick comes round. The row tint that
    used to carry this has been dropped: layered under the positional tint it
    muddied the colour that actually matters, particularly on amber goalie rows.
    The rank number alone now carries it — free, and it muddies nothing. */
-/* Scoped through .playerlist so it outranks the sort-emphasis rule
-   `.playerlist[data-sort="rank"] .p-rank`, which is equally specific and
-   declared later — without this the projection marker silently loses. */
-.playerlist .prow.is-projected-gone .p-rank { color: var(--me); font-weight: 800; }
+/* The rank rides inside the tile now, dark on the position colour. Projected
+   gone turns it into a small purple chip — purple being "about you", and a
+   chip rather than a text colour so it reads on all three tile colours.
+   Scoped through .playerlist so it outranks the sort-emphasis rule, which is
+   equally specific and declared later. */
+.playerlist .prow.is-projected-gone .p-rank {
+  background: var(--me); color: var(--ink); border-radius: 3px; padding: 1px 3px;
+  opacity: 1;
+}
 
 .p-rank {
-  font-size: 13px; color: var(--txt-faint);
+  font-size: 10px; font-weight: 600; line-height: 1;
+  color: var(--ink); opacity: .72;
   font-variant-numeric: tabular-nums;
 }
-.p-main { min-width: 0; background: none; border: 0; padding: 0; text-align: left; }
+.p-main { min-width: 0; background: none; border: 0; padding: 6px 0; text-align: left; }
 .p-name {
-  font-weight: 600; font-size: 16px;
+  font-weight: 600; font-size: 15px;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .p-sub {
-  display: flex; align-items: baseline; gap: 7px;
-  font-size: 14px; color: var(--txt-dim); margin-top: 3px;
+  display: flex; align-items: center; gap: 7px;
+  font-size: 12px; color: var(--txt-faint); margin-top: 2px;
 }
-.p-pos { font-weight: 900; font-size: 15px; letter-spacing: .04em; }
+/* Position letter elsewhere (teams, notes): coloured glyph, no fill. On the
+   board the tile carries it instead. */
+.p-pos { font-weight: 700; font-size: 13px; letter-spacing: .04em; }
 .pos-F .p-pos { color: var(--pos-F); }
 .pos-D .p-pos { color: var(--pos-D); }
 .pos-G .p-pos { color: var(--pos-G); }
-/* On the board the letter is a filled badge, so position is read as a
-   block of colour rather than a coloured glyph. */
-.prow .p-pos {
-  display: inline-block; min-width: 22px; padding: 1px 5px; border-radius: 5px;
-  text-align: center; line-height: 1.25; color: #0b1220;
-}
-.prow.pos-F .p-pos { background: #3ee9a4; color: #0b1220; }
-.prow.pos-D .p-pos { background: #7ab8ff; color: #0b1220; }
-.prow.pos-G .p-pos { background: #ffd23f; color: #0b1220; }
 .p-owner { color: var(--txt-dim); font-style: italic; }
-.p-owner.is-keeper { color: var(--pos-G); font-style: normal; }
+.p-owner.is-keeper { color: var(--txt-dim); font-style: normal; font-weight: 600; }
 
+/* Neutral: value is shown by brightness (see heatColor), never by hue, so
+   the numbers never compete with the position colour on the same row. */
 .p-num {
-  text-align: right; font-size: 24px; line-height: 1.05;
+  text-align: right; font-size: 17px; font-weight: 600; line-height: 1.1;
   font-variant-numeric: tabular-nums; color: var(--txt-dim);
 }
-/* Tier now rides with the position letter rather than owning a column. */
+/* Tier: plain text, one fewer box on every row. */
 .p-tier-chip {
-  font-weight: 800; font-size: 12px; letter-spacing: .02em;
+  font-weight: 600; font-size: 12px; letter-spacing: .02em;
   color: var(--txt-faint);
-  border: 1px solid var(--line); border-radius: 4px;
-  padding: 0 4px; line-height: 16px;
 }
 
 /* Shared plumbing for the row's info buttons (injury badge, notes "i"): a
@@ -410,23 +429,23 @@ button { cursor: pointer; }
   touch-action: manipulation;
 }
 
-/* Injury status from ESPN. Solid, like the position badge, because a hurt
-   player is a thing to notice before drafting, not after. Red for anything
-   that means he is not playing, amber for day-to-day, grey for a suspension. */
+/* Injury status from ESPN. Only "not playing" (OUT / IR / LTIR) is a solid
+   red fill; day-to-day and suspended are outlines, so the one badge that
+   should stop you is the only one that shouts. */
 .p-inj {
-  font-weight: 900; font-size: 11px; letter-spacing: .04em;
-  border-radius: 4px; padding: 0 4px; line-height: 16px;
-  color: #0b1220; background: var(--danger);
+  font-weight: 700; font-size: 10px; letter-spacing: .04em;
+  border-radius: 3px; padding: 0 4px; line-height: 15px;
+  color: var(--ink); background: var(--danger); border: 1px solid var(--danger);
 }
-.p-inj.inj-dtd { background: var(--pos-G); }
-.p-inj.inj-susp { background: var(--txt-dim); }
+.p-inj.inj-dtd { background: none; border-color: var(--warn); color: var(--warn); }
+.p-inj.inj-susp { background: none; border-color: var(--txt-faint); color: var(--txt-dim); }
 
 .injbox {
   margin-bottom: 10px; padding: 8px 10px; border-radius: 8px;
-  background: rgba(248, 113, 113, .10); border: 1px solid rgba(248, 113, 113, .35);
+  background: rgba(229, 115, 107, .10); border: 1px solid rgba(229, 115, 107, .35);
   font-size: 13px;
 }
-.injbox.inj-dtd { background: rgba(251, 191, 36, .10); border-color: rgba(251, 191, 36, .35); }
+.injbox.inj-dtd { background: rgba(216, 195, 90, .08); border-color: rgba(216, 195, 90, .35); }
 .injbox.inj-susp { background: var(--bg-3); border-color: var(--line); }
 .injbox-head { display: flex; align-items: center; gap: 8px; font-weight: 700; }
 .injbox-note { margin: 6px 0 0; color: var(--txt-dim); line-height: 1.4; }
@@ -436,20 +455,20 @@ button { cursor: pointer; }
 .playerlist[data-sort="adp"]    .p-adp,
 .playerlist[data-sort="vorp"]   .p-vorp,
 .playerlist[data-sort="points"] .p-pts { color: var(--txt); font-weight: 700; }
-.playerlist[data-sort="rank"]   .p-rank { color: var(--txt); }
+.playerlist[data-sort="rank"]   .p-rank { opacity: 1; font-weight: 700; }
 
 .holdhint {
   margin: 0; padding: 5px 12px; font-size: 11px;
   color: var(--txt-faint); background: var(--bg-2);
   border-bottom: 1px solid var(--line); text-align: center;
 }
-.holdhint b { color: var(--accent); }
+.holdhint b { color: var(--txt); }
 
 /* the "board by my next pick" divider */
 .divider {
   list-style: none; position: relative;
   margin: 0; padding: 4px 12px 4px;
-  background: linear-gradient(90deg, rgba(167,139,250,.16), transparent 70%);
+  background: linear-gradient(90deg, rgba(169, 146, 242, .14), transparent 70%);
   border-top: 2px dashed var(--me);
   display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap;
 }
@@ -457,22 +476,22 @@ button { cursor: pointer; }
 /* The second ruler is subordinate on purpose: the pick in front of you is the
    decision being made now, and two lines shouting equally would flatten that. */
 .divider.is-second {
-  background: linear-gradient(90deg, rgba(167, 139, 250, .07), transparent 55%);
+  background: linear-gradient(90deg, rgba(169, 146, 242, .06), transparent 55%);
   border-top-width: 1px;
-  border-top-color: rgba(167, 139, 250, .55);
+  border-top-color: rgba(169, 146, 242, .55);
   padding-top: 3px; padding-bottom: 3px;
 }
-.divider.is-second .divider-label { color: rgba(167, 139, 250, .8); font-size: 11px; }
+.divider.is-second .divider-label { color: rgba(169, 146, 242, .8); font-size: 11px; }
 .divider.is-second .divider-note { opacity: .75; }
 .divider-label {
-  font-size: 11px; font-weight: 800; letter-spacing: .06em;
+  font-size: 11px; font-weight: 700; letter-spacing: .06em;
   text-transform: uppercase; color: var(--me);
 }
 .divider-note { font-size: 11px; color: var(--txt-faint); }
 
 .searchnote {
   margin: 0; padding: 7px 12px; font-size: 11px;
-  color: var(--accent); background: rgba(77, 163, 255, .08);
+  color: var(--txt-dim); background: var(--bg-2);
   border-bottom: 1px solid var(--line);
 }
 
@@ -496,17 +515,17 @@ button { cursor: pointer; }
 }
 .tc-name { font-weight: 700; font-size: 15px; }
 .tc-name .slot { color: var(--txt-faint); font-weight: 600; font-size: 12px; margin-right: 6px; }
-.tc-name .me-tag { color: var(--me); font-size: 11px; font-weight: 800; margin-left: 6px; }
+.tc-name .me-tag { color: var(--me); font-size: 11px; font-weight: 700; margin-left: 6px; }
 
 .tc-counts { display: flex; gap: 8px; margin-top: 4px; font-size: 11px; }
 .tc-counts span { color: var(--txt-faint); font-variant-numeric: tabular-nums; }
 .tc-counts .c-F { color: var(--pos-F); }
 .tc-counts .c-D { color: var(--pos-D); }
 .tc-counts .c-G { color: var(--pos-G); }
-.tc-counts .is-full { font-weight: 800; }
+.tc-counts .is-full { font-weight: 700; }
 
 .tc-score { text-align: right; }
-.tc-eff { font-size: 20px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.tc-eff { font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums; }
 .tc-raw { font-size: 11px; color: var(--txt-faint); font-variant-numeric: tabular-nums; }
 
 .tc-body { border-top: 1px solid var(--line); padding: 4px 0; }
@@ -517,12 +536,12 @@ button { cursor: pointer; }
   gap: 8px; align-items: center; padding: 5px 12px; font-size: 13px;
 }
 .rrow.is-bench { opacity: .45; }
-.rrow .r-pos { font-weight: 800; font-size: 11px; }
+.rrow .r-pos { font-weight: 700; font-size: 11px; }
 .rrow.pos-F .r-pos { color: var(--pos-F); }
 .rrow.pos-D .r-pos { color: var(--pos-D); }
 .rrow.pos-G .r-pos { color: var(--pos-G); }
 .rrow .r-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.rrow .r-tag { font-size: 10px; color: var(--pos-G); font-weight: 700; }
+.rrow .r-tag { font-size: 10px; color: var(--txt-dim); font-weight: 700; }
 .rrow .r-pts { font-variant-numeric: tabular-nums; color: var(--txt-dim); }
 
 /* ------------------------------------------------------------ setup */
@@ -562,7 +581,7 @@ button { cursor: pointer; }
   background: none; border: 1px solid transparent; border-radius: 8px;
   color: var(--txt-faint); font-size: 20px; line-height: 1;
 }
-.ts-drop:active { background: rgba(248, 113, 113, .16); color: var(--danger); }
+.ts-drop:active { background: rgba(229, 115, 107, .16); color: var(--danger); }
 .ts-drop:disabled { opacity: .25; }
 #teamCountNote { padding: 0; align-self: center; }
 .ts-me { display: flex; align-items: center; justify-content: center; gap: 4px; }
@@ -577,10 +596,10 @@ button { cursor: pointer; }
   white-space: nowrap; overflow: hidden;
 }
 .ktbtn .kt-n { font-size: 10px; color: var(--txt-faint); font-variant-numeric: tabular-nums; }
-.ktbtn.is-full { border-color: var(--pos-F); }
-.ktbtn.is-full .kt-n { color: var(--pos-F); }
-.ktbtn.is-sel { background: var(--accent); border-color: var(--accent); color: #0b1220; }
-.ktbtn.is-sel .kt-n { color: rgba(11,18,32,.7); }
+.ktbtn.is-full { border-color: var(--txt-faint); }
+.ktbtn.is-full .kt-n { color: var(--txt); }
+.ktbtn.is-sel { background: var(--accent); border-color: var(--accent); color: var(--ink); }
+.ktbtn.is-sel .kt-n { color: rgba(17, 24, 38, .7); }
 
 .keeperpanel { margin-top: 12px; }
 .kp-slots { display: grid; gap: 5px; margin-bottom: 10px; }
@@ -604,7 +623,7 @@ button { cursor: pointer; }
 .kp-result {
   width: 100%; display: grid; grid-template-columns: 1fr auto; gap: 8px;
   align-items: center; padding: 9px 10px; text-align: left;
-  background: none; border: 0; border-bottom: 1px solid rgba(38,51,77,.55);
+  background: none; border: 0; border-bottom: 1px solid rgba(38, 50, 70, .85);
   border-left: 3px solid transparent;
 }
 .kp-result.pos-F { border-left-color: var(--pos-F); }
@@ -629,12 +648,12 @@ button { cursor: pointer; }
 .addfield-input:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
 select.addfield-input { appearance: none; -webkit-appearance: none; }
 
-.rrow .r-tag.is-custom { color: var(--accent); }
+.rrow .r-tag.is-custom { color: var(--txt); }
 
 .statusgrid { display: grid; gap: 6px; margin-bottom: 10px; font-size: 13px; }
 .statusgrid div { display: flex; justify-content: space-between; gap: 8px; }
-.statusgrid .ok { color: var(--pos-F); }
-.statusgrid .warn { color: var(--pos-G); }
+.statusgrid .ok { color: var(--txt); }
+.statusgrid .warn { color: var(--warn); }
 
 .btnrow { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
 .btn {
@@ -642,8 +661,8 @@ select.addfield-input { appearance: none; -webkit-appearance: none; }
   background: var(--bg-3); border: 1px solid var(--line);
   color: var(--txt); font-weight: 600; font-size: 14px;
 }
-.btn-primary { background: var(--accent); border-color: var(--accent); color: #0b1220; font-weight: 800; }
-.btn-danger { color: var(--danger); border-color: rgba(248,113,113,.4); }
+.btn-primary { background: var(--accent); border-color: var(--accent); color: var(--ink); font-weight: 700; }
+.btn-danger { color: var(--danger); border-color: rgba(229, 115, 107, .4); }
 
 .version { text-align: center; color: var(--txt-faint); font-size: 11px; margin: 16px 0 0; }
 
@@ -651,7 +670,7 @@ select.addfield-input { appearance: none; -webkit-appearance: none; }
 
 .sheet-backdrop {
   position: fixed; inset: 0; z-index: 40;
-  background: rgba(4, 8, 16, .6);
+  background: rgba(8, 12, 20, .62);
 }
 .sheet {
   position: fixed; left: 0; right: 0; bottom: 0; z-index: 41;
@@ -694,7 +713,7 @@ select.addfield-input { appearance: none; -webkit-appearance: none; }
   background: var(--bg-3); border: 1px solid var(--line);
   border-radius: 10px; padding: 10px 12px 12px; margin-bottom: 8px;
 }
-.resetopt.is-severe { border-color: rgba(248, 113, 113, .45); }
+.resetopt.is-severe { border-color: rgba(229, 115, 107, .45); }
 .resetopt-title { font-weight: 700; font-size: 14px; }
 .resetopt-detail {
   font-size: 12px; color: var(--txt-faint);
@@ -703,29 +722,33 @@ select.addfield-input { appearance: none; -webkit-appearance: none; }
 .resetopt .btn { width: 100%; flex: none; }
 .resetopt .btn.is-armed {
   background: var(--danger); border-color: var(--danger);
-  color: #0b1220; font-weight: 800;
+  color: var(--ink); font-weight: 700;
 }
 
 .sheet-warn {
   margin: 10px 0 0; padding: 8px 10px; border-radius: 8px; font-size: 12px;
-  background: rgba(251,191,36,.12); color: var(--pos-G);
-  border: 1px solid rgba(251,191,36,.3);
+  background: rgba(216, 195, 90, .10); color: var(--warn);
+  border: 1px solid rgba(216, 195, 90, .3);
 }
 
 /* ------------------------------------------------------- mock draft mode */
 
 /* Mock mode has to be unmissable from a glance at the top of the screen: the
    whole point of separate storage is defeated if he thinks a mock is the real
-   draft. Amber on the border rather than a box-shadow, so it survives the
-   purple "your turn" treatment instead of being overwritten by it. */
-body.is-mock .topbar { border-bottom: 3px solid var(--mock); }
+   draft. Stripes on the border rather than a box-shadow, so it survives the
+   purple "your turn" treatment instead of being overwritten by it — and
+   stripes rather than a hue, since every hue here already means something. */
+body.is-mock .topbar {
+  border-bottom: 4px solid transparent;
+  border-image: var(--mock-stripes) 4;
+}
 
 /* A row of its own rather than an item in the clock line: that line is a
    three-column grid whose flanks are width-matched to centre the team name, so
    a fourth item pushes Undo onto a second row. */
 .modebadge {
-  background: var(--mock); color: #241505;
-  font-size: 11px; font-weight: 900; letter-spacing: .07em;
+  background: var(--mock-stripes); color: var(--ink);
+  font-size: 11px; font-weight: 700; letter-spacing: .07em;
   text-transform: uppercase; text-align: center;
   padding: 3px 8px; border-radius: 5px; margin-bottom: 6px;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
@@ -735,8 +758,8 @@ body.is-mock .topbar { border-bottom: 3px solid var(--mock); }
   flex: none;
   display: flex; flex-direction: column; gap: 6px;
   padding: 8px 12px;
-  background: rgba(245, 158, 11, .08);
-  border-bottom: 1px solid rgba(245, 158, 11, .28);
+  background: rgba(207, 214, 227, .05);
+  border-bottom: 1px solid rgba(207, 214, 227, .18);
 }
 .mockstrip-row { display: flex; align-items: center; gap: 8px; }
 
@@ -744,19 +767,19 @@ body.is-mock .topbar { border-bottom: 3px solid var(--mock); }
   flex: none; height: 32px; padding: 0 12px;
   background: var(--bg-3); color: var(--txt);
   border: 1px solid var(--line); border-radius: 8px;
-  font-size: 13px; font-weight: 700;
+  font-size: 13px; font-weight: 600;
 }
 .mbtn[disabled] { opacity: .4; }
 .mbtn-go {
-  background: var(--mock); border-color: var(--mock); color: #241505;
+  background: var(--mock); border-color: var(--mock); color: var(--ink);
   min-width: 78px;
 }
 .mbtn-go.is-running { background: transparent; color: var(--mock); }
-/* A dimmed amber fill reads as a muddy brown, which looks like a rendering
-   fault rather than a disabled control. Drop the fill instead. */
+/* A dimmed fill reads as a rendering fault rather than a disabled control.
+   Drop the fill instead. */
 .mbtn-go[disabled] {
   background: transparent; color: var(--mock);
-  border-color: rgba(245, 158, 11, .45);
+  border-color: rgba(207, 214, 227, .4);
 }
 
 .mockstate {
@@ -771,15 +794,16 @@ body.is-mock .topbar { border-bottom: 3px solid var(--mock); }
   font-size: 12px; font-variant-numeric: tabular-nums; color: var(--txt-dim);
 }
 
-.mocksummary { border-color: rgba(245, 158, 11, .4); }
+.mocksummary { border-color: rgba(207, 214, 227, .35); }
 .ms-place { margin: 0 0 6px; font-size: 15px; }
-.ms-place b { color: var(--mock); }
+.ms-place b { color: var(--txt); }
 
 /* ------------------------------------------------------- start panel */
 
 /* The first thing on Setup, and on the board until a draft is running. Two
-   big targets, coloured the way each mode is coloured everywhere else: live in
-   the app's blue, mock in the same amber as the mock badge and strip. */
+   big targets, dressed the way each mode is dressed everywhere else: live
+   plain, mock broken-lined like the striped mock badge and header (dashed
+   here, since a striped border-image cannot follow rounded corners). */
 .startgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 @media (max-width: 340px) { .startgrid { grid-template-columns: 1fr; } }
 .startbtn {
@@ -789,25 +813,25 @@ body.is-mock .topbar { border-bottom: 3px solid var(--mock); }
 }
 .startbtn .sb-title {
   display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
-  font-size: 16px; font-weight: 800; line-height: 1.2;
+  font-size: 16px; font-weight: 700; line-height: 1.2;
 }
 .startbtn .sb-sub { font-size: 12px; color: var(--txt-dim); line-height: 1.35; }
 .startbtn .sb-tag {
-  font-size: 9px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase;
+  font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
   padding: 2px 5px; border-radius: 4px;
 }
-.startbtn-live { border-color: var(--accent); background: rgba(77, 163, 255, .12); }
+.startbtn-live { border-color: var(--accent); background: rgba(227, 233, 243, .06); }
 .startbtn-live .sb-title { color: var(--accent); }
-.startbtn-mock { border-color: var(--mock); background: rgba(245, 158, 11, .10); }
+.startbtn-mock { border: 2px dashed var(--mock); background: rgba(207, 214, 227, .04); }
 .startbtn-mock .sb-title { color: var(--mock); }
-.startbtn-live .sb-tag { background: var(--accent); color: #0b1220; }
-.startbtn-mock .sb-tag { background: var(--mock); color: #241505; }
+.startbtn-live .sb-tag { background: var(--accent); color: var(--ink); }
+.startbtn-mock .sb-tag { background: var(--mock); color: var(--ink); }
 .startbtn.is-current { box-shadow: 0 0 0 3px rgba(232, 238, 252, .18); }
 .startbtn:active { filter: brightness(1.25); }
 .startcard h2 { font-size: 17px; }
 .startcard #leagueLine { font-size: 13px; color: var(--txt-dim); }
-.startcard #leagueLine .ok { color: var(--pos-F); font-weight: 700; }
-.startcard #leagueLine .warn { color: var(--pos-G); font-weight: 700; }
+.startcard #leagueLine .ok { color: var(--txt); font-weight: 700; }
+.startcard #leagueLine .warn { color: var(--warn); font-weight: 700; }
 .startcard .startnote { margin: 10px 0 0; }
 #view-board > .boardstart { flex: none; }
 
@@ -843,14 +867,14 @@ body.is-mock .topbar { border-bottom: 3px solid var(--mock); }
   margin-top: 5px; padding: 3px 8px; border-radius: 6px;
   font-size: 13px; line-height: 1.3;
   white-space: nowrap; overflow: hidden;
-  border: 1px solid rgba(245, 158, 11, .35);
-  background: rgba(245, 158, 11, .10);
+  border: 1px solid rgba(207, 214, 227, .28);
+  background: rgba(207, 214, 227, .06);
 }
 .lp-pick {
   flex: none; font-variant-numeric: tabular-nums;
   font-size: 11px; font-weight: 700; color: var(--txt-faint);
 }
-.lp-team { flex: none; font-weight: 800; color: var(--mock); }
+.lp-team { flex: none; font-weight: 700; color: var(--txt); }
 .lp-arrow { flex: none; color: var(--txt-faint); }
 .lp-name {
   min-width: 0; font-weight: 700; color: var(--txt);
@@ -869,10 +893,10 @@ body.is-mock .topbar { border-bottom: 3px solid var(--mock); }
   flex: 0 0 auto; gap: 3px; padding: 0 8px;
   background: var(--bg-3); border-color: var(--line); color: var(--me);
 }
-.chip-queue.is-on { background: var(--me); border-color: var(--me); color: #16112b; }
+.chip-queue.is-on { background: var(--me); border-color: var(--me); color: var(--ink); }
 .chip-queue.is-empty { color: var(--txt-faint); }
 .chip-star { font-size: 13px; line-height: 1; }
-.chip-qn { font-size: 12px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.chip-qn { font-size: 12px; font-weight: 700; font-variant-numeric: tabular-nums; }
 
 /* The board's own queue toggle: a star in its own column on every available
    player's row, so building a queue is a tap on the row you're already
@@ -887,16 +911,16 @@ body.is-mock .topbar { border-bottom: 3px solid var(--mock); }
   width: 100%; height: 100%; padding: 0;
   display: inline-flex; align-items: center; justify-content: center;
   background: none; border: 0;
-  font-size: 12px; font-weight: 800; font-variant-numeric: tabular-nums; line-height: 1;
+  font-size: 12px; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1;
   color: var(--txt-faint);
   -webkit-touch-callout: none; user-select: none; -webkit-user-select: none;
   touch-action: manipulation;
 }
 .p-qstar.is-on { color: var(--me); }
-.p-qstar:active { color: #fff; }
+.p-qstar:active { color: var(--txt); }
 
 /* Reorder controls, only in the queue view -- a 7th column past the star. */
-.prow.has-qmove { grid-template-columns: 28px 1fr 46px 60px 62px 26px 26px; }
+.prow.has-qmove { grid-template-columns: 34px 1fr 42px 52px 52px 26px 26px; }
 .q-move { display: flex; flex-direction: column; gap: 2px; justify-self: end; }
 .q-btn {
   width: 26px; height: 22px; padding: 0;
@@ -906,7 +930,7 @@ body.is-mock .topbar { border-bottom: 3px solid var(--mock); }
   touch-action: manipulation;
 }
 .q-btn:disabled { opacity: .3; }
-.q-btn:active { background: var(--me); color: #16112b; }
+.q-btn:active { background: var(--me); color: var(--ink); }
 
 .btn-queue { width: 100%; margin-bottom: 10px; }
 .btn-queue.is-on { border-color: var(--me); color: var(--me); }
@@ -920,9 +944,9 @@ body.is-mock .topbar { border-bottom: 3px solid var(--mock); }
   margin-left: 2px;
   font-family: Georgia, "Times New Roman", serif;
   font-style: italic; font-weight: 700; font-size: 14px; line-height: 1;
-  color: var(--accent);
+  color: var(--txt-dim);
 }
-.p-notes:active { color: #fff; }
+.p-notes:active { color: var(--txt); }
 
 /* Above the sheet (41) because it can be opened while nothing else is, and
    must win the shared backdrop if both ever coincide. */
@@ -933,7 +957,7 @@ body.is-mock .topbar { border-bottom: 3px solid var(--mock); }
   max-height: min(78vh, 560px); overflow-y: auto;
   background: var(--bg-2);
   border: 1px solid var(--line); border-radius: 14px;
-  box-shadow: 0 20px 56px rgba(0, 0, 0, .65);
+  box-shadow: 0 20px 56px rgba(0, 0, 0, .5);
   padding: 14px 16px 16px;
 }
 .note-head { display: flex; align-items: flex-start; gap: 10px; }
@@ -953,11 +977,11 @@ body.is-mock .topbar { border-bottom: 3px solid var(--mock); }
   font-size: 13px; font-weight: 700; line-height: 1.2; color: var(--txt);
   white-space: nowrap;
 }
-.note-pill.is-quiet { font-weight: 500; color: var(--txt-dim); }
-.note-pill.note-pos { border-color: transparent; color: #0b1220; font-weight: 900; }
-.note-pill.pos-F { background: #3ee9a4; }
-.note-pill.pos-D { background: #7ab8ff; }
-.note-pill.pos-G { background: #ffd23f; }
+.note-pill.is-quiet { font-weight: 400; color: var(--txt-dim); }
+.note-pill.note-pos { border-color: transparent; color: var(--ink); font-weight: 700; }
+.note-pill.pos-F { background: var(--pos-F); }
+.note-pill.pos-D { background: var(--pos-D); }
+.note-pill.pos-G { background: var(--pos-G); }
 
 .note-stats {
   display: grid; grid-template-columns: repeat(3, 1fr);
@@ -970,7 +994,7 @@ body.is-mock .topbar { border-bottom: 3px solid var(--mock); }
 }
 .ns-cell + .ns-cell { border-left: 1px solid var(--line); }
 .ns-num {
-  font-size: 20px; font-weight: 800; line-height: 1.1;
+  font-size: 20px; font-weight: 700; line-height: 1.1;
   font-variant-numeric: tabular-nums; color: var(--txt);
 }
 .ns-label {
@@ -999,7 +1023,7 @@ body.is-mock .topbar { border-bottom: 3px solid var(--mock); }
 
 .note-text {
   margin: 14px 0 0; padding-left: 10px;
-  border-left: 3px solid var(--accent);
+  border-left: 3px solid var(--txt-faint);
   font-size: 15px; line-height: 1.5; color: var(--txt);
 }
 .note-text.is-empty {
@@ -1038,7 +1062,7 @@ body.is-mock .topbar { border-bottom: 3px solid var(--mock); }
   background: var(--bg-3);
   border: 2px solid var(--accent);
   border-radius: 16px; padding: 16px 18px 18px;
-  box-shadow: 0 18px 48px rgba(0, 0, 0, .7);
+  box-shadow: 0 18px 48px rgba(0, 0, 0, .55);
 }
 /* Pointer back toward the finger. */
 .holdpop::after {
@@ -1063,7 +1087,7 @@ body.is-mock .topbar { border-bottom: 3px solid var(--mock); }
   color: var(--txt-faint); margin-top: 4px;
 }
 .holdpop-team {
-  font-weight: 900; font-size: 38px; line-height: 1.1;
+  font-weight: 700; font-size: 38px; line-height: 1.1;
   color: var(--accent); letter-spacing: -.02em;
   max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
@@ -1074,7 +1098,7 @@ body.is-mock .topbar { border-bottom: 3px solid var(--mock); }
 }
 .holdpop-bar {
   height: 100%; width: 0%; border-radius: 6px;
-  background: linear-gradient(90deg, var(--accent), var(--pos-F));
+  background: var(--accent);
 }
 
 /* ------------------------------------------------------------ toast */
@@ -1091,7 +1115,7 @@ body.is-mock .topbar { border-bottom: 3px solid var(--mock); }
 .toast span { flex: 1; min-width: 0; }
 .toast-undo {
   flex: none; background: none; border: 0;
-  color: var(--accent); font-weight: 800; font-size: 13px; padding: 4px 2px;
+  color: var(--accent); font-weight: 700; font-size: 13px; padding: 4px 2px;
 }
 
 /* Very narrow phones: tighten the chip row a little. */
@@ -1125,12 +1149,11 @@ body.is-mock .topbar { border-bottom: 3px solid var(--mock); }
   .listhead { font-size: 9px; }
   .lh-sort { padding: 5px 0; font-size: 9px; }
   .listhead > span { padding: 4px 0; }
-  .prow { padding: 5px 12px; }
+  .p-main { padding: 4px 0; }
   .p-name { font-size: 14px; }
-  .p-sub { font-size: 12px; margin-top: 1px; }
-  .p-pos { font-size: 13px; }
-  .p-num { font-size: 19px; }
-  .p-tier-chip { font-size: 11px; line-height: 15px; }
+  .p-sub { font-size: 11px; margin-top: 1px; }
+  .p-num { font-size: 16px; }
+  .p-tier-chip { font-size: 11px; }
   .turnline { font-size: 17px; }
   .divider { padding: 4px 12px 3px; }
   .divider-note { display: none; }
@@ -1142,9 +1165,8 @@ body.is-mock .topbar { border-bottom: 3px solid var(--mock); }
 
 @media (min-width: 640px) {
   .teamlist { grid-template-columns: repeat(2, 1fr); }
-  .prow, .listhead { grid-template-columns: 26px 1fr 44px 58px 60px 26px; }
-  .prow.has-qmove { grid-template-columns: 26px 1fr 44px 58px 60px 26px 26px; }
-  .prow { padding: 6px 12px; }
+  .prow, .listhead { grid-template-columns: 38px 1fr 48px 58px 58px 26px; }
+  .prow.has-qmove { grid-template-columns: 38px 1fr 48px 58px 58px 26px 26px; }
 }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -1158,9 +1180,9 @@ body.is-mock .topbar { border-bottom: 3px solid var(--mock); }
      Only the motion is gated on reduced motion; the line itself still appears
      and reads correctly without it. */
   @keyframes pickflash {
-    0%   { opacity: 1;   background-color: rgba(245, 158, 11, .38); }
-    12%  { opacity: 1;   background-color: rgba(245, 158, 11, .20); }
-    100% { opacity: .45; background-color: rgba(245, 158, 11, 0); }
+    0%   { opacity: 1;   background-color: rgba(207, 214, 227, .30); }
+    12%  { opacity: 1;   background-color: rgba(207, 214, 227, .16); }
+    100% { opacity: .45; background-color: rgba(207, 214, 227, 0); }
   }
   .lastpick.is-flash { animation: pickflash 2s ease-out both; }
 
@@ -1169,9 +1191,9 @@ body.is-mock .topbar { border-bottom: 3px solid var(--mock); }
      its position tint. Only background-color moves, so the tint — which is a
      gradient, i.e. background-image — survives underneath. */
   @keyframes rowflash {
-    0%   { background-color: rgba(245, 158, 11, .38); }
-    12%  { background-color: rgba(245, 158, 11, .22); }
-    100% { background-color: rgba(245, 158, 11, 0); }
+    0%   { background-color: rgba(207, 214, 227, .26); }
+    12%  { background-color: rgba(207, 214, 227, .14); }
+    100% { background-color: rgba(207, 214, 227, 0); }
   }
   .prow.is-justpicked { animation: rowflash 2s ease-out; }
 }
