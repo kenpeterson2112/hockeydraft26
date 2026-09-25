@@ -5,7 +5,7 @@
   var $ = UI.$, $$ = UI.$$, el = UI.el, num = UI.num, normalize = UI.normalize;
   var LEAGUE = Draft.LEAGUE;
 
-  var APP_VERSION = '2.16.0';
+  var APP_VERSION = '2.17.0';
 
   var players = [];              // seeded from data/players.json
   var playersById = {};
@@ -571,7 +571,7 @@
     hint.innerHTML = '';
     hint.appendChild(document.createTextNode('Hold a player to draft to '));
     hint.appendChild(el('b', null, c.onClockTeam.name));
-    hint.appendChild(document.createTextNode(' \u00b7 tap to choose another team'));
+    hint.appendChild(document.createTextNode(' \u00b7 tap for info'));
   }
 
   function renderSortHeader() {
@@ -628,45 +628,48 @@
   // which also keeps the column narrow enough to leave room for the name.
   /* ------------------------------------------------ value-column heat map */
 
-  // Value reads as brightness, not hue: the best remaining value is full text
-  // colour, the worst fades toward the background. It used to be a
-  // green/amber/red ramp, which fought the position colours on every row —
-  // green "good value" on a green forward row — and was the loudest thing on
-  // screen. Colour on a row now means position and nothing else.
-  var HEAT_MIN = 0.40;          // opacity of the worst value
-  var HEAT_RGB = '213, 220, 232'; // --txt
+  // Red -> yellow -> green, with yellow pinned at a fixed value and each end
+  // at the best/worst value still on the board. Green always means "good for
+  // you": high VORP, and a LATE ADP — so sorted by VORP, a green ADP beside a
+  // big VORP is a player the room is letting fall.
+  var HEAT = {
+    vorp: { mid: 15,  greenIsHigh: true },
+    adp:  { mid: 140, greenIsHigh: true }
+  };
+  var HUE_RED = 0, HUE_YELLOW = 50, HUE_GREEN = 140;
 
-  // Where each remaining player sits on a metric, 1 = best, 0 = worst.
-  // Measured over the whole remaining pool rather than the filtered view: the
-  // question the colour answers is "is this good for what is still out there",
-  // and that does not change because a position chip is selected.
-  function percentiles(available, valueOf, bestIs) {
-    var rows = [];
-    for (var i = 0; i < available.length; i++) {
-      var v = valueOf(available[i]);
-      if (v != null) rows.push({ id: available[i].id, v: v });
-    }
-    rows.sort(function (a, b) { return bestIs === 'asc' ? a.v - b.v : b.v - a.v; });
-
-    var out = Object.create(null);
-    for (var j = 0; j < rows.length; j++) {
-      out[rows[j].id] = rows.length > 1 ? 1 - (j / (rows.length - 1)) : 1;
-    }
-    return out;
-  }
-
+  // For each metric, the remaining pool's low and high. Measured over the
+  // whole remaining pool, not the filtered view, so a chip never recolours.
   function buildHeat(available) {
-    return {
-      // Low ADP is good, high VORP is good — the ramp reads desirability, not
-      // magnitude, so both columns are brightest at the top.
-      adp: percentiles(available, function (p) { return p.adp; }, 'asc'),
-      vorp: percentiles(available, function (p) { return p.vorp; }, 'desc')
-    };
+    var heat = {};
+    ['adp', 'vorp'].forEach(function (key) {
+      var lo = Infinity, hi = -Infinity;
+      for (var i = 0; i < available.length; i++) {
+        var v = available[i][key];
+        if (v == null) continue;
+        if (v < lo) lo = v;
+        if (v > hi) hi = v;
+      }
+      heat[key] = { lo: lo, hi: hi, mid: HEAT[key].mid };
+    });
+    return heat;
   }
 
-  function heatColor(pct) {
-    if (pct == null) return null;
-    return 'rgba(' + HEAT_RGB + ', ' + (HEAT_MIN + (1 - HEAT_MIN) * pct).toFixed(2) + ')';
+  // 0 = red, 0.5 = yellow (the pinned midpoint), 1 = green.
+  function heatPos(scale, v) {
+    if (v == null || !isFinite(scale.lo)) return null;
+    if (v >= scale.mid) {
+      return scale.hi > scale.mid ? 0.5 + 0.5 * Math.min(1, (v - scale.mid) / (scale.hi - scale.mid)) : 0.5;
+    }
+    return scale.mid > scale.lo ? 0.5 * Math.max(0, (v - scale.lo) / (scale.mid - scale.lo)) : 0.5;
+  }
+
+  function heatColor(t) {
+    if (t == null) return null;
+    var hue = t <= 0.5
+      ? HUE_RED + (HUE_YELLOW - HUE_RED) * (t / 0.5)
+      : HUE_YELLOW + (HUE_GREEN - HUE_YELLOW) * ((t - 0.5) / 0.5);
+    return 'hsl(' + Math.round(hue) + ', 65%, 60%)';
   }
 
   // Colour the value column the list is NOT ordered by: sorted by ADP, the VORP
@@ -749,8 +752,8 @@
     // class so it cannot collide with the sorted-column rule — and it never
     // has to, since the coloured column is by definition not the sorted one.
     if (heat && ownerId == null) {
-      if (heatFor('adp')) tint(adpCell, heat.adp[p.id]);
-      if (heatFor('vorp')) tint(vorpCell, heat.vorp[p.id]);
+      if (heatFor('adp')) tint(adpCell, heatPos(heat.adp, p.adp));
+      if (heatFor('vorp')) tint(vorpCell, heatPos(heat.vorp, p.vorp));
     }
     li.appendChild(adpCell);
     li.appendChild(vorpCell);
@@ -787,8 +790,22 @@
       li.setAttribute('role', 'button');
       li.tabIndex = 0;
       li.setAttribute('aria-label',
-        'Hold to draft ' + p.name + ' to ' + c.onClockTeam.name + ', or tap to choose a team');
+        'Tap for info on ' + p.name + ', or hold to draft to ' + c.onClockTeam.name);
       attachHold(li, p, c.onClockTeam);
+    } else {
+      // Drafted, kept, or the draft is not running: no hold, but a tap still
+      // opens the info card (which offers no draft button in that state).
+      li.classList.add('is-infoable');
+      li.setAttribute('role', 'button');
+      li.tabIndex = 0;
+      li.setAttribute('aria-label', 'Info on ' + p.name);
+      li.addEventListener('click', function (ev) {
+        if (ev.target.closest && ev.target.closest('.p-infobtn, .p-qstar, .q-btn')) return;
+        openNotes(p);
+      });
+      li.addEventListener('keydown', function (ev) {
+        if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); openNotes(p); }
+      });
     }
 
     return li;
@@ -960,7 +977,7 @@
     }
     $('#noteSeason').hidden = !facts.childNodes.length;
 
-    $('#noteText').textContent = n.note || 'No summary for this player yet.';
+    $('#noteText').textContent = n.note || 'No notes';
     $('#noteText').classList.toggle('is-empty', !n.note);
 
     var meta = [];
@@ -1044,11 +1061,12 @@
       if (ev.target.closest && ev.target.closest('.p-infobtn, .p-qstar, .q-btn')) return;
       startHold(ev, li, p, team);
     });
-    // Keyboard users get the team chooser, which is fully operable.
+    // Keyboard users get the same info card a tap opens; its draft button
+    // hands off to the team chooser.
     li.addEventListener('keydown', function (ev) {
       if (ev.key === 'Enter' || ev.key === ' ') {
         ev.preventDefault();
-        openPlayerSheet(p);
+        openNotes(p);
       }
     });
   }
@@ -1110,12 +1128,13 @@
     }
   }
 
-  // Releasing early is a plain tap: open the team chooser instead.
+  // Releasing early is a plain tap: open the player's info card, whose
+  // "Draft this player…" button leads on to the team chooser.
   function onHoldEnd() {
     if (!hold || hold.done) return;
     var p = hold.player;
     cancelHold();
-    openPlayerSheet(p);
+    openNotes(p);
   }
 
   function onHoldAbort() { cancelHold(); }
