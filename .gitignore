@@ -1,12 +1,6 @@
 node_modules/
 .DS_Store
 
-# Scouting notes are private research, built locally and imported on device.
-# They are never published with the app.
-data/notes.json
 tools/.cache/
-# The summaries themselves, which may be derived from sources licensed to you
-# alone. Only the .example file is committed.
-tools/notes-source.json
 
 __pycache__/
