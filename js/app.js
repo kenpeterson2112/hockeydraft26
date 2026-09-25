@@ -5,7 +5,7 @@
   var $ = UI.$, $$ = UI.$$, el = UI.el, num = UI.num, normalize = UI.normalize;
   var LEAGUE = Draft.LEAGUE;
 
-  var APP_VERSION = '2.13.2';
+  var APP_VERSION = '2.13.3';
 
   var players = [];              // seeded from data/players.json
   var playersById = {};
@@ -53,9 +53,12 @@
     }
   }
 
+  // A written note, not just NHL facts: nearly every player has an age, so
+  // counting facts would put the "i" on every row and it would stop meaning
+  // "there is something to read here".
   function noteFor(playerId) {
     var n = notes[playerId];
-    return n && (n.note || n.age != null || n.gp != null) ? n : null;
+    return n && n.note ? n : null;
   }
 
   function notesCoverage() {
@@ -854,8 +857,29 @@
     var modal = $('#noteModal');
 
     $('#noteName').textContent = p.name;
-    $('#noteSub').textContent = p.position + ' · ' + p.team + ' · Tier ' + p.tier +
-      ' · ADP ' + formatAdp(p.adp) + ' · ' + num(p.points) + ' pts';
+
+    var pills = $('#notePills');
+    pills.innerHTML = '';
+    pills.appendChild(el('span', 'note-pill note-pos pos-' + p.position, p.position));
+    pills.appendChild(el('span', 'note-pill', p.team));
+    pills.appendChild(el('span', 'note-pill', 'Tier ' + p.tier));
+    if (n.age != null) pills.appendChild(el('span', 'note-pill', 'Age ' + n.age));
+    if (n.ht) pills.appendChild(el('span', 'note-pill is-quiet', n.ht));
+    // A goalie catches rather than shoots.
+    if (n.shoots) {
+      pills.appendChild(el('span', 'note-pill is-quiet',
+        (p.position === 'G' ? 'Catches ' : 'Shoots ') + n.shoots));
+    }
+
+    var stats = $('#noteStats');
+    stats.innerHTML = '';
+    [['ADP', formatAdp(p.adp)], ['VORP', num(p.vorp)], ['Proj pts', num(p.points)]]
+      .forEach(function (s) {
+        var cell = el('div', 'ns-cell');
+        cell.appendChild(el('span', 'ns-num', s[1]));
+        cell.appendChild(el('span', 'ns-label', s[0]));
+        stats.appendChild(cell);
+      });
 
     var injHost = $('#noteInj');
     injHost.innerHTML = '';
@@ -865,31 +889,28 @@
 
     var facts = $('#noteFacts');
     facts.innerHTML = '';
-    addFact(facts, 'Age', n.age);
-    addFact(facts, 'Ht', n.ht);
-    // A goalie catches rather than shoots, and wins and shutouts are the only
-    // two numbers that score for him in this league — showing his goal total
-    // instead would be showing the wrong stat line entirely.
+    // Wins and shutouts are the only two numbers that score for a goalie in
+    // this league — his goal total would be the wrong stat line entirely.
     if (p.position === 'G') {
-      addFact(facts, 'Catches', n.shoots);
       addFact(facts, 'GP', n.gp);
       addFact(facts, 'W', n.w);
       addFact(facts, 'SO', n.so);
     } else {
-      addFact(facts, 'Shoots', n.shoots);
       addFact(facts, 'GP', n.gp);
       addFact(facts, 'G', n.g);
       addFact(facts, 'A', n.a);
       addFact(facts, 'Pts', n.pts);
     }
-    facts.hidden = !facts.childNodes.length;
+    $('#noteSeason').hidden = !facts.childNodes.length;
 
     $('#noteText').textContent = n.note || 'No summary for this player yet.';
     $('#noteText').classList.toggle('is-empty', !n.note);
 
     var meta = [];
-    if (n.src) meta.push(n.src);
-    if (n.updated) meta.push('updated ' + n.updated);
+    if (n.note) {
+      meta.push('note');
+      if (n.updated) meta.push('updated ' + n.updated);
+    }
     $('#noteMeta').textContent = meta.join(' · ');
     $('#noteMeta').hidden = !meta.length;
 
