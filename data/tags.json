@@ -1,0 +1,180 @@
+{
+ "players": {
+  "adam-fox": [
+   "pp1"
+  ],
+  "alex-nikishin": [
+   "breakout"
+  ],
+  "alex-ovechkin": [
+   "pp1"
+  ],
+  "andrei-svechnikov": [
+   "pp1"
+  ],
+  "andrei-vasilevskiy": [
+   "goalie"
+  ],
+  "arturs-silovs": [
+   "goalie"
+  ],
+  "cale-makar": [
+   "pp1"
+  ],
+  "cole-caufield": [
+   "pp1"
+  ],
+  "connor-bedard": [
+   "breakout"
+  ],
+  "connor-hellebuyck": [
+   "goalie"
+  ],
+  "connor-mcdavid": [
+   "pp1"
+  ],
+  "easton-cowan": [
+   "breakout"
+  ],
+  "evan-bouchard": [
+   "pp1"
+  ],
+  "filip-gustavsson": [
+   "goalie"
+  ],
+  "frank-nazar": [
+   "breakout"
+  ],
+  "frederik-andersen": [
+   "goalie"
+  ],
+  "igor-shesterkin": [
+   "goalie"
+  ],
+  "ilya-sorokin": [
+   "goalie"
+  ],
+  "ivan-demidov": [
+   "pp1",
+   "breakout"
+  ],
+  "jack-eichel": [
+   "pp1"
+  ],
+  "jack-hughes": [
+   "pp1"
+  ],
+  "jackson-blake": [
+   "breakout"
+  ],
+  "jake-oettinger": [
+   "goalie"
+  ],
+  "jake-sanderson": [
+   "pp1"
+  ],
+  "jakob-chychrun": [
+   "pp1"
+  ],
+  "jason-robertson": [
+   "pp1"
+  ],
+  "jeremy-swayman": [
+   "goalie"
+  ],
+  "jesper-wallstedt": [
+   "breakout"
+  ],
+  "jj-peterka": [
+   "breakout"
+  ],
+  "john-carlson": [
+   "pp1"
+  ],
+  "juuse-saros": [
+   "goalie"
+  ],
+  "kirill-kaprizov": [
+   "pp1"
+  ],
+  "konsta-helenius": [
+   "breakout"
+  ],
+  "lane-hutson": [
+   "pp1"
+  ],
+  "leo-carlsson": [
+   "breakout"
+  ],
+  "leon-draisaitl": [
+   "pp1"
+  ],
+  "logan-stankoven": [
+   "breakout"
+  ],
+  "logan-thompson": [
+   "goalie"
+  ],
+  "matt-duchene": [
+   "pp1"
+  ],
+  "matthew-schaefer": [
+   "pp1"
+  ],
+  "matvei-michkov": [
+   "breakout"
+  ],
+  "mavrik-bourque": [
+   "breakout"
+  ],
+  "miro-heiskanen": [
+   "pp1"
+  ],
+  "nathan-mackinnon": [
+   "pp1"
+  ],
+  "nikita-kucherov": [
+   "pp1"
+  ],
+  "porter-martone": [
+   "breakout"
+  ],
+  "pyotr-kochetkov": [
+   "goalie"
+  ],
+  "quinn-hughes": [
+   "pp1"
+  ],
+  "rasmus-dahlin": [
+   "pp1"
+  ],
+  "roman-josi": [
+   "pp1"
+  ],
+  "roman-kantserov": [
+   "breakout"
+  ],
+  "ryan-leonard": [
+   "breakout"
+  ],
+  "scott-wedgewood": [
+   "goalie"
+  ],
+  "sebastian-aho": [
+   "pp1"
+  ],
+  "simon-nemec": [
+   "breakout"
+  ],
+  "steven-stamkos": [
+   "pp1"
+  ],
+  "will-smith": [
+   "breakout"
+  ],
+  "zach-werenski": [
+   "pp1"
+  ]
+ },
+ "v": 1
+}
