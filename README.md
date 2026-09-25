@@ -101,7 +101,9 @@ mistaken for a draft in progress.
      in large type, the team the pick will go to, with a progress bar filling
      left to right; the pick commits when the bar completes. Sliding your finger more than 12px cancels it, so
      scrolling never drafts anyone by accident.
-   - **Tap a row** to open the sheet and assign the pick to a different team.
+   - **Tap a row** to open the player's info card; its **Draft this player…**
+     button opens the sheet to assign the pick to any team. Drafted players'
+     rows open the card too, without the draft button.
    - **Undo** is in the header and on every toast.
    - **The + beside the team name** handles a player who is not in the
      rankings at all. Enter position, name and a projected points figure
@@ -170,37 +172,21 @@ is not a good one, and it is not a bad one either.
 
 ### The value heat map
 
-Whichever of **ADP** and **VORP** is *not* the sort key is shaded by
-percentile among the players **still remaining**. The best value shows at full
-brightness, and worse values fade toward the background. It is brightness, not
-hue. It used to be a green/amber/red ramp, but that fought the position colours
-on every row (green "good value" on a green forward row) and was the loudest
-thing on screen.
+Whichever of **ADP** and **VORP** is *not* the sort key is coloured red →
+yellow → green. **Green always means good for you:** a high VORP, and a *late*
+ADP. Sorted by VORP, a green ADP beside a big VORP is a player the room is
+letting fall; a red ADP means you'll have to pay up early for him. Under the
+**#** or **Pts** sort neither is the key, so both are coloured.
 
-That pairing is the point. Sorted by ADP, the VORP shading says what consensus
-is missing: a dim number beside an early ADP is the market overpaying, and a
-bright one beside a late ADP is the bargain. Sorted by VORP, the ADP shading
-says the same thing from the other side. Under the **#** or **Pts** sort
-neither is the key, so both are shaded.
+- **Yellow is pinned:** VORP 15, and ADP pick 140. Each end of the scale is the
+  best and worst value **still remaining**, so it re-scales as picks land but
+  never because a position chip is selected.
+- **A missing ADP gets no colour at all**, the same rule the sort follows.
+- Drafted players are off the scale entirely.
 
-Three deliberate choices:
-
-- **The ramp reads desirability, not magnitude.** Low ADP and high VORP are
-  both good, so both columns are brightest at their best end.
-- **The scale is the whole remaining pool, not the filtered view.** Filter to
-  goalies and the best one does not jump to full brightness. The question the
-  shading answers is "is this good for what is still out there", and that does
-  not change because a chip is selected. It does re-scale as picks land: the
-  best player left is always the brightest.
-- **A missing ADP gets no shading at all**, the same rule the sort follows. An
-  absent value is not a good one and it is not a bad one.
-
-Drafted players are off the scale entirely, since the scale is defined over
-what remains.
-
-The shade is applied inline rather than through a class, which cannot collide
-with the sorted-column rule below — and never has to, because the ramped column
-is by definition not the sorted one.
+The colour is applied inline rather than through a class, so it cannot collide
+with the sorted-column rule — and never has to, because the coloured column is
+by definition not the sorted one.
 
 ### The queue
 

@@ -406,8 +406,8 @@ button { cursor: pointer; }
 .p-owner { color: var(--txt-dim); font-style: italic; }
 .p-owner.is-keeper { color: var(--txt-dim); font-style: normal; font-weight: 600; }
 
-/* Neutral: value is shown by brightness (see heatColor), never by hue, so
-   the numbers never compete with the position colour on the same row. */
+/* Neutral by default; the value column the list is not sorted by gets an
+   inline red -> yellow -> green colour from heatColor(). */
 .p-num {
   text-align: right; font-size: 17px; font-weight: 600; line-height: 1.1;
   font-variant-numeric: tabular-nums; color: var(--txt-dim);
@@ -1042,8 +1042,8 @@ body.is-mock .topbar {
   font-size: 15px; line-height: 1.5; color: var(--txt);
 }
 .note-text.is-empty {
-  border-left-color: var(--line);
-  color: var(--txt-faint); font-style: italic;
+  padding: 12px; border: 1px dashed var(--line); border-radius: 8px;
+  text-align: center; color: var(--txt-faint); font-size: 14px;
 }
 
 .note-meta {
