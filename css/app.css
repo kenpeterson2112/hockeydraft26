@@ -63,7 +63,7 @@ button { cursor: pointer; }
   flex: none; z-index: 30;
   background: linear-gradient(180deg, #111c33, #0d1526);
   border-bottom: 1px solid var(--line);
-  padding: max(8px, env(safe-area-inset-top)) 12px 8px;
+  padding: max(6px, env(safe-area-inset-top)) 12px 6px;
 }
 /* Ken is on the clock — the one moment in the draft that must not be missed. */
 .topbar.is-mine {
@@ -102,7 +102,7 @@ button { cursor: pointer; }
 .topbar.is-mine .addpick { border-color: rgba(255, 255, 255, .35); color: #fff; }
 
 .onclock {
-  font-weight: 800; font-size: 26px; text-align: center; min-width: 0;
+  font-weight: 800; font-size: 23px; text-align: center; min-width: 0;
   letter-spacing: -.01em;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
@@ -121,7 +121,7 @@ button { cursor: pointer; }
 .undo-btn:disabled { opacity: .35; }
 
 .turnline {
-  margin-top: 5px; font-size: 22px; font-weight: 600; color: var(--txt-dim);
+  margin-top: 3px; font-size: 18px; font-weight: 600; color: var(--txt-dim);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   letter-spacing: -.01em;
 }
@@ -137,7 +137,7 @@ button { cursor: pointer; }
   background: var(--bg-2); border-bottom: 1px solid var(--line);
 }
 .tab {
-  background: none; border: 0; padding: 11px 4px;
+  background: none; border: 0; padding: 8px 4px;
   color: var(--txt-faint); font-size: 14px; font-weight: 600;
   border-bottom: 2px solid transparent;
 }
@@ -191,27 +191,27 @@ button { cursor: pointer; }
 .controls {
   position: sticky; top: 0; z-index: 20;
   background: var(--bg); border-bottom: 1px solid var(--line);
-  padding: 6px 12px;
+  padding: 5px 12px;
 }
 
 .searchrow { display: flex; align-items: center; gap: 8px; }
 .searchwrap { position: relative; flex: 1 1 auto; min-width: 0; }
 .search {
-  width: 100%; height: 38px; padding: 0 34px 0 12px;
+  width: 100%; height: 34px; padding: 0 34px 0 12px;
   background: var(--bg-2); border: 1px solid var(--line);
   border-radius: 10px; color: var(--txt);
 }
 .search::placeholder { color: var(--txt-faint); }
 .search:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
 .clear-btn {
-  position: absolute; right: 2px; top: 2px;
-  width: 34px; height: 34px; background: none; border: 0;
+  position: absolute; right: 1px; top: 1px;
+  width: 32px; height: 32px; background: none; border: 0;
   color: var(--txt-faint); font-size: 22px; line-height: 1;
 }
 
-.chips { display: flex; gap: 6px; margin-top: 6px; }
+.chips { display: flex; gap: 6px; margin-top: 5px; }
 .chip {
-  height: 38px; border-radius: 8px; padding: 0 6px;
+  height: 34px; border-radius: 8px; padding: 0 6px;
   background: var(--bg-2); border: 1px solid var(--line);
   color: var(--txt-faint); font-weight: 700; font-size: 14px;
   display: inline-flex; align-items: center; justify-content: center; gap: 4px;
@@ -270,7 +270,7 @@ button { cursor: pointer; }
 
 .showdrafted {
   display: inline-flex; align-items: center; gap: 5px; flex: none;
-  height: 38px; padding: 0 2px;
+  height: 34px; padding: 0 2px;
   font-size: 12px; color: var(--txt-faint); white-space: nowrap;
 }
 .showdrafted input { width: 15px; height: 15px; margin: 0; accent-color: var(--accent); }
@@ -279,20 +279,21 @@ button { cursor: pointer; }
 
 .listhead {
   display: grid; align-items: stretch;
-  grid-template-columns: 28px 1fr 46px 60px 62px;
+  grid-template-columns: 28px 1fr 46px 60px 62px 26px;
   gap: 8px; padding: 0 12px;
   font-size: 10px; letter-spacing: .08em; text-transform: uppercase;
   color: var(--txt-faint); border-bottom: 1px solid var(--line);
 }
-.listhead > span { display: flex; align-items: center; padding: 5px 0; }
+.listhead > span { display: flex; align-items: center; padding: 3px 0; }
 .lh-name { justify-content: flex-start; }
 .lh-sort.lh-rank { justify-content: flex-start; }
+.lh-star { justify-content: center; font-size: 12px; color: var(--txt-faint); }
 
 /* Tapping a column sorts by it; tapping the active one reverses. */
 .lh-sort {
   display: flex; align-items: center; justify-content: flex-end; gap: 2px;
   min-width: 0;
-  padding: 7px 0; background: none; border: 0;
+  padding: 5px 0; background: none; border: 0;
   font: inherit; font-size: 10px; letter-spacing: .08em; text-transform: uppercase;
   color: var(--txt-faint); white-space: nowrap;
 }
@@ -304,8 +305,8 @@ button { cursor: pointer; }
 
 .prow {
   display: grid; align-items: center;
-  grid-template-columns: 28px 1fr 46px 60px 62px;
-  gap: 8px; padding: 8px 12px;
+  grid-template-columns: 28px 1fr 46px 60px 62px 26px;
+  gap: 8px; padding: 6px 12px;
   border-bottom: 1px solid rgba(38, 51, 77, .55);
   border-left: 10px solid transparent;
 }
@@ -873,16 +874,29 @@ body.is-mock .topbar { border-bottom: 3px solid var(--mock); }
 .chip-star { font-size: 13px; line-height: 1; }
 .chip-qn { font-size: 12px; font-weight: 800; font-variant-numeric: tabular-nums; }
 
-/* The board marker. Carries its position in the queue, so the order you set is
-   readable without opening the queue view. */
-.p-queued {
-  flex: none; margin-left: 2px;
-  font-size: 11px; font-weight: 800; letter-spacing: .02em;
-  color: var(--me);
+/* The board's own queue toggle: a star in its own column on every available
+   player's row, so building a queue is a tap on the row you're already
+   scanning rather than a trip through the sheet. Filled and numbered once
+   queued, carrying his position — the same thing the sheet's own queue
+   button already showed, just reachable without opening it. Owned players
+   render nothing here; the column stays, empty, for grid alignment. It gets
+   the row's full height as its tap target, so no hit-area trick is needed
+   the way the sub-line icons need one. Fenced out of the hold exactly like
+   they are — see attachHold. */
+.p-qstar {
+  width: 100%; height: 100%; padding: 0;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: none; border: 0;
+  font-size: 12px; font-weight: 800; font-variant-numeric: tabular-nums; line-height: 1;
+  color: var(--txt-faint);
+  -webkit-touch-callout: none; user-select: none; -webkit-user-select: none;
+  touch-action: manipulation;
 }
+.p-qstar.is-on { color: var(--me); }
+.p-qstar:active { color: #fff; }
 
-/* Reorder controls, only in the queue view. */
-.prow.has-qmove { grid-template-columns: 28px 1fr 46px 60px 62px 26px; }
+/* Reorder controls, only in the queue view -- a 7th column past the star. */
+.prow.has-qmove { grid-template-columns: 28px 1fr 46px 60px 62px 26px 26px; }
 .q-move { display: flex; flex-direction: column; gap: 2px; justify-self: end; }
 .q-btn {
   width: 26px; height: 22px; padding: 0;
@@ -1128,7 +1142,8 @@ body.is-mock .topbar { border-bottom: 3px solid var(--mock); }
 
 @media (min-width: 640px) {
   .teamlist { grid-template-columns: repeat(2, 1fr); }
-  .prow, .listhead { grid-template-columns: 26px 1fr 44px 58px 60px; }
+  .prow, .listhead { grid-template-columns: 26px 1fr 44px 58px 60px 26px; }
+  .prow.has-qmove { grid-template-columns: 26px 1fr 44px 58px 60px 26px 26px; }
   .prow { padding: 6px 12px; }
 }
 

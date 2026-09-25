@@ -174,20 +174,27 @@ is by definition not the sorted one.
 
 ### The queue
 
-A shortlist you order yourself, ported from Yahoo's. Tap a player, then **Add
-to queue**; the row then carries **★n** showing where he sits in it. The **★**
-chip filters the board to your queue **in your order** — no column sorts it,
-because the order is the whole point — and each row gets ▲▼ to move him.
+A shortlist you order yourself, ported from Yahoo's. Every available player's
+row carries a **☆** of its own, in a column at the end — tap it to add him;
+tap it again to take him off. Once queued it fills in and carries his number,
+**★n**, so the order you set is readable straight off the board without
+opening anything. The **★** chip filters the board to your queue **in your
+order** — no column sorts it, because the order is the whole point — and each
+row there also gets ▲▼ to move him, in a further column past the star. The
+player sheet's own **☆ Add to queue** still works too, for whenever you're
+already looking at it.
 
 It stays honest without you tending it: anyone drafted, by you or by a bot in a
-mock, drops out automatically, and so does anyone you make a keeper. The sheet
-will not offer to queue a player who is already owned.
+mock, drops out automatically, and so does anyone you make a keeper. Nothing
+offers to queue a player who is already owned — an owned row's star column is
+simply empty.
 
-Queueing is done from the player sheet rather than a button on the row. The row
-is already a press target for hold-to-draft plus the notes **i**, and a third
-target on it would be a mis-draft waiting to happen. The ▲▼ buttons that do sit
-on a row are fenced off the same way the **i** is — `attachHold` bails on
-anything inside them, so a long press on one drafts nobody.
+The star has its own hitbox, the same double guard the notes **i** and injury
+badge use: it stops its own press, and `attachHold` bails on anything inside
+`.p-qstar` before a hold ever starts, so no amount of tapping or holding it
+drafts anyone. It gets the row's own column and full height as its target
+rather than their negative-margin trick, since — unlike the sub-line icons —
+it isn't competing for room inline with the player's name and team.
 
 ### The "next pick" divider
 
@@ -374,6 +381,13 @@ a flex column with `overflow: hidden`, and only `.playerlist` scrolls.
 `position: sticky` on each piece was not enough and was quietly wrong: with the
 mock strip above it, `.controls` slid up by the strip's height before it caught,
 so in mock mode the search box moved after all.
+
+Every row of it is chrome the whole draft needs, none of it worth a swipe to
+reach — so it stays as short as it can rather than as short as it started.
+The header, tabs, search row, chips and column heads are all sized down from
+their first pass; a short phone (`@media (max-height: 700px)`) goes further
+still. What doesn't shrink is what has to read at a glance from across the
+room mid-pick — the on-the-clock team name and "You're up!" stay large.
 
 ### No pull-to-refresh
 
