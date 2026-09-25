@@ -300,7 +300,9 @@ owned players.
 
 Both icons sit together at the very end of the row's sub-line, past the team
 and (if he's owned or queued) that too — grouped, so there is one place on the
-row that is always safe to tap regardless of how it is filled in. The row
+row that is always safe to tap regardless of how it is filled in. The notes
+**i** comes first, since it's the one that's always there whenever there's
+anything to read, with the injury badge riding next to it when he's hurt. The row
 itself is a press-to-draft target, so each icon is fenced off from it twice:
 it stops its own pointer events, and `attachHold` bails on anything inside
 `.p-infobtn`, the class both share. Hold either one for five seconds and
@@ -321,14 +323,15 @@ the sheet. Opening the popover while a mock is running pauses the clock — the
 same call `undoLastPick` makes — so nothing changes out from under you while
 you're reading.
 
-#### The notes never ship with the app
+#### Where the notes come from
 
-They live in `localStorage` on your device, imported via **Setup → Player
-notes**, and `data/notes.json` is gitignored. This is deliberate: much of what
-is worth writing down comes from sources like Dobber that are subscriptions
-licensed to *you*, not to everyone who can open a public GitHub Pages site.
-Keeping the file off the repo means you can research however you like without
-republishing anyone's paid product.
+`data/notes.json` ships with the app and loads automatically on boot, the
+same as the injury report. **Setup → Player notes** also lets a device
+import its own file on top — that overlay wins per player id, and the
+bundled notes fill in everyone else — for research from a source (Dobber and
+similar subscriptions) licensed to you alone rather than safe to publish in
+this repo. **Clear notes** only drops that overlay; the bundled notes always
+come back on the next load.
 
 No reset scope touches them, and an import reports both how many players
 matched and how many unknown ids were dropped rather than failing quietly.
@@ -759,7 +762,7 @@ js/ui.js            DOM helpers, toast, bottom sheet
 js/app.js           controller: state, board derivation, rendering, events
 data/players.json   407-player pool
 data/injuries.json  ESPN injury report for the pool
-data/notes.json     scouting notes — gitignored, imported on device
+data/notes.json     scouting notes, ships with the app
 tools/build-notes.mjs   builds notes.json from the NHL API + your summaries
 tools/recompute-vorp.py rebuilds vorp from points and per-position baselines
 tools/import-projections.py  rebuilds players.json from the projections workbook
