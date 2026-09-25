@@ -5,7 +5,7 @@
   var $ = UI.$, $$ = UI.$$, el = UI.el, num = UI.num, normalize = UI.normalize;
   var LEAGUE = Draft.LEAGUE;
 
-  var APP_VERSION = '2.13.1';
+  var APP_VERSION = '2.13.2';
 
   var players = [];              // seeded from data/players.json
   var playersById = {};
@@ -70,6 +70,11 @@
      unreadable file just means no badges. */
 
   var injuryDoc = null;   // { source, url, fetched, players: { id: {...} } }
+
+  // data/notes.json ships with the app (built by tools/build-notes.mjs). A
+  // device can still import its own file on top via Setup -> Player notes;
+  // that overlay wins per player id, bundled notes fill in the rest.
+  var bundledNotes = null;   // { id: {...} } | null if the fetch failed
 
   // Short code for the row, word for the sheet, and a severity for the colour.
   var INJURY = {
@@ -700,12 +705,14 @@
     }
     // Icon buttons go last, at the true end of the row -- away from the name
     // and team text a thumb is actually aiming at, and grouped together so
-    // there is one place to learn they are both safe to tap mid-press.
-    var hurt = injuryFor(p.id);
-    if (hurt) sub.appendChild(buildInjuryBadge(hurt, p));
+    // there is one place to learn they are both safe to tap mid-press. Notes
+    // icon first, with the injury tag riding next to it, since the note icon
+    // is the one that is always present whenever there is anything to read.
     // Only where there is something to read, so the button doubles as "I have
     // research on this guy" and there are no dead taps.
     if (noteFor(p.id)) sub.appendChild(buildNotesButton(p));
+    var hurt = injuryFor(p.id);
+    if (hurt) sub.appendChild(buildInjuryBadge(hurt, p));
     main.appendChild(sub);
     li.appendChild(main);
 
@@ -2089,7 +2096,10 @@
           else dropped++;
         }
 
-        notes = kept;
+        // The import overlays the bundled notes rather than replacing them,
+        // so a device that only wants to add its own scouting on top of the
+        // shipped notes doesn't lose the rest of the board's coverage.
+        notes = Object.assign({}, bundledNotes, kept);
         saveNotes(notes);
         render();
 
@@ -2104,13 +2114,18 @@
     reader.readAsText(file);
   }
 
+  // Clears only what this device imported on top of the bundled notes —
+  // there is no "clear the app's own notes" scope, so this can never leave
+  // the board worse off than a fresh install.
   function clearNotes() {
     var had = notesCoverage();
-    notes = {};
+    notes = Object.assign({}, bundledNotes);
     try { global.localStorage.removeItem(NOTES_KEY); } catch (err) { /* private mode */ }
     closeNotes();
     render();
-    UI.showToast('Cleared notes for ' + had + ' player' + (had === 1 ? '' : 's') + '.');
+    var have = notesCoverage();
+    UI.showToast('Cleared imported notes (' + have + ' of ' + had + ' player' +
+      (had === 1 ? '' : 's') + ' still have a bundled note).');
   }
 
   function renderNotesStatus() {
@@ -2160,7 +2175,7 @@
           if (next.notes && typeof next.notes === 'object' && !Array.isArray(next.notes)) {
             var kept = {}, n = 0;
             for (var id in next.notes) if (playersById[id]) { kept[id] = next.notes[id]; n++; }
-            notes = kept;
+            notes = Object.assign({}, bundledNotes, kept);
             saveNotes(notes);
             parts.push(n + ' note' + (n === 1 ? '' : 's'));
           }
@@ -2609,7 +2624,7 @@
       searchKeys[p.id] = normalize(p.name + p.team);
     });
 
-    notes = loadNotes();
+    notes = Object.assign({}, bundledNotes, loadNotes());
     requestPersistence();
 
     // Come back in whichever draft he left, so a reload mid-mock is not a trap.
@@ -2655,14 +2670,20 @@
       .then(function (r) { return r.ok ? r.json() : null; })
       .catch(function () { return null; });
 
+    // Same treatment: bundled notes are a nice-to-have, never a boot blocker.
+    var notesLoad = fetch('./data/notes.json', { cache: 'no-cache' })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .catch(function () { return null; });
+
     fetch('./data/players.json', { cache: 'no-cache' })
       .then(function (r) {
         if (!r.ok) throw new Error('HTTP ' + r.status);
         return r.json();
       })
       .then(function (data) {
-        return injuriesLoad.then(function (doc) {
-          injuryDoc = doc && doc.players ? doc : null;
+        return Promise.all([injuriesLoad, notesLoad]).then(function (docs) {
+          injuryDoc = docs[0] && docs[0].players ? docs[0] : null;
+          bundledNotes = docs[1] && docs[1].notes ? docs[1].notes : null;
           boot(data);
         });
       })
