@@ -1,6 +1,21 @@
 {
  "players": {
+  "aaron-ekblad": [
+   "pp1"
+  ],
+  "adam-fantilli": [
+   "pp1"
+  ],
   "adam-fox": [
+   "pp1"
+  ],
+  "adrian-kempe": [
+   "pp1"
+  ],
+  "aleksander-barkov": [
+   "pp1"
+  ],
+  "alex-debrincat": [
    "pp1"
   ],
   "alex-nikishin": [
@@ -9,19 +24,70 @@
   "alex-ovechkin": [
    "pp1"
   ],
+  "alexis-lafreni-re": [
+   "pp1"
+  ],
   "andrei-svechnikov": [
    "pp1"
   ],
   "andrei-vasilevskiy": [
    "goalie"
   ],
+  "andrew-copp": [
+   "pp1"
+  ],
+  "anton-frondell": [
+   "pp1"
+  ],
+  "artemi-panarin": [
+   "pp1"
+  ],
   "arturs-silovs": [
    "goalie"
+  ],
+  "auston-matthews": [
+   "pp1"
+  ],
+  "beckett-sennecke": [
+   "pp1"
+  ],
+  "bo-horvat": [
+   "pp1"
+  ],
+  "bobby-mcmann": [
+   "pp1"
+  ],
+  "bowen-byram": [
+   "pp1"
+  ],
+  "brady-tkachuk": [
+   "pp1"
+  ],
+  "brandt-clarke": [
+   "pp1"
+  ],
+  "brayden-schenn": [
+   "pp1"
+  ],
+  "brock-boeser": [
+   "pp1"
   ],
   "cale-makar": [
    "pp1"
   ],
+  "chandler-stephenson": [
+   "pp1"
+  ],
+  "charlie-coyle": [
+   "pp1"
+  ],
+  "clayton-keller": [
+   "pp1"
+  ],
   "cole-caufield": [
+   "pp1"
+  ],
+  "cole-perfetti": [
    "pp1"
   ],
   "connor-bedard": [
@@ -33,20 +99,71 @@
   "connor-mcdavid": [
    "pp1"
   ],
+  "cutter-gauthier": [
+   "pp1"
+  ],
+  "darren-raddysh": [
+   "pp1"
+  ],
+  "david-pastrnak": [
+   "pp1"
+  ],
+  "drake-batherson": [
+   "pp1"
+  ],
+  "dylan-cozens": [
+   "pp1"
+  ],
+  "dylan-guenther": [
+   "pp1"
+  ],
+  "dylan-holloway": [
+   "pp1"
+  ],
+  "dylan-strome": [
+   "pp1"
+  ],
   "easton-cowan": [
    "breakout"
+  ],
+  "elias-pettersson": [
+   "pp1"
+  ],
+  "erik-karlsson": [
+   "pp1"
   ],
   "evan-bouchard": [
    "pp1"
   ],
+  "evgeni-malkin": [
+   "pp1"
+  ],
+  "filip-forsberg": [
+   "pp1"
+  ],
   "filip-gustavsson": [
    "goalie"
+  ],
+  "filip-hronek": [
+   "pp1"
   ],
   "frank-nazar": [
    "breakout"
   ],
   "frederik-andersen": [
    "goalie"
+  ],
+  "gabriel-landeskog": [
+   "pp1"
+  ],
+  "gabriel-vilardi": [
+   "pp1"
+  ],
+  "gavin-mckenna": [
+   "pp1"
+  ],
+  "hampus-lindholm": [
+   "pp1"
   ],
   "igor-shesterkin": [
    "goalie"
@@ -58,14 +175,27 @@
    "pp1",
    "breakout"
   ],
+  "j-t-miller": [
+   "pp1"
+  ],
   "jack-eichel": [
    "pp1"
   ],
   "jack-hughes": [
    "pp1"
   ],
+  "jack-quinn": [
+   "pp1"
+  ],
   "jackson-blake": [
+   "pp1",
    "breakout"
+  ],
+  "jackson-lacombe": [
+   "pp1"
+  ],
+  "jake-debrusk": [
+   "pp1"
   ],
   "jake-oettinger": [
    "goalie"
@@ -76,37 +206,84 @@
   "jakob-chychrun": [
    "pp1"
   ],
+  "jamie-drysdale": [
+   "pp1"
+  ],
+  "jared-mccann": [
+   "pp1"
+  ],
   "jason-robertson": [
    "pp1"
   ],
   "jeremy-swayman": [
    "goalie"
   ],
+  "jesper-bratt": [
+   "pp1"
+  ],
   "jesper-wallstedt": [
    "breakout"
   ],
+  "jimmy-snuggerud": [
+   "pp1"
+  ],
   "jj-peterka": [
+   "pp1",
    "breakout"
   ],
-  "john-carlson": [
+  "joel-eriksson-ek": [
+   "pp1"
+  ],
+  "john-tavares": [
+   "pp1"
+  ],
+  "jonathan-huberdeau": [
+   "pp1"
+  ],
+  "jordan-eberle": [
+   "pp1"
+  ],
+  "josh-doan": [
+   "pp1"
+  ],
+  "josh-morrissey": [
+   "pp1"
+  ],
+  "juraj-slafkovsky": [
    "pp1"
   ],
   "juuse-saros": [
    "goalie"
   ],
+  "kent-johnson": [
+   "pp1"
+  ],
   "kirill-kaprizov": [
+   "pp1"
+  ],
+  "kirill-marchenko": [
    "pp1"
   ],
   "konsta-helenius": [
    "breakout"
   ],
+  "kyle-connor": [
+   "pp1"
+  ],
+  "kyle-palmieri": [
+   "pp1"
+  ],
   "lane-hutson": [
    "pp1"
   ],
   "leo-carlsson": [
+   "pp1",
    "breakout"
   ],
   "leon-draisaitl": [
+   "pp1"
+  ],
+  "logan-cooley": [
    "pp1"
   ],
   "logan-stankoven": [
@@ -115,28 +292,129 @@
   "logan-thompson": [
    "goalie"
   ],
+  "luca-cagnoni": [
+   "pp1"
+  ],
+  "lucas-raymond": [
+   "pp1"
+  ],
+  "luke-evangelista": [
+   "pp1"
+  ],
+  "luke-hughes": [
+   "pp1"
+  ],
+  "marco-rossi": [
+   "pp1"
+  ],
+  "mark-scheifele": [
+   "pp1"
+  ],
+  "mark-stone": [
+   "pp1"
+  ],
+  "martin-necas": [
+   "pp1"
+  ],
+  "mason-mctavish": [
+   "pp1"
+  ],
+  "matias-maccelli": [
+   "pp1"
+  ],
+  "mats-zuccarello": [
+   "pp1"
+  ],
+  "matt-boldy": [
+   "pp1"
+  ],
+  "matt-coronato": [
+   "pp1"
+  ],
   "matt-duchene": [
    "pp1"
   ],
   "matthew-schaefer": [
    "pp1"
   ],
+  "matthew-tkachuk": [
+   "pp1"
+  ],
+  "matthew-wood": [
+   "pp1"
+  ],
+  "matvei-gridin": [
+   "pp1"
+  ],
   "matvei-michkov": [
+   "pp1",
    "breakout"
   ],
   "mavrik-bourque": [
    "breakout"
   ],
+  "mika-zibanejad": [
+   "pp1"
+  ],
+  "mikael-granlund": [
+   "pp1"
+  ],
+  "mikhail-sergachev": [
+   "pp1"
+  ],
+  "mikko-rantanen": [
+   "pp1"
+  ],
   "miro-heiskanen": [
+   "pp1"
+  ],
+  "mitch-marner": [
+   "pp1"
+  ],
+  "morgan-frost": [
+   "pp1"
+  ],
+  "morgan-geekie": [
+   "pp1"
+  ],
+  "moritz-seider": [
    "pp1"
   ],
   "nathan-mackinnon": [
    "pp1"
   ],
+  "nick-schmaltz": [
+   "pp1"
+  ],
+  "nick-suzuki": [
+   "pp1"
+  ],
+  "nico-hischier": [
+   "pp1"
+  ],
   "nikita-kucherov": [
    "pp1"
   ],
+  "nikolaj-ehlers": [
+   "pp1"
+  ],
+  "patrick-kane": [
+   "pp1"
+  ],
+  "pavel-dorofeyev": [
+   "pp1"
+  ],
+  "pavel-zacha": [
+   "pp1"
+  ],
+  "philip-broberg": [
+   "pp1"
+  ],
+  "pierre-luc-dubois": [
+   "pp1"
+  ],
   "porter-martone": [
+   "pp1",
    "breakout"
   ],
   "pyotr-kochetkov": [
@@ -145,22 +423,53 @@
   "quinn-hughes": [
    "pp1"
   ],
+  "quinton-byfield": [
+   "pp1"
+  ],
   "rasmus-dahlin": [
+   "pp1"
+  ],
+  "rickard-rakell": [
+   "pp1"
+  ],
+  "robert-thomas": [
    "pp1"
   ],
   "roman-josi": [
    "pp1"
   ],
   "roman-kantserov": [
+   "pp1",
    "breakout"
+  ],
+  "ryan-hartman": [
+   "pp1"
   ],
   "ryan-leonard": [
    "breakout"
+  ],
+  "ryan-nugent-hopkins": [
+   "pp1"
+  ],
+  "ryan-o-reilly": [
+   "pp1"
+  ],
+  "sam-reinhart": [
+   "pp1"
   ],
   "scott-wedgewood": [
    "goalie"
   ],
   "sebastian-aho": [
+   "pp1"
+  ],
+  "shayne-gostisbehere": [
+   "pp1"
+  ],
+  "shea-theodore": [
+   "pp1"
+  ],
+  "sidney-crosby": [
    "pp1"
   ],
   "simon-nemec": [
@@ -169,10 +478,55 @@
   "steven-stamkos": [
    "pp1"
   ],
+  "tage-thompson": [
+   "pp1"
+  ],
+  "tim-st-tzle": [
+   "pp1"
+  ],
+  "tom-wilson": [
+   "pp1"
+  ],
+  "tomas-hertl": [
+   "pp1"
+  ],
+  "trevor-zegras": [
+   "pp1"
+  ],
+  "tyler-bertuzzi": [
+   "pp1"
+  ],
+  "tyson-foerster": [
+   "pp1"
+  ],
+  "victor-hedman": [
+   "pp1"
+  ],
+  "viktor-arvidsson": [
+   "pp1"
+  ],
+  "vince-dunn": [
+   "pp1"
+  ],
   "will-smith": [
    "breakout"
   ],
+  "william-eklund": [
+   "pp1"
+  ],
+  "william-nylander": [
+   "pp1"
+  ],
+  "wyatt-johnston": [
+   "pp1"
+  ],
+  "zach-benson": [
+   "pp1"
+  ],
   "zach-werenski": [
+   "pp1"
+  ],
+  "zayne-parekh": [
    "pp1"
   ]
  },

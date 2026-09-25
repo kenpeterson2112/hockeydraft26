@@ -5,7 +5,7 @@
   var $ = UI.$, $$ = UI.$$, el = UI.el, num = UI.num, normalize = UI.normalize;
   var LEAGUE = Draft.LEAGUE;
 
-  var APP_VERSION = '2.17.0';
+  var APP_VERSION = '2.17.1';
 
   var players = [];              // seeded from data/players.json
   var playersById = {};
@@ -1047,7 +1047,11 @@
   /* ------------------------------------------------------- hold-to-draft */
 
   var HOLD_MS = 1500;      // full press duration before the pick commits
-  var MOVE_CANCEL_PX = 12; // treat as a scroll, not a press
+  var MOVE_CANCEL_PX = 8;  // treat as a scroll, not a press
+  // A finger must rest this long before the hold arms (popup, first buzz,
+  // progress). A scroll flick moves or cancels well inside it, so scrolling
+  // the list never buzzes or flashes a hold.
+  var HOLD_ARM_MS = 180;
   var HOLD_POP_GAP = 62;   // clearance from the press point, so a thumb cannot
                            // cover the popup or its progress bar
 
@@ -1082,18 +1086,27 @@
       start: 0,
       raf: 0,
       halfway: false,
-      done: false
+      done: false,
+      armTimer: 0
     };
-    li.classList.add('is-holding');
-    showHoldPop(p, team, ev.clientX, ev.clientY);
-    buzz(8);
 
     global.addEventListener('pointermove', onHoldMove, { passive: true });
     global.addEventListener('pointerup', onHoldEnd);
     global.addEventListener('pointercancel', onHoldAbort);
-    global.addEventListener('scroll', onHoldAbort, { passive: true });
+    // Capture: the list scrolls in its own container, and scroll does not
+    // bubble, so a window-only listener never heard it.
+    global.addEventListener('scroll', onHoldAbort, { passive: true, capture: true });
     global.addEventListener('contextmenu', onContextMenu);
 
+    hold.armTimer = global.setTimeout(armHold, HOLD_ARM_MS);
+  }
+
+  function armHold() {
+    if (!hold) return;
+    hold.armTimer = 0;
+    hold.li.classList.add('is-holding');
+    showHoldPop(hold.player, hold.team, hold.startX, hold.startY);
+    buzz(8);
     hold.raf = global.requestAnimationFrame(stepHold);
   }
 
@@ -1143,6 +1156,7 @@
 
   function cancelHold() {
     if (!hold) return;
+    if (hold.armTimer) global.clearTimeout(hold.armTimer);
     if (hold.raf) global.cancelAnimationFrame(hold.raf);
     hold.li.classList.remove('is-holding');
     hold = null;
@@ -1150,7 +1164,7 @@
     global.removeEventListener('pointermove', onHoldMove);
     global.removeEventListener('pointerup', onHoldEnd);
     global.removeEventListener('pointercancel', onHoldAbort);
-    global.removeEventListener('scroll', onHoldAbort);
+    global.removeEventListener('scroll', onHoldAbort, { capture: true });
     global.removeEventListener('contextmenu', onContextMenu);
   }
 

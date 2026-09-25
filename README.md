@@ -109,7 +109,10 @@ mistaken for a draft in progress.
      rankings at all. Enter position, name and a projected points figure
      (defaults to 45) and it drafts straight to the team on the clock.
 
-   The hold duration is `HOLD_MS` in `js/app.js`.
+   The hold duration is `HOLD_MS` in `js/app.js`. Nothing happens for the
+   first `HOLD_ARM_MS` (180 ms) — no buzz, no popup — so scrolling the list
+   with a thumb never starts a hold. Moving more than 8 px or any scroll
+   cancels it.
    When it is your turn the whole header turns purple and the line reads
    **"You're up! Next selection in X picks."** in white.
 5. **Teams.** Your team is pinned to the top; the other 13 rank by effective
