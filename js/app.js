@@ -5,7 +5,7 @@
   var $ = UI.$, $$ = UI.$$, el = UI.el, num = UI.num, normalize = UI.normalize;
   var LEAGUE = Draft.LEAGUE;
 
-  var APP_VERSION = '2.17.2';
+  var APP_VERSION = '2.18.0';
 
   var players = [];              // seeded from data/players.json
   var playersById = {};

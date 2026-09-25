@@ -627,9 +627,9 @@ the live and mock drafts can differ. That matters more than it sounds:
 
 | Position | Baseline |
 |---|---|
-| F | 35.0 |
-| D | 25.5 |
-| G | 36.5 |
+| F | 43.0 |
+| D | 29.0 |
+| G | 38.0 |
 
 The baseline is what a replacement-level player at that position is expected to
 score — what is actually sitting on the wire. A **lower** baseline means a

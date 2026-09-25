@@ -34,7 +34,7 @@ DRY = '--dry-run' in sys.argv
 
 # Points a replacement-level player at this position is expected to score.
 # Change these and re-run; nothing else in the app needs to know.
-BASELINE = {'F': 35.0, 'D': 25.5, 'G': 36.5}
+BASELINE = {'F': 43.0, 'D': 29.0, 'G': 38.0}
 
 # Exactly the original file's encoding. Any deviation rewrites bytes we do not
 # own, so these two arguments are load-bearing, not style.
