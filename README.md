@@ -124,7 +124,8 @@ mistaken for a draft in progress.
 
 The position has to be readable at scrolling speed, so you can see the mix of
 F, D and G without reading a letter. Every row starts with a **solid position
-tile**, full row height, carrying the **F / D / G** letter and the board rank.
+tile**, full row height, carrying the **F / D / G** letter and his **rank at that position** among
+players still available (D4 = fourth-best defenceman left).
 Down the left edge of the list those tiles form one continuous strip, which
 reads like a stacked bar chart: a run of goalies, then a block of forwards.
 A light wash of the same colour runs across the rest of the row, so the band
@@ -234,9 +235,10 @@ the number of picks until your turn does not depend on what you are looking at.
 When Ken is on the clock it counts to the wheel, his *following* pick, which is
 the decision that actually matters.
 
-**The purple rank chips are the projection.** A player's rank number, inside
-his position tile, becomes a small purple chip when his canonical board rank
-falls inside that horizon. He is expected to be gone. It is a chip rather than
+**The purple rank chips are the projection.** A player's positional rank,
+inside his position tile, becomes a small purple chip when his overall board
+rank falls inside that horizon — so "D4 is purple" reads as "the fourth-best
+defenceman left won't make it back to you". He is expected to be gone. It is a chip rather than
 a text colour so it reads on all three tile colours. (A row tint carried this originally; layered under the
 positional tint it muddied the colour that matters more, so only the number
 carries it now.) This is measured against the **full combined board**, not
