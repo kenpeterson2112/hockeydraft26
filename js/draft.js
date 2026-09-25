@@ -65,11 +65,19 @@
     return roundForPick(n, teams) + '.' + String(pickInRound(n, teams)).padStart(2, '0');
   }
 
-  // First pick number >= from that belongs to slot. Null once the draft ends.
-  function nextPickForSlot(slot, from, teams) {
+  // Who actually holds pick n. A traded pick overrides the snake; `owners` is
+  // the draft's own { pickNumber: slot } map and may be absent.
+  function ownerSlotForPick(n, teams, owners) {
+    var traded = owners && owners[n];
+    return traded || slotForPick(n, teams);
+  }
+
+  // First pick number >= from that belongs to slot, honouring traded picks.
+  // Null once the draft ends.
+  function nextPickForSlot(slot, from, teams, owners) {
     var last = LEAGUE.draftRounds * teams;
     for (var n = Math.max(1, from); n <= last; n++) {
-      if (slotForPick(n, teams) === slot) return n;
+      if (ownerSlotForPick(n, teams, owners) === slot) return n;
     }
     return null;
   }
@@ -122,6 +130,14 @@
     return out;
   }
 
+  // Traded picks are pick numbers in a snake of a particular width. Change the
+  // width and every one of them points at a different pick, so they go.
+  function clearTrades(state) {
+    var n = Object.keys(state.pickOwners || {}).length;
+    state.pickOwners = {};
+    return n;
+  }
+
   // Ids double as indexes into state.teams and are what keepers and picks point
   // at, so removing one means renumbering everything after it. Keepers held by
   // the departing team go back in the pool.
@@ -155,7 +171,8 @@
     // the number.
     if (state.mySlot > going.slot) state.mySlot--;
 
-    return { ok: true, removed: going.name, released: released };
+    var tradesCleared = clearTrades(state);
+    return { ok: true, removed: going.name, released: released, tradesCleared: tradesCleared };
   }
 
   function addTeam(state, name) {
@@ -168,20 +185,45 @@
       name: name || DEFAULT_TEAM_NAMES[i] || ('Team ' + (i + 1))
     };
     state.teams.push(team);
-    return { ok: true, added: team.name };
+    return { ok: true, added: team.name, tradesCleared: clearTrades(state) };
   }
 
-  function freshState() {
+  function blankState() {
     return {
       v: 1,
       teams: makeTeams(DEFAULT_TEAM_NAMES),
       mySlot: DEFAULT_MY_SLOT,
       keepers: {},       // playerId -> teamId
+      pickOwners: {},    // traded picks: pickNumber -> slot that now holds it
       picks: [],         // [{ playerId, teamId, n }] in pick order
       queue: [],         // playerIds you mean to take, in your own order
       customPlayers: [], // players entered by hand, absent from the rankings
       setupDone: false
     };
+  }
+
+  // A fresh draft is the real league, not a blank one: the 2026 order, all 42
+  // declared keepers and the traded picks, straight from js/league.js. Nothing
+  // to type on draft day, and every piece of it is still editable in Setup.
+  function freshState() {
+    var s = blankState();
+    var L = global.League2026;
+    if (!L) return s;
+
+    s.teams = makeTeams(L.teams, L.teams.length);
+    s.mySlot = L.mySlot;
+    var idByName = {};
+    s.teams.forEach(function (t) { idByName[t.name] = t.id; });
+
+    for (var name in L.keepers) {
+      if (idByName[name] == null) continue;
+      L.keepers[name].forEach(function (pid) { s.keepers[pid] = idByName[name]; });
+    }
+    L.trades.forEach(function (tr) {
+      if (idByName[tr.to] != null) s.pickOwners[tr.pick] = idByName[tr.to] + 1;
+    });
+    s.league = L.season;
+    return s;
   }
 
   function load(key) {
@@ -196,7 +238,14 @@
           s.teams.length < LEAGUE.minTeams || s.teams.length > LEAGUE.maxTeams) {
         return freshState();
       }
+      // A save from before the league was built in, with no picks in it, is
+      // an untouched setup — the real keepers and trades supersede it. One
+      // with picks is somebody's draft and is left exactly as it is.
+      if (!s.league && !(Array.isArray(s.picks) && s.picks.length)) {
+        return freshState();
+      }
       s.keepers = s.keepers || {};
+      s.pickOwners = s.pickOwners || {};
       s.picks = Array.isArray(s.picks) ? s.picks : [];
       s.customPlayers = Array.isArray(s.customPlayers) ? s.customPlayers : [];
       s.queue = Array.isArray(s.queue) ? s.queue : [];  // absent in pre-2.10 saves
@@ -248,17 +297,21 @@
     var made = state.picks.length;
     var current = made + 1;
     var complete = current > totalPicks(state);
-    var onClockSlot = complete ? null : slotForPick(current, teams);
+    var owners = state.pickOwners;
+    var onClockSlot = complete ? null : ownerSlotForPick(current, teams, owners);
     var onClockTeam = complete ? null : teamBySlot(state, onClockSlot);
     var onClockIsMe = !complete && onClockSlot === state.mySlot;
+    // The team whose pick this originally was, when it has been traded.
+    var snakeSlot = complete ? null : slotForPick(current, teams);
+    var onClockVia = (!complete && snakeSlot !== onClockSlot) ? teamBySlot(state, snakeSlot) : null;
 
     // When Ken is on the clock his "next turn" is the wheel back around —
     // that is the horizon worth drawing on the board.
     var from = onClockIsMe ? current + 1 : current;
-    var target = complete ? null : nextPickForSlot(state.mySlot, from, teams);
+    var target = complete ? null : nextPickForSlot(state.mySlot, from, teams, owners);
     // The pick after that one. On the wheel your two picks come back to back,
     // so knowing where the second lands is what decides whether you can wait.
-    var second = target ? nextPickForSlot(state.mySlot, target + 1, teams) : null;
+    var second = target ? nextPickForSlot(state.mySlot, target + 1, teams, owners) : null;
 
     return {
       picksMade: made,
@@ -267,12 +320,27 @@
       onClockSlot: onClockSlot,
       onClockTeam: onClockTeam,
       onClockIsMe: onClockIsMe,
+      onClockVia: onClockVia,
       targetPick: target,
       // Picks other teams get to make before Ken is up again.
       picksUntilMine: target ? target - current : 0,
       secondPick: second,
       picksUntilSecond: second ? second - current : 0
     };
+  }
+
+  // Traded picks as a list, in pick order, with both teams resolved.
+  function tradedPicks(state) {
+    var teams = state.teams.length;
+    return Object.keys(state.pickOwners || {}).map(Number).sort(function (a, b) { return a - b; })
+      .map(function (n) {
+        return {
+          n: n,
+          to: teamBySlot(state, state.pickOwners[n]),
+          from: teamBySlot(state, slotForPick(n, teams))
+        };
+      })
+      .filter(function (t) { return t.to && t.from && t.to !== t.from; });
   }
 
   function teamBySlot(state, slot) {
@@ -315,6 +383,9 @@
     pickInRound: pickInRound,
     pickLabel: pickLabel,
     nextPickForSlot: nextPickForSlot,
+    ownerSlotForPick: ownerSlotForPick,
+    tradedPicks: tradedPicks,
+    blankState: blankState,
     scoreRoster: scoreRoster,
     freshState: freshState,
     makeTeams: makeTeams,

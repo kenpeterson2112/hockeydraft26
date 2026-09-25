@@ -55,6 +55,12 @@
 
   <section class="card mocksummary" id="mockSummary" hidden></section>
 
+  <!-- Shown until a draft is running, so the board never looks like one is. -->
+  <section class="card startcard boardstart" id="boardStart" hidden>
+    <h2>No draft running</h2>
+    <div class="startgrid" data-start-host></div>
+  </section>
+
   <div class="controls">
     <div class="searchrow">
       <div class="searchwrap">
@@ -100,8 +106,22 @@
 <!-- ------------------------------------------------------------- SETUP -->
 <main class="view" id="view-setup">
 
+  <section class="card startcard" id="startCard">
+    <h2>Start a draft</h2>
+    <p class="hint" id="leagueLine"></p>
+    <div class="startgrid" data-start-host></div>
+    <div class="btnrow" id="mockActions" hidden>
+      <button class="btn" id="mockRestart" type="button">New mock</button>
+      <button class="btn" id="mockCopy" type="button">Copy transcript</button>
+      <button class="btn" id="mockDownload" type="button">Save .txt</button>
+    </div>
+    <p class="hint startnote">A mock runs on a copy of the league — same order,
+      keepers and traded picks — and is saved separately, so nothing you do in
+      one can touch the live draft.</p>
+  </section>
+
   <section class="card">
-    <h2>1 · Draft order</h2>
+    <h2>Draft order</h2>
     <p class="hint">Slot 1 picks first. Snake order reverses every round. Tap a row's
       radio to mark which team is yours, or <b>&times;</b> to drop someone who
       pulled out — the slots below close up and their keepers go back in the pool.</p>
@@ -110,36 +130,17 @@
       <button class="btn" id="addTeamBtn" type="button">Add team</button>
       <span class="hint" id="teamCountNote"></span>
     </div>
+    <h3 class="subhead">Traded picks <span class="counter" id="tradeCounter"></span></h3>
+    <ul class="tradelist" id="tradeList"></ul>
   </section>
 
   <section class="card">
-    <h2>2 · Keepers <span class="counter" id="keeperCounter">0 / 42</span></h2>
-    <p class="hint">Assign 3 keepers to every team. Keepers are owned before the draft and do <strong>not</strong> consume a snake pick.</p>
+    <h2>Keepers <span class="counter" id="keeperCounter">0 / 42</span></h2>
+    <p class="hint">Pre-loaded with the league's declared 2026 keepers — tap a
+      team to check or change them. Keepers are owned before the draft and do
+      <strong>not</strong> consume a snake pick.</p>
     <div class="keeperteams" id="keeperTeamPicker"></div>
     <div class="keeperpanel" id="keeperPanel"></div>
-  </section>
-
-  <section class="card">
-    <h2>3 · Draft day</h2>
-    <div class="statusgrid" id="setupStatus"></div>
-    <div class="btnrow">
-      <button class="btn btn-primary" id="startBtn" type="button">Start draft</button>
-    </div>
-  </section>
-
-  <section class="card">
-    <h2>Mock draft</h2>
-    <p class="hint">A mock runs on a copy of your teams and keepers and is saved
-      separately, so nothing you do here can touch the live draft.</p>
-    <div class="segmented" id="modeSwitch" role="group" aria-label="Draft mode">
-      <button class="seg is-on" data-mode="live" type="button">Live draft</button>
-      <button class="seg" data-mode="mock" type="button">Mock draft</button>
-    </div>
-    <div class="btnrow" id="mockActions" hidden>
-      <button class="btn" id="mockRestart" type="button">New mock</button>
-      <button class="btn" id="mockCopy" type="button">Copy transcript</button>
-      <button class="btn" id="mockDownload" type="button">Save .txt</button>
-    </div>
   </section>
 
   <section class="card">
@@ -177,6 +178,7 @@
     <p class="hint">An installed copy keeps serving its cached build until you
       update it. This checks the server and only reloads if there is something
       newer.</p>
+    <p class="hint" id="injuryStatus"></p>
     <div class="btnrow">
       <button class="btn" id="updateBtn" type="button">Check for update</button>
     </div>
@@ -207,9 +209,11 @@
     </div>
     <button class="sheet-close" id="noteClose" type="button" aria-label="Close">&times;</button>
   </div>
+  <div id="noteInj" hidden></div>
   <div class="note-facts" id="noteFacts" hidden></div>
   <p class="note-text" id="noteText"></p>
   <p class="note-meta" id="noteMeta" hidden></p>
+  <div class="note-actions" id="noteActions" hidden></div>
 </div>
 
 <div class="holdpop" id="holdPop" hidden aria-hidden="true">
@@ -226,6 +230,7 @@
   <button class="toast-undo" id="toastUndo" type="button">Undo</button>
 </div>
 
+<script src="./js/league.js"></script>
 <script src="./js/draft.js"></script>
 <script src="./js/bot.js"></script>
 <script src="./js/mock.js"></script>

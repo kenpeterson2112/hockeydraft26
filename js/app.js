@@ -5,7 +5,7 @@
   var $ = UI.$, $$ = UI.$$, el = UI.el, num = UI.num, normalize = UI.normalize;
   var LEAGUE = Draft.LEAGUE;
 
-  var APP_VERSION = '2.10.0';
+  var APP_VERSION = '2.13.1';
 
   var players = [];              // seeded from data/players.json
   var playersById = {};
@@ -62,6 +62,73 @@
     var n = 0;
     for (var i = 0; i < players.length; i++) if (noteFor(players[i].id)) n++;
     return n;
+  }
+
+  /* ------------------------------------------------------------- injuries
+     data/injuries.json is ESPN's injury report cut down to this pool, built by
+     tools/fetch-injuries.py and published with the app. Optional: a missing or
+     unreadable file just means no badges. */
+
+  var injuryDoc = null;   // { source, url, fetched, players: { id: {...} } }
+
+  // Short code for the row, word for the sheet, and a severity for the colour.
+  var INJURY = {
+    'O':     { code: 'OUT',  word: 'Out',             sev: 'out' },
+    'IR':    { code: 'IR',   word: 'Injured reserve', sev: 'out' },
+    'IR-LT': { code: 'LTIR', word: 'Long-term IR',    sev: 'out' },
+    'DTD':   { code: 'DTD',  word: 'Day-to-day',      sev: 'dtd' },
+    'SUSP':  { code: 'SUSP', word: 'Suspended',       sev: 'susp' }
+  };
+
+  function injuryFor(playerId) {
+    var i = injuryDoc && injuryDoc.players && injuryDoc.players[playerId];
+    return i && INJURY[i.status] ? i : null;
+  }
+
+  var MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+                'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+  // "2026-10-02" -> "Oct 2". Parsed by hand: new Date() would read it as UTC
+  // midnight and show the day before anywhere west of Greenwich.
+  function shortDate(iso) {
+    var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso || '');
+    return m ? MONTHS[Number(m[2]) - 1] + ' ' + Number(m[3]) : '';
+  }
+
+  // The badge beside it already says OUT, so the box drops a word that only
+  // repeats it; "Long-term IR" says more than LTIR and stays.
+  function injurySummary(i, besideBadge) {
+    var kind = INJURY[i.status];
+    var parts = besideBadge && kind.word.toUpperCase() === kind.code ? [] : [kind.word];
+    if (i.injury && i.injury.toLowerCase() !== 'suspension') parts.push(i.injury);
+    if (i.return) parts.push('back ' + shortDate(i.return));
+    return parts.join(' \u00b7 ');
+  }
+
+  function buildInjuryBox(i) {
+    var box = el('div', 'injbox inj-' + INJURY[i.status].sev);
+    var head = el('div', 'injbox-head');
+    head.appendChild(el('span', 'p-inj inj-' + INJURY[i.status].sev, INJURY[i.status].code));
+    head.appendChild(el('span', null, injurySummary(i, true)));
+    box.appendChild(head);
+    if (i.note) box.appendChild(el('p', 'injbox-note', i.note));
+    box.appendChild(el('p', 'injbox-meta', 'ESPN' +
+      (i.updated ? ' \u00b7 ' + shortDate(i.updated) : '')));
+    return box;
+  }
+
+  function renderInjuryStatus() {
+    var line = $('#injuryStatus');
+    if (!line) return;
+    if (!injuryDoc) {
+      line.textContent = 'No injury report loaded.';
+      return;
+    }
+    var n = Object.keys(injuryDoc.players || {}).length;
+    var when = injuryDoc.fetched || '';
+    line.textContent = 'Injuries: ' + n + ' player' + (n === 1 ? '' : 's') +
+      ' flagged, from ESPN as of ' + shortDate(when) +
+      (when.length >= 16 ? ', ' + when.slice(11, 16) + ' UTC' : '') + '.';
   }
 
   /* ------------------------------------------------------------------ mode
@@ -354,6 +421,7 @@
     renderTierBadges(board);
     syncChips();
     renderMockChrome(board);
+    renderStart();
     if (view.tab === 'board') renderBoard(board);
     if (view.tab === 'teams') renderTeams(board);
     if (view.tab === 'setup') renderSetup(board);
@@ -382,6 +450,9 @@
     if (c.onClockIsMe) {
       $('#onClockText').appendChild(el('span', 'me-tag', 'YOU'));
     }
+    if (c.onClockVia) {
+      $('#onClockText').appendChild(el('span', 'via-tag', 'via ' + c.onClockVia.name));
+    }
 
     topbar.classList.toggle('is-mine', c.onClockIsMe);
     var turn = $('#turnLine');
@@ -389,7 +460,7 @@
     turn.innerHTML = '';
 
     if (!state.setupDone) {
-      turn.textContent = 'Finish setup to start the draft.';
+      turn.textContent = isMock() ? 'Mock not started.' : 'Live draft not started.';
       return;
     }
 
@@ -616,9 +687,6 @@
     sub.appendChild(el('span', 'p-pos', p.position));
     sub.appendChild(el('span', 'p-tier-chip', 'T' + p.tier));
     sub.appendChild(el('span', null, p.team));
-    // Only where there is something to read, so the button doubles as "I have
-    // research on this guy" and there are no dead taps.
-    if (noteFor(p.id)) sub.appendChild(buildNotesButton(p));
     var qAt = queued(p.id);
     if (qAt !== -1) {
       var star = el('span', 'p-queued', '\u2605' + (qAt + 1));
@@ -630,6 +698,14 @@
       sub.appendChild(el('span', 'p-owner' + (isKeeper ? ' is-keeper' : ''),
         (isKeeper ? 'K · ' : '') + state.teams[ownerId].name));
     }
+    // Icon buttons go last, at the true end of the row -- away from the name
+    // and team text a thumb is actually aiming at, and grouped together so
+    // there is one place to learn they are both safe to tap mid-press.
+    var hurt = injuryFor(p.id);
+    if (hurt) sub.appendChild(buildInjuryBadge(hurt, p));
+    // Only where there is something to read, so the button doubles as "I have
+    // research on this guy" and there are no dead taps.
+    if (noteFor(p.id)) sub.appendChild(buildNotesButton(p));
     main.appendChild(sub);
     li.appendChild(main);
 
@@ -716,32 +792,69 @@
 
   /* --------------------------------------------------------- player notes */
 
-  // The row is already a press target, so this button must never reach the
-  // hold. Two guards, deliberately redundant: it stops its own events here,
-  // and attachHold bails on anything inside .p-notes — that second one cannot
+  // The row is already a press target, so a button living inside it — the
+  // notes "i" and the injury badge alike — must never reach the hold. Two
+  // guards, deliberately redundant: it stops its own events here, and
+  // attachHold bails on anything inside .p-infobtn — that second one cannot
   // be defeated by event ordering once the global hold listeners are live.
-  function buildNotesButton(p) {
-    var btn = el('button', 'p-notes', 'i');
+  function buildRowIconButton(content, ariaLabel, onClick) {
+    var btn = el('button', 'p-infobtn');
     btn.type = 'button';
-    btn.setAttribute('aria-label', 'Notes on ' + p.name);
+    btn.setAttribute('aria-label', ariaLabel);
+    if (typeof content === 'string') btn.textContent = content;
+    else btn.appendChild(content);
     btn.addEventListener('pointerdown', function (ev) { ev.stopPropagation(); });
     btn.addEventListener('click', function (ev) {
       ev.stopPropagation();
       ev.preventDefault();
-      openNotes(p);
+      onClick();
     });
+    return btn;
+  }
+
+  function buildNotesButton(p) {
+    var btn = buildRowIconButton('i', 'Notes on ' + p.name, function () { openNotes(p); });
+    btn.classList.add('p-notes');
+    return btn;
+  }
+
+  // Tapping it opens the same info popover as the notes "i" — the injury box
+  // rides at the top of it — so checking on a hurt player never risks landing
+  // mid-press on the row underneath.
+  function buildInjuryBadge(i, p) {
+    var pill = el('span', 'p-inj inj-' + INJURY[i.status].sev, INJURY[i.status].code);
+    var btn = buildRowIconButton(pill,
+      injurySummary(i) + ' — tap for details', function () { openNotes(p); });
+    btn.title = injurySummary(i);
     return btn;
   }
 
   // A top-level element rather than a child of the row: a mock draft rebuilds
   // every row on each pick, which would otherwise tear an open modal down.
+  //
+  // Doubles as the injury popover (opened from the badge) and carries a
+  // draft action of its own, so checking on a player never has to end with
+  // closing this and re-finding him in a rebuilt list to actually take him.
+  //
+  // That draft action names a team and a pick number as of right now; a mock
+  // left running underneath could move the clock while this sits open and
+  // turn it into a mis-draft. Same call as undo: reading this means he wants
+  // a moment, so the clock stops rather than racing him.
   function openNotes(p) {
+    if (isMock() && mock.isRunning()) mock.pause();
+
     var n = notes[p.id] || {};
     var modal = $('#noteModal');
 
     $('#noteName').textContent = p.name;
     $('#noteSub').textContent = p.position + ' · ' + p.team + ' · Tier ' + p.tier +
       ' · ADP ' + formatAdp(p.adp) + ' · ' + num(p.points) + ' pts';
+
+    var injHost = $('#noteInj');
+    injHost.innerHTML = '';
+    var hurt = injuryFor(p.id);
+    if (hurt) injHost.appendChild(buildInjuryBox(hurt));
+    injHost.hidden = !hurt;
 
     var facts = $('#noteFacts');
     facts.innerHTML = '';
@@ -772,6 +885,33 @@
     if (n.updated) meta.push('updated ' + n.updated);
     $('#noteMeta').textContent = meta.join(' · ');
     $('#noteMeta').hidden = !meta.length;
+
+    // Same "can this be drafted right now" test buildPlayerRow uses for the
+    // row itself, so the button appears exactly when the hold would have
+    // worked — and stays silent for an owned player or a draft not running.
+    //
+    // Deliberately one hop, not a direct commit: this popover is opened with
+    // the same light, repeatable tap used to just glance at a player, and a
+    // one-tap "Draft to X" button living right there turned out to draft
+    // whoever the user was glancing at, the moment a quick run through
+    // several players landed a stray tap on it. Handing off to the sheet
+    // keeps it to a single tap here and a second, deliberate one there — the
+    // same two steps a plain tap on the row itself has always taken.
+    var c = Draft.clock(state);
+    var ownerId = Draft.ownerMap(state)[p.id];
+    var actions = $('#noteActions');
+    actions.innerHTML = '';
+    var canDraft = ownerId == null && state.setupDone && !c.complete;
+    if (canDraft) {
+      var go = el('button', 'btn btn-primary', 'Draft this player…');
+      go.type = 'button';
+      go.addEventListener('click', function () {
+        closeNotes();
+        openPlayerSheet(p);
+      });
+      actions.appendChild(go);
+    }
+    actions.hidden = !canDraft;
 
     $('#sheetBackdrop').hidden = false;
     modal.hidden = false;
@@ -815,9 +955,9 @@
   function attachHold(li, p, team) {
     li.addEventListener('pointerdown', function (ev) {
       if (!ev.isPrimary || (ev.pointerType === 'mouse' && ev.button !== 0)) return;
-      // The notes button lives inside the row; pressing it must never begin a
-      // draft, however long the press is held.
-      if (ev.target.closest && ev.target.closest('.p-notes, .q-btn')) return;
+      // The notes and injury buttons live inside the row; pressing either
+      // must never begin a draft, however long the press is held.
+      if (ev.target.closest && ev.target.closest('.p-infobtn, .q-btn')) return;
       startHold(ev, li, p, team);
     });
     // Keyboard users get the team chooser, which is fully operable.
@@ -957,6 +1097,9 @@
       num(p.points) + ' pts';
 
     UI.openSheet(p.name, sub, function (body) {
+      var hurt = injuryFor(p.id);
+      if (hurt) body.appendChild(buildInjuryBox(hurt));
+
       // Offered for anyone still available, whatever else the sheet shows —
       // queueing is planning, and it is useful before setup is even finished.
       if (ownerId == null) {
@@ -1146,8 +1289,10 @@
   function renderSetup(board) {
     renderTeamSetup();
     renderKeeperSetup(board);
-    renderSetupStatus();
+    renderLeagueLine();
+    renderTrades();
     renderNotesStatus();
+    renderInjuryStatus();
   }
 
   function renderTeamSetup() {
@@ -1244,7 +1389,7 @@
     UI.showToast('Removed ' + res.removed + '.' +
       (res.released ? ' ' + res.released + ' keeper' + (res.released === 1 ? '' : 's') +
         ' back in the pool.' : '') +
-      ' Now ' + state.teams.length + ' teams.');
+      ' Now ' + state.teams.length + ' teams.' + tradesClearedNote(res.tradesCleared));
   }
 
   function addTeamRow() {
@@ -1255,7 +1400,15 @@
       return;
     }
     afterTeamChange();
-    UI.showToast('Added ' + res.added + '. Now ' + state.teams.length + ' teams.');
+    UI.showToast('Added ' + res.added + '. Now ' + state.teams.length + ' teams.' +
+      tradesClearedNote(res.tradesCleared));
+  }
+
+  // Traded picks are numbers in a snake of one width; a new width moves every
+  // one of them to a different pick, so they are cleared rather than kept wrong.
+  function tradesClearedNote(n) {
+    return n ? ' ' + n + ' traded pick' + (n === 1 ? '' : 's') +
+      ' cleared — the pick numbers no longer line up.' : '';
   }
 
   // Team ids shift, so anything holding one has to be rebuilt rather than
@@ -1384,27 +1537,119 @@
     if (input) input.focus();
   }
 
-  function renderSetupStatus() {
-    var host = $('#setupStatus');
-    host.innerHTML = '';
-    var kc = Draft.keeperCount(state);
+  function renderLeagueLine() {
     var me = Draft.myTeam(state);
+    var kc = Draft.keeperCount(state);
+    var trades = Draft.tradedPicks(state).length;
+    var line = $('#leagueLine');
+    line.innerHTML = '';
+    line.appendChild(document.createTextNode(nTeams() + ' teams · ' +
+      (me ? me.name + ' picks ' + ordinal(me.slot) : 'no team marked as yours') + ' · '));
+    line.appendChild(el('span', kc === nKeepers() ? 'ok' : 'warn',
+      kc + '/' + nKeepers() + ' keepers'));
+    line.appendChild(document.createTextNode(' · ' + trades + ' traded pick' +
+      (trades === 1 ? '' : 's') + ' · ' + nPicks() + ' picks'));
+  }
 
-    function row(label, value, cls) {
-      var d = el('div');
-      d.appendChild(el('span', null, label));
-      d.appendChild(el('span', cls, value));
-      host.appendChild(d);
+  function renderTrades() {
+    var trades = Draft.tradedPicks(state);
+    $('#tradeCounter').textContent = String(trades.length);
+    var host = $('#tradeList');
+    host.innerHTML = '';
+    if (!trades.length) {
+      host.appendChild(el('li', 'tc-empty', 'No traded picks — every pick follows the snake.'));
+      return;
     }
+    trades.forEach(function (t) {
+      var li = el('li', 'traderow' + (t.to.slot === state.mySlot || t.from.slot === state.mySlot ? ' is-mine' : ''));
+      li.appendChild(el('span', 'tr-pick', label(t.n)));
+      li.appendChild(el('span', 'tr-n', '#' + t.n));
+      li.appendChild(el('span', 'tr-to', t.to.name));
+      li.appendChild(el('span', 'tr-from', 'from ' + t.from.name));
+      host.appendChild(li);
+    });
+  }
 
-    row('Keepers assigned', kc + ' / ' + nKeepers(),
-      kc === nKeepers() ? 'ok' : 'warn');
-    row('Your team', me ? me.name + ' (slot ' + me.slot + ')' : '—', 'ok');
-    row('Draft rounds', String(LEAGUE.draftRounds), 'ok');
-    row('Total picks', String(nPicks()), 'ok');
-    row('Picks made', String(state.picks.length), 'ok');
+  /* ---------------------------------------------------------- start panel
+     Starting is the first thing on Setup and, until a draft is running, on
+     the board as well — two big buttons, live and mock, each saying where that
+     draft stands. The other draft is read straight from storage (never
+     written), so both buttons are accurate whichever mode is active. */
 
-    $('#startBtn').textContent = state.setupDone ? 'Back to board' : 'Start draft';
+  function draftStatus(s) {
+    var total = Draft.totalPicks(s);
+    var made = s.picks.length;
+    return {
+      made: made,
+      total: total,
+      complete: made >= total,
+      started: made > 0 || !!s.setupDone,
+      next: made < total ? Draft.pickLabel(made + 1, s.teams.length) : null
+    };
+  }
+
+  function buildStartButton(kind, title, sub, current, onGo) {
+    var b = el('button', 'startbtn startbtn-' + kind + (current ? ' is-current' : ''));
+    b.type = 'button';
+    var head = el('span', 'sb-title', title);
+    if (current) head.appendChild(el('span', 'sb-tag', 'Active'));
+    b.appendChild(head);
+    b.appendChild(el('span', 'sb-sub', sub));
+    b.addEventListener('click', onGo);
+    return b;
+  }
+
+  function renderStart() {
+    var live = isMock() ? Draft.load(Draft.STORAGE_KEY) : state;
+    var mk = isMock() ? state : Draft.load(Draft.MOCK_STORAGE_KEY);
+    var ls = draftStatus(live), ms = draftStatus(mk);
+    var bots = nTeams() - 1;
+
+    var liveTitle = ls.complete ? 'Live draft complete'
+      : ls.made ? 'Resume live draft'
+      : ls.started ? 'Back to live draft' : 'Start live draft';
+    var liveSub = ls.made
+      ? (ls.complete ? 'All ' + ls.total + ' picks in' : 'Pick ' + ls.next + ' · ' + ls.made + ' of ' + ls.total + ' made')
+      : 'The real one · you pick ' + ordinal(live.mySlot) + ' · you enter every pick';
+
+    var mockLive = ms.made && !ms.complete;
+    var mockTitle = mockLive ? 'Resume mock draft'
+      : ms.complete ? 'Start a new mock' : 'Start a mock draft';
+    var mockSub = mockLive
+      ? 'Pick ' + ms.next + ' · ' + ms.made + ' of ' + ms.total + ' made'
+      : (ms.complete ? 'Last one finished · ' : '') +
+        'Practice against ' + bots + ' bots · starts drafting right away';
+
+    $$('[data-start-host]').forEach(function (host) {
+      host.innerHTML = '';
+      host.appendChild(buildStartButton('live', liveTitle, liveSub,
+        !isMock() && state.setupDone, startLive));
+      host.appendChild(buildStartButton('mock', mockTitle, mockSub,
+        isMock() && state.setupDone, startMock));
+    });
+
+    $('#boardStart').hidden = state.setupDone;
+    $('#mockActions').hidden = !isMock();
+  }
+
+  function startLive() {
+    setMode('live');
+    state.setupDone = true;
+    saveState();
+    setTab('board');
+  }
+
+  // Resumes a mock in progress; otherwise starts a fresh one from the live
+  // league and sets the clock going, since starting is what he just asked for.
+  function startMock() {
+    var existing = isMock() ? state : Draft.load(Draft.MOCK_STORAGE_KEY);
+    var st = draftStatus(existing);
+    var fresh = !st.made || st.complete;
+    setMode('mock', fresh ? { force: true, fresh: true } : null);
+    state.setupDone = true;
+    saveState();
+    setTab('board');
+    if (!state.picks.length && !Draft.clock(state).onClockIsMe) mock.resume();
   }
 
   /* ---------------------------------------------------------------- events */
@@ -1473,12 +1718,6 @@
       else if (UI.sheetIsOpen()) UI.closeSheet();
     });
 
-    $('#startBtn').addEventListener('click', function () {
-      state.setupDone = true;
-      saveState();
-      setTab('board');
-    });
-
     $('#updateBtn').addEventListener('click', checkForUpdate);
     $('#exportBtn').addEventListener('click', exportState);
     $('#importBtn').addEventListener('click', function () { $('#importFile').click(); });
@@ -1527,6 +1766,7 @@
 
   function resetEverything() {
     state.customPlayers.forEach(function (p) { delete playersById[p.id]; });
+    // "Defaults" are the real 2026 league — order, keepers and traded picks.
     state = Draft.freshState();
     view.lastPick = null;
     saveState();
@@ -1535,7 +1775,7 @@
     view.keeperSearch = '';
     view.expandedTeams = {};
     setTab('setup');
-    UI.showToast('Everything reset. Player projections are untouched.');
+    UI.showToast('Reset to the 2026 league — real keepers and traded picks reloaded.');
   }
 
   function openAddPickSheet() {
@@ -2016,6 +2256,8 @@
     var seeded = Draft.freshState();
     seeded.teams = live.teams;
     seeded.mySlot = live.mySlot;
+    seeded.pickOwners = {};
+    for (var n in live.pickOwners || {}) seeded.pickOwners[n] = live.pickOwners[n];
     seeded.keepers = {};
     for (var id in live.keepers) {
       if (playersById[id]) seeded.keepers[id] = live.keepers[id];
@@ -2062,10 +2304,6 @@
     // the screen is for.
     var done = state.picks.length >= nPicks();
     $('#mockStrip').hidden = !on || !state.setupDone || done;
-    $('#mockActions').hidden = !on;
-    $$('#modeSwitch .seg').forEach(function (b) {
-      b.classList.toggle('is-on', b.dataset.mode === mode);
-    });
 
     if (!on) { $('#mockSummary').hidden = true; return; }
 
@@ -2209,6 +2447,16 @@
       LEAGUE.counting.D + 'D + ' + LEAGUE.counting.G + 'G score.');
     out.push(LEAGUE.keepersPerTeam + ' keepers per team, owned before the draft and costing no pick, so ' +
       LEAGUE.draftRounds + ' rounds are drafted (' + nPicks() + ' picks).');
+    if (injuryDoc) {
+      out.push('Injury flags (OUT/IR/LTIR/DTD/SUSP) are ESPN\'s report as of ' +
+        shortDate(injuryDoc.fetched) + '.');
+    }
+    var trades = Draft.tradedPicks(state);
+    if (trades.length) {
+      out.push('Traded picks: ' + trades.map(function (t) {
+        return '#' + t.n + ' ' + t.to.name + ' (from ' + t.from.name + ')';
+      }).join(', ') + '.');
+    }
     out.push('"why" is the bot\'s stated reason for the pick. Projected points follow each name.');
     out.push('');
 
@@ -2237,7 +2485,9 @@
         pad(p && p.tier ? 'T' + p.tier : '', 4) +
         pad(p && p.adp != null ? 'ADP ' + p.adp.toFixed(1) : 'no ADP', 11) +
         padLeft(p ? num(p.points) : '', 7) +
-        (isMine ? '   [your pick]' : (pick.why ? '   [' + pick.why + ']' : ''))
+        (isMine ? '   [your pick]' : (pick.why ? '   [' + pick.why + ']' : '')) +
+        (state.pickOwners && state.pickOwners[pick.n] ? '   (traded pick)' : '') +
+        (injuryFor(pick.playerId) ? '   ' + INJURY[injuryFor(pick.playerId).status].code : '')
       );
     });
     out.push('');
@@ -2302,13 +2552,9 @@
   }
 
   function wireMock() {
-    $$('#modeSwitch .seg').forEach(function (b) {
-      b.addEventListener('click', function () { setMode(b.dataset.mode); });
-    });
-
     $('#mockRestart').addEventListener('click', function () {
       setMode('mock', { force: true, fresh: true });
-      UI.showToast('New mock — teams and keepers copied from the live draft.');
+      UI.showToast('New mock — teams, keepers and traded picks copied from the live draft.');
     });
     $('#mockCopy').addEventListener('click', copyTranscript);
     $('#mockDownload').addEventListener('click', downloadTranscript);
@@ -2403,12 +2649,23 @@
   }
 
   function start() {
+    // The injury report is optional: a missing or broken file must never
+    // stop the board from loading, so its failure resolves to null.
+    var injuriesLoad = fetch('./data/injuries.json', { cache: 'no-cache' })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .catch(function () { return null; });
+
     fetch('./data/players.json', { cache: 'no-cache' })
       .then(function (r) {
         if (!r.ok) throw new Error('HTTP ' + r.status);
         return r.json();
       })
-      .then(boot)
+      .then(function (data) {
+        return injuriesLoad.then(function (doc) {
+          injuryDoc = doc && doc.players ? doc : null;
+          boot(data);
+        });
+      })
       .catch(function (err) {
         console.error('Could not load player data', err);
         $('#playerList').innerHTML = '';

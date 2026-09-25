@@ -307,7 +307,7 @@ button { cursor: pointer; }
   grid-template-columns: 28px 1fr 46px 60px 62px;
   gap: 8px; padding: 8px 12px;
   border-bottom: 1px solid rgba(38, 51, 77, .55);
-  border-left: 6px solid transparent;
+  border-left: 10px solid transparent;
 }
 /* The row itself is the press target: suppress the OS text-selection and
    callout that a long press would otherwise trigger, while leaving vertical
@@ -322,21 +322,24 @@ button { cursor: pointer; }
 
 /* Position tint: FLAT across the row rather than a left-to-right wash, so the
    colour is still there under the ADP/VORP/Pts columns and position can be read
-   without looking back to the left edge. A bright ramp at the left was both
-   harder on the eyes and absent exactly where it was needed. Only the last
-   fifth softens, to avoid a hard edge at the end of the row. Alpha kept low —
-   at .16 and above the amber goalie rows go muddy against the navy. */
+   without looking back to the left edge. Only the last fifth softens, to avoid
+   a hard edge at the end of the row.
+
+   Turned up in 2.11 because F / D / G still was not readable at a glance: a
+   10px edge bar, roughly double the tint, and the position letter as a solid
+   badge (below). Goalie amber stays a notch lower than the other two and is
+   pushed towards yellow. Amber at F/D strength goes olive against the navy. */
 .prow.pos-F {
   border-left-color: #3ee9a4;
-  background-image: linear-gradient(90deg, rgba(62, 233, 164, .10) 0%, rgba(62, 233, 164, .10) 82%, rgba(62, 233, 164, 0) 100%);
+  background-image: linear-gradient(90deg, rgba(62, 233, 164, .20) 0%, rgba(62, 233, 164, .20) 82%, rgba(62, 233, 164, .04) 100%);
 }
 .prow.pos-D {
   border-left-color: #7ab8ff;
-  background-image: linear-gradient(90deg, rgba(122, 184, 255, .10) 0%, rgba(122, 184, 255, .10) 82%, rgba(122, 184, 255, 0) 100%);
+  background-image: linear-gradient(90deg, rgba(122, 184, 255, .22) 0%, rgba(122, 184, 255, .22) 82%, rgba(122, 184, 255, .04) 100%);
 }
 .prow.pos-G {
-  border-left-color: #ffcb3d;
-  background-image: linear-gradient(90deg, rgba(255, 203, 61, .10) 0%, rgba(255, 203, 61, .10) 82%, rgba(255, 203, 61, 0) 100%);
+  border-left-color: #ffd23f;
+  background-image: linear-gradient(90deg, rgba(255, 210, 63, .17) 0%, rgba(255, 210, 63, .17) 82%, rgba(255, 210, 63, .03) 100%);
 }
 .prow.is-taken { opacity: .4; }
 
@@ -366,6 +369,15 @@ button { cursor: pointer; }
 .pos-F .p-pos { color: var(--pos-F); }
 .pos-D .p-pos { color: var(--pos-D); }
 .pos-G .p-pos { color: var(--pos-G); }
+/* On the board the letter is a filled badge, so position is read as a
+   block of colour rather than a coloured glyph. */
+.prow .p-pos {
+  display: inline-block; min-width: 22px; padding: 1px 5px; border-radius: 5px;
+  text-align: center; line-height: 1.25; color: #0b1220;
+}
+.prow.pos-F .p-pos { background: #3ee9a4; color: #0b1220; }
+.prow.pos-D .p-pos { background: #7ab8ff; color: #0b1220; }
+.prow.pos-G .p-pos { background: #ffd23f; color: #0b1220; }
 .p-owner { color: var(--txt-dim); font-style: italic; }
 .p-owner.is-keeper { color: var(--pos-G); font-style: normal; }
 
@@ -380,6 +392,44 @@ button { cursor: pointer; }
   border: 1px solid var(--line); border-radius: 4px;
   padding: 0 4px; line-height: 16px;
 }
+
+/* Shared plumbing for the row's info buttons (injury badge, notes "i"): a
+   real tap target that must never be swallowed by the row's own
+   press-to-draft gesture. attachHold fences every .p-infobtn out of that
+   gesture entirely; this is only the sizing and touch handling, not the
+   look — each button's own class (.p-inj, .p-notes) supplies that, and can
+   freely override background/padding since this rule never sets them. */
+.p-infobtn {
+  flex: none;
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 30px; min-height: 30px;
+  margin: -8px -4px;
+  background: none; border: 0;
+  -webkit-touch-callout: none; user-select: none; -webkit-user-select: none;
+  touch-action: manipulation;
+}
+
+/* Injury status from ESPN. Solid, like the position badge, because a hurt
+   player is a thing to notice before drafting, not after. Red for anything
+   that means he is not playing, amber for day-to-day, grey for a suspension. */
+.p-inj {
+  font-weight: 900; font-size: 11px; letter-spacing: .04em;
+  border-radius: 4px; padding: 0 4px; line-height: 16px;
+  color: #0b1220; background: var(--danger);
+}
+.p-inj.inj-dtd { background: var(--pos-G); }
+.p-inj.inj-susp { background: var(--txt-dim); }
+
+.injbox {
+  margin-bottom: 10px; padding: 8px 10px; border-radius: 8px;
+  background: rgba(248, 113, 113, .10); border: 1px solid rgba(248, 113, 113, .35);
+  font-size: 13px;
+}
+.injbox.inj-dtd { background: rgba(251, 191, 36, .10); border-color: rgba(251, 191, 36, .35); }
+.injbox.inj-susp { background: var(--bg-3); border-color: var(--line); }
+.injbox-head { display: flex; align-items: center; gap: 8px; font-weight: 700; }
+.injbox-note { margin: 6px 0 0; color: var(--txt-dim); line-height: 1.4; }
+.injbox-meta { margin: 4px 0 0; font-size: 11px; color: var(--txt-faint); }
 
 /* The column the board is sorted by gets the emphasis. */
 .playerlist[data-sort="adp"]    .p-adp,
@@ -724,19 +774,65 @@ body.is-mock .topbar { border-bottom: 3px solid var(--mock); }
 .ms-place { margin: 0 0 6px; font-size: 15px; }
 .ms-place b { color: var(--mock); }
 
-/* Live / Mock switch on the setup tab. */
-.segmented {
-  display: flex; gap: 0; margin-bottom: 10px;
-  border: 1px solid var(--line); border-radius: 10px; overflow: hidden;
+/* ------------------------------------------------------- start panel */
+
+/* The first thing on Setup, and on the board until a draft is running. Two
+   big targets, coloured the way each mode is coloured everywhere else: live in
+   the app's blue, mock in the same amber as the mock badge and strip. */
+.startgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+@media (max-width: 340px) { .startgrid { grid-template-columns: 1fr; } }
+.startbtn {
+  min-height: 84px; padding: 12px; border-radius: 12px; text-align: left;
+  display: flex; flex-direction: column; justify-content: center; gap: 5px;
+  background: var(--bg-3); border: 2px solid var(--line); color: var(--txt);
 }
-.seg {
-  flex: 1; min-width: 0; height: 38px;
-  background: transparent; color: var(--txt-dim);
-  border: 0; font-size: 13px; font-weight: 700;
+.startbtn .sb-title {
+  display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+  font-size: 16px; font-weight: 800; line-height: 1.2;
 }
-.seg + .seg { border-left: 1px solid var(--line); }
-.seg.is-on { background: var(--bg-3); color: var(--txt); }
-.seg[data-mode="mock"].is-on { background: rgba(245, 158, 11, .18); color: var(--mock); }
+.startbtn .sb-sub { font-size: 12px; color: var(--txt-dim); line-height: 1.35; }
+.startbtn .sb-tag {
+  font-size: 9px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase;
+  padding: 2px 5px; border-radius: 4px;
+}
+.startbtn-live { border-color: var(--accent); background: rgba(77, 163, 255, .12); }
+.startbtn-live .sb-title { color: var(--accent); }
+.startbtn-mock { border-color: var(--mock); background: rgba(245, 158, 11, .10); }
+.startbtn-mock .sb-title { color: var(--mock); }
+.startbtn-live .sb-tag { background: var(--accent); color: #0b1220; }
+.startbtn-mock .sb-tag { background: var(--mock); color: #241505; }
+.startbtn.is-current { box-shadow: 0 0 0 3px rgba(232, 238, 252, .18); }
+.startbtn:active { filter: brightness(1.25); }
+.startcard h2 { font-size: 17px; }
+.startcard #leagueLine { font-size: 13px; color: var(--txt-dim); }
+.startcard #leagueLine .ok { color: var(--pos-F); font-weight: 700; }
+.startcard #leagueLine .warn { color: var(--pos-G); font-weight: 700; }
+.startcard .startnote { margin: 10px 0 0; }
+#view-board > .boardstart { flex: none; }
+
+/* Traded picks, under the draft order. */
+.subhead {
+  margin: 14px 0 6px; font-size: 13px; color: var(--txt-dim);
+  display: flex; align-items: center; gap: 8px;
+}
+.tradelist { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.traderow {
+  display: grid; grid-template-columns: 44px 40px 1fr auto; gap: 8px; align-items: baseline;
+  padding: 6px 10px; border-radius: 8px; background: var(--bg-3); font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+.traderow .tr-pick { font-weight: 700; }
+.traderow .tr-n { color: var(--txt-faint); font-size: 12px; }
+.traderow .tr-to { font-weight: 700; }
+.traderow .tr-from { color: var(--txt-faint); font-size: 12px; }
+.traderow.is-mine { outline: 1px solid var(--me); }
+
+/* "via Matthew" beside the team on the clock when the pick was traded. */
+.via-tag {
+  margin-left: 6px; font-size: 11px; font-weight: 700; color: var(--txt-dim);
+  padding: 1px 5px; border: 1px solid var(--line); border-radius: 4px;
+  vertical-align: middle;
+}
 
 /* The last pick made, in mock mode. Its own line, because the big name in the
    clock line is the team picking NEXT — putting the player beside it would read
@@ -804,25 +900,13 @@ body.is-mock .topbar { border-bottom: 3px solid var(--mock); }
 /* ---------------------------------------------------------- player notes */
 
 /* Sits in the sub line, so it costs the name no width — the row grid is
-   already tight at 320px. The hit area is grown with padding and pulled back
-   with negative margins, so the row height (and the 10-row density target)
-   is unchanged. */
+   already tight at 320px. Sizing and tap handling are .p-infobtn's job
+   (shared with the injury badge); this is only the glyph. */
 .p-notes {
-  flex: none;
-  /* A thumb needs ~30px square. The glyph is ~4px wide, so the target is made
-     of padding and a min-width, and the negative margins pull the row height
-     back to what it was — the 10-row density target is unaffected. */
-  display: inline-flex; align-items: center; justify-content: center;
-  min-width: 30px; min-height: 30px;
-  margin: -8px 0 -8px 2px;
-  padding: 0;
-  background: none; border: 0;
+  margin-left: 2px;
   font-family: Georgia, "Times New Roman", serif;
   font-style: italic; font-weight: 700; font-size: 14px; line-height: 1;
   color: var(--accent);
-  -webkit-touch-callout: none; user-select: none; -webkit-user-select: none;
-  /* The row uses pan-y for its press gesture; this is a plain tap target. */
-  touch-action: manipulation;
 }
 .p-notes:active { color: #fff; }
 
@@ -872,6 +956,19 @@ body.is-mock .topbar { border-bottom: 3px solid var(--mock); }
 .note-meta {
   margin: 10px 0 0; font-size: 11px; color: var(--txt-faint);
 }
+
+/* The injury box (shared with the player sheet — .injbox itself) sits right
+   under the header when this popover was opened from the injury badge. */
+#noteInj { margin-top: 12px; }
+#noteInj .injbox { margin-bottom: 0; }
+
+/* Lets a hurt or otherwise-checked-on player be drafted straight from here,
+   without closing this to re-find him in what may already be a rebuilt list
+   underneath. Same primary-button-plus-alternate shape as the player sheet. */
+.note-actions {
+  display: flex; gap: 8px; margin-top: 14px;
+}
+.note-actions .btn { flex: 1 1 auto; }
 
 /* ------------------------------------------------------------ toast */
 

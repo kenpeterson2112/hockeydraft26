@@ -17,13 +17,13 @@
       "src": "manual",
       "updated": "2026-09-25"
     },
-    "jack-hughes": {
-      "note": "Scored goal in preseason debut",
+    "evan-bouchard": {
+      "note": "Four assists in preseason win",
       "src": "manual",
       "updated": "2026-09-25"
     },
-    "evan-bouchard": {
-      "note": "Four assists in preseason win",
+    "jack-hughes": {
+      "note": "Scored goal in preseason debut",
       "src": "manual",
       "updated": "2026-09-25"
     },
@@ -32,13 +32,13 @@
       "src": "manual",
       "updated": "2026-09-25"
     },
-    "brady-tkachuk": {
-      "note": "Three points Sunday; left Tuesday's game, day-to-day",
+    "lane-hutson": {
+      "note": "Goal, two assists in preseason opener",
       "src": "manual",
       "updated": "2026-09-25"
     },
-    "lane-hutson": {
-      "note": "Goal, two assists in preseason opener",
+    "brady-tkachuk": {
+      "note": "Three points Sunday; left Tuesday's game, day-to-day",
       "src": "manual",
       "updated": "2026-09-25"
     },
@@ -47,13 +47,13 @@
       "src": "manual",
       "updated": "2026-09-25"
     },
-    "cutter-gauthier": {
-      "note": "Signed six-year, $81M deal",
+    "andrei-vasilevskiy": {
+      "note": "Preseason: 12/13 saves; starting Thursday vs FLA",
       "src": "manual",
       "updated": "2026-09-25"
     },
-    "dylan-guenther": {
-      "note": "Working on net-front deflection goals",
+    "cutter-gauthier": {
+      "note": "Signed six-year, $81M deal",
       "src": "manual",
       "updated": "2026-09-25"
     },
@@ -62,53 +62,13 @@
       "src": "manual",
       "updated": "2026-09-25"
     },
+    "dylan-guenther": {
+      "note": "Working on net-front deflection goals",
+      "src": "manual",
+      "updated": "2026-09-25"
+    },
     "leo-carlsson": {
       "note": "Goal and PP assist in preseason win",
-      "src": "manual",
-      "updated": "2026-09-25"
-    },
-    "andrei-vasilevskiy": {
-      "note": "Preseason: 12/13 saves; starting Thursday vs FLA",
-      "src": "manual",
-      "updated": "2026-09-25"
-    },
-    "aleksander-barkov": {
-      "note": "Healthy (knee); goal and PP assist in opener",
-      "src": "manual",
-      "updated": "2026-09-25"
-    },
-    "juraj-slafkovsky": {
-      "note": "Scored goal in preseason opener",
-      "src": "manual",
-      "updated": "2026-09-25"
-    },
-    "connor-bedard": {
-      "note": "Shoulder; not close to practicing with team",
-      "src": "manual",
-      "updated": "2026-09-25"
-    },
-    "jake-sanderson": {
-      "note": "Concussion cleared; missed Wednesday skate, minor issue",
-      "src": "manual",
-      "updated": "2026-09-25"
-    },
-    "connor-hellebuyck": {
-      "note": "Suspended by Jets for not reporting to camp",
-      "src": "manual",
-      "updated": "2026-09-25"
-    },
-    "jesper-bratt": {
-      "note": "Named Devils assistant captain",
-      "src": "manual",
-      "updated": "2026-09-25"
-    },
-    "logan-thompson": {
-      "note": "2 GA on 30 shots; starts Friday",
-      "src": "manual",
-      "updated": "2026-09-25"
-    },
-    "jackson-lacombe": {
-      "note": "Goal and assist in preseason opener",
       "src": "manual",
       "updated": "2026-09-25"
     },
@@ -117,23 +77,63 @@
       "src": "manual",
       "updated": "2026-09-25"
     },
-    "brayden-point": {
-      "note": "Assist in preseason opener",
+    "logan-thompson": {
+      "note": "2 GA on 30 shots; starts Friday",
       "src": "manual",
       "updated": "2026-09-25"
     },
-    "pavel-dorofeyev": {
-      "note": "Role to be decided in training camp",
+    "juraj-slafkovsky": {
+      "note": "Scored goal in preseason opener",
       "src": "manual",
       "updated": "2026-09-25"
     },
-    "drake-batherson": {
-      "note": "Signed eight-year, $86M extension",
+    "aleksander-barkov": {
+      "note": "Healthy (knee); goal and PP assist in opener",
+      "src": "manual",
+      "updated": "2026-09-25"
+    },
+    "connor-hellebuyck": {
+      "note": "Suspended by Jets for not reporting to camp",
+      "src": "manual",
+      "updated": "2026-09-25"
+    },
+    "jake-sanderson": {
+      "note": "Concussion cleared; missed Wednesday skate, minor issue",
       "src": "manual",
       "updated": "2026-09-25"
     },
     "ilya-sorokin": {
       "note": "Started Tuesday preseason vs Rangers",
+      "src": "manual",
+      "updated": "2026-09-25"
+    },
+    "connor-bedard": {
+      "note": "Shoulder; not close to practicing with team",
+      "src": "manual",
+      "updated": "2026-09-25"
+    },
+    "igor-shesterkin": {
+      "note": "Started Tuesday preseason vs Islanders",
+      "src": "manual",
+      "updated": "2026-09-25"
+    },
+    "jackson-lacombe": {
+      "note": "Goal and assist in preseason opener",
+      "src": "manual",
+      "updated": "2026-09-25"
+    },
+    "jesper-bratt": {
+      "note": "Named Devils assistant captain",
+      "src": "manual",
+      "updated": "2026-09-25"
+    },
+    "brayden-point": {
+      "note": "Assist in preseason opener",
+      "src": "manual",
+      "updated": "2026-09-25"
+    },
+    "jeremy-swayman": {
+      "note": "1 GA on 21 shots in preseason win",
       "src": "manual",
       "updated": "2026-09-25"
     },
@@ -147,13 +147,33 @@
       "src": "manual",
       "updated": "2026-09-25"
     },
+    "drake-batherson": {
+      "note": "Signed eight-year, $86M extension",
+      "src": "manual",
+      "updated": "2026-09-25"
+    },
     "charlie-mcavoy": {
       "note": "Goal, 28:35 TOI in preseason",
       "src": "manual",
       "updated": "2026-09-25"
     },
-    "igor-shesterkin": {
-      "note": "Started Tuesday preseason vs Islanders",
+    "pavel-dorofeyev": {
+      "note": "Role to be decided in training camp",
+      "src": "manual",
+      "updated": "2026-09-25"
+    },
+    "karel-vejmelka": {
+      "note": "Won preseason start, 19/22 saves",
+      "src": "manual",
+      "updated": "2026-09-25"
+    },
+    "ivan-demidov": {
+      "note": "Foot, day-to-day; expected ready for opener",
+      "src": "manual",
+      "updated": "2026-09-25"
+    },
+    "jesper-wallstedt": {
+      "note": "22/24 saves; starting final two preseason games",
       "src": "manual",
       "updated": "2026-09-25"
     },
@@ -162,8 +182,8 @@
       "src": "manual",
       "updated": "2026-09-25"
     },
-    "ivan-demidov": {
-      "note": "Foot, day-to-day; expected ready for opener",
+    "jakub-dobes": {
+      "note": "2 GA on 11 shots in preseason",
       "src": "manual",
       "updated": "2026-09-25"
     },
@@ -177,43 +197,18 @@
       "src": "manual",
       "updated": "2026-09-25"
     },
+    "scott-wedgewood": {
+      "note": "13/14 saves in preseason loss",
+      "src": "manual",
+      "updated": "2026-09-25"
+    },
+    "jacob-markstrom": {
+      "note": "Won preseason opener; started again Tuesday",
+      "src": "manual",
+      "updated": "2026-09-25"
+    },
     "adam-fantilli": {
       "note": "Signed six-year, $82.5M deal; ends holdout",
-      "src": "manual",
-      "updated": "2026-09-25"
-    },
-    "timo-meier": {
-      "note": "Goal and assist in preseason win",
-      "src": "manual",
-      "updated": "2026-09-25"
-    },
-    "jeremy-swayman": {
-      "note": "1 GA on 21 shots in preseason win",
-      "src": "manual",
-      "updated": "2026-09-25"
-    },
-    "seth-jarvis": {
-      "note": "Shoulder; ahead of schedule, practicing",
-      "src": "manual",
-      "updated": "2026-09-25"
-    },
-    "logan-cooley": {
-      "note": "Feels good heading into camp",
-      "src": "manual",
-      "updated": "2026-09-25"
-    },
-    "seth-jones": {
-      "note": "Foot healed; practicing at camp",
-      "src": "manual",
-      "updated": "2026-09-25"
-    },
-    "karel-vejmelka": {
-      "note": "Won preseason start, 19/22 saves",
-      "src": "manual",
-      "updated": "2026-09-25"
-    },
-    "beckett-sennecke": {
-      "note": "Hat trick in preseason opener",
       "src": "manual",
       "updated": "2026-09-25"
     },
@@ -222,18 +217,53 @@
       "src": "manual",
       "updated": "2026-09-25"
     },
+    "beckett-sennecke": {
+      "note": "Hat trick in preseason opener",
+      "src": "manual",
+      "updated": "2026-09-25"
+    },
+    "brandon-bussi": {
+      "note": "Started Tuesday preseason vs Panthers",
+      "src": "manual",
+      "updated": "2026-09-25"
+    },
     "morgan-geekie": {
       "note": "PP goal in preseason win",
       "src": "manual",
       "updated": "2026-09-25"
     },
-    "bryan-rust": {
-      "note": "PP goal, two assists in preseason opener",
+    "logan-cooley": {
+      "note": "Feels good heading into camp",
+      "src": "manual",
+      "updated": "2026-09-25"
+    },
+    "timo-meier": {
+      "note": "Goal and assist in preseason win",
       "src": "manual",
       "updated": "2026-09-25"
     },
     "mackenzie-weegar": {
       "note": "High expectations for 2026-27",
+      "src": "manual",
+      "updated": "2026-09-25"
+    },
+    "seth-jarvis": {
+      "note": "Shoulder; ahead of schedule, practicing",
+      "src": "manual",
+      "updated": "2026-09-25"
+    },
+    "juuse-saros": {
+      "note": "2 GA on 22 shots in preseason",
+      "src": "manual",
+      "updated": "2026-09-25"
+    },
+    "seth-jones": {
+      "note": "Foot healed; practicing at camp",
+      "src": "manual",
+      "updated": "2026-09-25"
+    },
+    "sergei-bobrovsky": {
+      "note": "13/14 saves in preseason win",
       "src": "manual",
       "updated": "2026-09-25"
     },
@@ -247,78 +277,13 @@
       "src": "manual",
       "updated": "2026-09-25"
     },
-    "jakub-dobes": {
-      "note": "2 GA on 11 shots in preseason",
-      "src": "manual",
-      "updated": "2026-09-25"
-    },
-    "mathew-barzal": {
-      "note": "Aggravated knee; out about two weeks",
-      "src": "manual",
-      "updated": "2026-09-25"
-    },
-    "jacob-markstrom": {
-      "note": "Won preseason opener; started again Tuesday",
-      "src": "manual",
-      "updated": "2026-09-25"
-    },
-    "jesper-wallstedt": {
-      "note": "22/24 saves; starting final two preseason games",
-      "src": "manual",
-      "updated": "2026-09-25"
-    },
-    "kevin-fiala": {
-      "note": "Leg fracture; at least three weeks away",
-      "src": "manual",
-      "updated": "2026-09-25"
-    },
-    "rickard-rakell": {
-      "note": "Scored goal in preseason loss",
-      "src": "manual",
-      "updated": "2026-09-25"
-    },
-    "dylan-cozens": {
-      "note": "Goal and assist in preseason",
-      "src": "manual",
-      "updated": "2026-09-25"
-    },
-    "juuse-saros": {
-      "note": "2 GA on 22 shots in preseason",
-      "src": "manual",
-      "updated": "2026-09-25"
-    },
-    "scott-wedgewood": {
-      "note": "13/14 saves in preseason loss",
-      "src": "manual",
-      "updated": "2026-09-25"
-    },
-    "luke-hughes": {
-      "note": "Back on ice at training camp",
-      "src": "manual",
-      "updated": "2026-09-25"
-    },
-    "owen-tippett": {
-      "note": "Abdomen cleared for camp",
-      "src": "manual",
-      "updated": "2026-09-25"
-    },
     "mackenzie-blackwood": {
       "note": "7/7 saves in preseason; in great shape",
       "src": "manual",
       "updated": "2026-09-25"
     },
-    "sergei-bobrovsky": {
-      "note": "13/14 saves in preseason win",
-      "src": "manual",
-      "updated": "2026-09-25"
-    },
-    "brad-marchand": {
-      "note": "Lower body; expected to miss October",
-      "src": "manual",
-      "updated": "2026-09-25"
-    },
-    "gabriel-vilardi": {
-      "note": "Goal and assist in preseason win",
+    "bryan-rust": {
+      "note": "PP goal, two assists in preseason opener",
       "src": "manual",
       "updated": "2026-09-25"
     },
@@ -327,23 +292,23 @@
       "src": "manual",
       "updated": "2026-09-25"
     },
-    "brandon-bussi": {
-      "note": "Started Tuesday preseason vs Panthers",
+    "mathew-barzal": {
+      "note": "Aggravated knee; out about two weeks",
       "src": "manual",
       "updated": "2026-09-25"
     },
-    "sam-bennett": {
-      "note": "Lower body healed; good to go for camp",
+    "dylan-cozens": {
+      "note": "Goal and assist in preseason",
       "src": "manual",
       "updated": "2026-09-25"
     },
-    "thomas-chabot": {
-      "note": "Back with team after personal absence",
+    "luke-hughes": {
+      "note": "Back on ice at training camp",
       "src": "manual",
       "updated": "2026-09-25"
     },
-    "mattias-samuelsson": {
-      "note": "Lower-body injury; week-to-week",
+    "rickard-rakell": {
+      "note": "Scored goal in preseason loss",
       "src": "manual",
       "updated": "2026-09-25"
     },
@@ -352,33 +317,13 @@
       "src": "manual",
       "updated": "2026-09-25"
     },
-    "dylan-strome": {
-      "note": "Goal and PP assist in preseason",
-      "src": "manual",
-      "updated": "2026-09-25"
-    },
-    "joel-hofer": {
-      "note": "17/18 saves in preseason loss",
-      "src": "manual",
-      "updated": "2026-09-25"
-    },
-    "carter-verhaeghe": {
-      "note": "Lower body healed; ready for camp",
-      "src": "manual",
-      "updated": "2026-09-25"
-    },
-    "matt-duchene": {
-      "note": "Not skating at camp; out preseason finale",
-      "src": "manual",
-      "updated": "2026-09-25"
-    },
     "linus-ullmark": {
       "note": "3 GA on 23 shots in preseason debut",
       "src": "manual",
       "updated": "2026-09-25"
     },
-    "pavel-zacha": {
-      "note": "Contract talks with Boston ongoing",
+    "joel-hofer": {
+      "note": "17/18 saves in preseason loss",
       "src": "manual",
       "updated": "2026-09-25"
     },
@@ -392,13 +337,33 @@
       "src": "manual",
       "updated": "2026-09-25"
     },
-    "troy-terry": {
-      "note": "Hip; out another 2-3 months",
+    "owen-tippett": {
+      "note": "Abdomen cleared for camp",
       "src": "manual",
       "updated": "2026-09-25"
     },
-    "ryan-leonard": {
-      "note": "Signed eight-year, $84M deal",
+    "mattias-samuelsson": {
+      "note": "Lower-body injury; week-to-week",
+      "src": "manual",
+      "updated": "2026-09-25"
+    },
+    "sam-bennett": {
+      "note": "Lower body healed; good to go for camp",
+      "src": "manual",
+      "updated": "2026-09-25"
+    },
+    "gabriel-vilardi": {
+      "note": "Goal and assist in preseason win",
+      "src": "manual",
+      "updated": "2026-09-25"
+    },
+    "thomas-chabot": {
+      "note": "Back with team after personal absence",
+      "src": "manual",
+      "updated": "2026-09-25"
+    },
+    "dylan-strome": {
+      "note": "Goal and PP assist in preseason",
       "src": "manual",
       "updated": "2026-09-25"
     },
@@ -407,23 +372,8 @@
       "src": "manual",
       "updated": "2026-09-25"
     },
-    "dustin-wolf": {
-      "note": "8/9 saves in preseason win",
-      "src": "manual",
-      "updated": "2026-09-25"
-    },
-    "filip-gustavsson": {
-      "note": "Hip; expected back early November",
-      "src": "manual",
-      "updated": "2026-09-25"
-    },
-    "ukko-pekka-luukkonen": {
-      "note": "Perfect 13 saves; likely net timeshare",
-      "src": "manual",
-      "updated": "2026-09-25"
-    },
-    "jake-walman": {
-      "note": "Improved conditioning this offseason",
+    "kevin-fiala": {
+      "note": "Leg fracture; at least three weeks away",
       "src": "manual",
       "updated": "2026-09-25"
     },
@@ -432,8 +382,28 @@
       "src": "manual",
       "updated": "2026-09-25"
     },
-    "mats-zuccarello": {
-      "note": "Minor shoulder injury; back next week",
+    "ukko-pekka-luukkonen": {
+      "note": "Perfect 13 saves; likely net timeshare",
+      "src": "manual",
+      "updated": "2026-09-25"
+    },
+    "pavel-zacha": {
+      "note": "Contract talks with Boston ongoing",
+      "src": "manual",
+      "updated": "2026-09-25"
+    },
+    "brad-marchand": {
+      "note": "Lower body; expected to miss October",
+      "src": "manual",
+      "updated": "2026-09-25"
+    },
+    "dustin-wolf": {
+      "note": "8/9 saves in preseason win",
+      "src": "manual",
+      "updated": "2026-09-25"
+    },
+    "carter-verhaeghe": {
+      "note": "Lower body healed; ready for camp",
       "src": "manual",
       "updated": "2026-09-25"
     },
@@ -442,13 +412,28 @@
       "src": "manual",
       "updated": "2026-09-25"
     },
-    "morgan-rielly": {
-      "note": "Recovered from viral illness",
+    "ryan-leonard": {
+      "note": "Signed eight-year, $84M deal",
       "src": "manual",
       "updated": "2026-09-25"
     },
-    "josh-norris": {
-      "note": "Scored goal in preseason win",
+    "matt-duchene": {
+      "note": "Not skating at camp; out preseason finale",
+      "src": "manual",
+      "updated": "2026-09-25"
+    },
+    "filip-gustavsson": {
+      "note": "Hip; expected back early November",
+      "src": "manual",
+      "updated": "2026-09-25"
+    },
+    "mats-zuccarello": {
+      "note": "Minor shoulder injury; back next week",
+      "src": "manual",
+      "updated": "2026-09-25"
+    },
+    "morgan-rielly": {
+      "note": "Recovered from viral illness",
       "src": "manual",
       "updated": "2026-09-25"
     },
@@ -457,13 +442,8 @@
       "src": "manual",
       "updated": "2026-09-25"
     },
-    "alex-nikishin": {
-      "note": "Unsigned; not with team at camp",
-      "src": "manual",
-      "updated": "2026-09-25"
-    },
-    "lawson-crouse": {
-      "note": "Looking to grow his game",
+    "luke-evangelista": {
+      "note": "Signed five-year, $36.25M extension",
       "src": "manual",
       "updated": "2026-09-25"
     },
@@ -472,13 +452,13 @@
       "src": "manual",
       "updated": "2026-09-25"
     },
-    "pyotr-kochetkov": {
-      "note": "5 GA in opener; starting Thursday",
+    "joey-daccord": {
+      "note": "14/14 saves in preseason win",
       "src": "manual",
       "updated": "2026-09-25"
     },
-    "joey-daccord": {
-      "note": "14/14 saves in preseason win",
+    "jake-walman": {
+      "note": "Improved conditioning this offseason",
       "src": "manual",
       "updated": "2026-09-25"
     },
@@ -487,28 +467,8 @@
       "src": "manual",
       "updated": "2026-09-25"
     },
-    "arturs-silovs": {
-      "note": "Allowed 7 goals on 23 shots",
-      "src": "manual",
-      "updated": "2026-09-25"
-    },
-    "adin-hill": {
-      "note": "17/19 saves; likely starting Thursday",
-      "src": "manual",
-      "updated": "2026-09-25"
-    },
-    "jack-roslovic": {
-      "note": "Goal, two assists in preseason win",
-      "src": "manual",
-      "updated": "2026-09-25"
-    },
-    "luke-evangelista": {
-      "note": "Signed five-year, $36.25M extension",
-      "src": "manual",
-      "updated": "2026-09-25"
-    },
-    "joseph-woll": {
-      "note": "3 GA in preseason; starting Thursday",
+    "kevin-lankinen": {
+      "note": "27/30 saves in preseason loss",
       "src": "manual",
       "updated": "2026-09-25"
     },
@@ -517,8 +477,53 @@
       "src": "manual",
       "updated": "2026-09-25"
     },
+    "pyotr-kochetkov": {
+      "note": "5 GA in opener; starting Thursday",
+      "src": "manual",
+      "updated": "2026-09-25"
+    },
+    "dmitry-orlov": {
+      "note": "Assist in preseason shootout loss",
+      "src": "manual",
+      "updated": "2026-09-25"
+    },
+    "stuart-skinner": {
+      "note": "31/32 saves in Jets debut",
+      "src": "manual",
+      "updated": "2026-09-25"
+    },
+    "arturs-silovs": {
+      "note": "Allowed 7 goals on 23 shots",
+      "src": "manual",
+      "updated": "2026-09-25"
+    },
+    "james-hagens": {
+      "note": "Impressed at rookie camp",
+      "src": "manual",
+      "updated": "2026-09-25"
+    },
     "brent-burns": {
       "note": "Ironman streak not in danger",
+      "src": "manual",
+      "updated": "2026-09-25"
+    },
+    "alex-nikishin": {
+      "note": "Unsigned; not with team at camp",
+      "src": "manual",
+      "updated": "2026-09-25"
+    },
+    "jack-roslovic": {
+      "note": "Goal, two assists in preseason win",
+      "src": "manual",
+      "updated": "2026-09-25"
+    },
+    "adin-hill": {
+      "note": "17/19 saves; likely starting Thursday",
+      "src": "manual",
+      "updated": "2026-09-25"
+    },
+    "tristan-jarry": {
+      "note": "1 GA on 16 shots in preseason",
       "src": "manual",
       "updated": "2026-09-25"
     },
@@ -527,18 +532,38 @@
       "src": "manual",
       "updated": "2026-09-25"
     },
+    "joseph-woll": {
+      "note": "3 GA in preseason; starting Thursday",
+      "src": "manual",
+      "updated": "2026-09-25"
+    },
+    "drew-doughty": {
+      "note": "Named Kings captain",
+      "src": "manual",
+      "updated": "2026-09-25"
+    },
+    "olen-zellweger": {
+      "note": "Concussion; in protocol",
+      "src": "manual",
+      "updated": "2026-09-25"
+    },
     "esa-lindell": {
       "note": "Scored goal in preseason win",
       "src": "manual",
       "updated": "2026-09-25"
     },
-    "thatcher-demko": {
-      "note": "Hip; placed on injured reserve",
+    "alex-lyon": {
+      "note": "3 GA in preseason; starting Thursday",
       "src": "manual",
       "updated": "2026-09-25"
     },
-    "alex-lyon": {
-      "note": "3 GA in preseason; starting Thursday",
+    "troy-terry": {
+      "note": "Hip; out another 2-3 months",
+      "src": "manual",
+      "updated": "2026-09-25"
+    },
+    "josh-norris": {
+      "note": "Scored goal in preseason win",
       "src": "manual",
       "updated": "2026-09-25"
     },
@@ -552,18 +577,13 @@
       "src": "manual",
       "updated": "2026-09-25"
     },
-    "jason-zucker": {
-      "note": "Sports hernia surgery; out to start season",
+    "neal-pionk": {
+      "note": "Healthy for training camp",
       "src": "manual",
       "updated": "2026-09-25"
     },
-    "james-hagens": {
-      "note": "Impressed at rookie camp",
-      "src": "manual",
-      "updated": "2026-09-25"
-    },
-    "arseny-gritsyuk": {
-      "note": "Upper body; practicing at camp",
+    "lawson-crouse": {
+      "note": "Looking to grow his game",
       "src": "manual",
       "updated": "2026-09-25"
     },
@@ -572,33 +592,18 @@
       "src": "manual",
       "updated": "2026-09-25"
     },
-    "anders-lee": {
-      "note": "Optimistic about season with Mammoth",
+    "jason-zucker": {
+      "note": "Sports hernia surgery; out to start season",
       "src": "manual",
       "updated": "2026-09-25"
     },
-    "neal-pionk": {
-      "note": "Healthy for training camp",
+    "luca-cagnoni": {
+      "note": "Impressing in training camp",
       "src": "manual",
       "updated": "2026-09-25"
     },
     "matvei-gridin": {
       "note": "Two assists in preseason win",
-      "src": "manual",
-      "updated": "2026-09-25"
-    },
-    "dmitry-orlov": {
-      "note": "Assist in preseason shootout loss",
-      "src": "manual",
-      "updated": "2026-09-25"
-    },
-    "ben-kindel": {
-      "note": "Lower-body injury; week-to-week",
-      "src": "manual",
-      "updated": "2026-09-25"
-    },
-    "philipp-grubauer": {
-      "note": "15/16 saves in preseason win",
       "src": "manual",
       "updated": "2026-09-25"
     },
@@ -612,58 +617,18 @@
       "src": "manual",
       "updated": "2026-09-25"
     },
-    "luca-cagnoni": {
-      "note": "Impressing in training camp",
+    "anders-lee": {
+      "note": "Optimistic about season with Mammoth",
       "src": "manual",
       "updated": "2026-09-25"
     },
-    "tristan-jarry": {
-      "note": "1 GA on 16 shots in preseason",
+    "arseny-gritsyuk": {
+      "note": "Upper body; practicing at camp",
       "src": "manual",
       "updated": "2026-09-25"
     },
-    "olen-zellweger": {
-      "note": "Concussion; in protocol",
-      "src": "manual",
-      "updated": "2026-09-25"
-    },
-    "casey-desmith": {
-      "note": "30/31 saves; starting Friday",
-      "src": "manual",
-      "updated": "2026-09-25"
-    },
-    "charlie-lindgren": {
-      "note": "12/14 saves in preseason win",
-      "src": "manual",
-      "updated": "2026-09-25"
-    },
-    "drew-doughty": {
-      "note": "Named Kings captain",
-      "src": "manual",
-      "updated": "2026-09-25"
-    },
-    "devin-cooley": {
-      "note": "3 GA on 22 shots in preseason",
-      "src": "manual",
-      "updated": "2026-09-25"
-    },
-    "stuart-skinner": {
-      "note": "31/32 saves in Jets debut",
-      "src": "manual",
-      "updated": "2026-09-25"
-    },
-    "dmitri-voronkov": {
-      "note": "Hand healed; ready for camp",
-      "src": "manual",
-      "updated": "2026-09-25"
-    },
-    "bobby-brink": {
-      "note": "Two goals in preseason OT loss",
-      "src": "manual",
-      "updated": "2026-09-25"
-    },
-    "morgan-frost": {
-      "note": "Expected elevated role, top center in Calgary",
+    "ben-kindel": {
+      "note": "Lower-body injury; week-to-week",
       "src": "manual",
       "updated": "2026-09-25"
     },
@@ -672,83 +637,23 @@
       "src": "manual",
       "updated": "2026-09-25"
     },
+    "philipp-grubauer": {
+      "note": "15/16 saves in preseason win",
+      "src": "manual",
+      "updated": "2026-09-25"
+    },
+    "thatcher-demko": {
+      "note": "Hip; placed on injured reserve",
+      "src": "manual",
+      "updated": "2026-09-25"
+    },
     "jordan-staal": {
       "note": "Signed one-year, $4.9M extension",
       "src": "manual",
       "updated": "2026-09-25"
     },
-    "sebastian-cossa": {
-      "note": "11/12 saves in preseason",
-      "src": "manual",
-      "updated": "2026-09-25"
-    },
-    "noah-cates": {
-      "note": "Foot cleared for camp",
-      "src": "manual",
-      "updated": "2026-09-25"
-    },
-    "alex-newhook": {
-      "note": "Signed four-year, $22.2M extension",
-      "src": "manual",
-      "updated": "2026-09-25"
-    },
-    "kevin-lankinen": {
-      "note": "27/30 saves in preseason loss",
-      "src": "manual",
-      "updated": "2026-09-25"
-    },
-    "jamie-benn": {
-      "note": "Leanest and strongest ever entering camp",
-      "src": "manual",
-      "updated": "2026-09-25"
-    },
-    "joel-farabee": {
-      "note": "Expected bigger role this season",
-      "src": "manual",
-      "updated": "2026-09-25"
-    },
-    "ryan-poehling": {
-      "note": "Lower body; cleared to return to camp",
-      "src": "manual",
-      "updated": "2026-09-25"
-    },
-    "damon-severson": {
-      "note": "Shoulder; Opening Night status uncertain",
-      "src": "manual",
-      "updated": "2026-09-25"
-    },
-    "alex-iafallo": {
-      "note": "Healthy for training camp",
-      "src": "manual",
-      "updated": "2026-09-25"
-    },
-    "mason-lohrei": {
-      "note": "Undisclosed injury; back at practice Thursday",
-      "src": "manual",
-      "updated": "2026-09-25"
-    },
-    "samuel-ersson": {
-      "note": "32/35 saves in preseason OT loss",
-      "src": "manual",
-      "updated": "2026-09-25"
-    },
-    "jordan-spence": {
-      "note": "Minor injury; sat Wednesday",
-      "src": "manual",
-      "updated": "2026-09-25"
-    },
-    "dennis-hildeby": {
-      "note": "Expected No. 2 goalie; 23/26 saves",
-      "src": "manual",
-      "updated": "2026-09-25"
-    },
-    "elvis-merzlikins": {
-      "note": "Shoulder; out indefinitely, failed physical",
-      "src": "manual",
-      "updated": "2026-09-25"
-    },
-    "justus-annunen": {
-      "note": "25/27 saves in debut; starting Thursday",
+    "morgan-frost": {
+      "note": "Expected elevated role, top center in Calgary",
       "src": "manual",
       "updated": "2026-09-25"
     },
@@ -757,28 +662,38 @@
       "src": "manual",
       "updated": "2026-09-25"
     },
-    "conor-garland": {
-      "note": "Shootout winner in preseason",
+    "charlie-lindgren": {
+      "note": "12/14 saves in preseason win",
       "src": "manual",
       "updated": "2026-09-25"
     },
-    "jiri-kulich": {
-      "note": "Could fill in for injured Zucker early",
+    "jamie-benn": {
+      "note": "Leanest and strongest ever entering camp",
       "src": "manual",
       "updated": "2026-09-25"
     },
-    "connor-zary": {
-      "note": "Cleared for training camp",
+    "devin-cooley": {
+      "note": "3 GA on 22 shots in preseason",
       "src": "manual",
       "updated": "2026-09-25"
     },
-    "joonas-korpisalo": {
-      "note": "Competing for backup; likely starting Thursday",
+    "casey-desmith": {
+      "note": "30/31 saves; starting Friday",
       "src": "manual",
       "updated": "2026-09-25"
     },
-    "michael-dipietro": {
-      "note": "30/32 saves in preseason win",
+    "dmitri-voronkov": {
+      "note": "Hand healed; ready for camp",
+      "src": "manual",
+      "updated": "2026-09-25"
+    },
+    "jordan-spence": {
+      "note": "Minor injury; sat Wednesday",
+      "src": "manual",
+      "updated": "2026-09-25"
+    },
+    "arvid-soderblom": {
+      "note": "3 GA on 26 shots in preseason",
       "src": "manual",
       "updated": "2026-09-25"
     },
@@ -787,8 +702,83 @@
       "src": "manual",
       "updated": "2026-09-25"
     },
-    "arvid-soderblom": {
-      "note": "3 GA on 26 shots in preseason",
+    "samuel-ersson": {
+      "note": "32/35 saves in preseason OT loss",
+      "src": "manual",
+      "updated": "2026-09-25"
+    },
+    "jiri-kulich": {
+      "note": "Could fill in for injured Zucker early",
+      "src": "manual",
+      "updated": "2026-09-25"
+    },
+    "elvis-merzlikins": {
+      "note": "Shoulder; out indefinitely, failed physical",
+      "src": "manual",
+      "updated": "2026-09-25"
+    },
+    "michael-dipietro": {
+      "note": "30/32 saves in preseason win",
+      "src": "manual",
+      "updated": "2026-09-25"
+    },
+    "bobby-brink": {
+      "note": "Two goals in preseason OT loss",
+      "src": "manual",
+      "updated": "2026-09-25"
+    },
+    "mason-lohrei": {
+      "note": "Undisclosed injury; back at practice Thursday",
+      "src": "manual",
+      "updated": "2026-09-25"
+    },
+    "noah-cates": {
+      "note": "Foot cleared for camp",
+      "src": "manual",
+      "updated": "2026-09-25"
+    },
+    "connor-zary": {
+      "note": "Cleared for training camp",
+      "src": "manual",
+      "updated": "2026-09-25"
+    },
+    "justus-annunen": {
+      "note": "25/27 saves in debut; starting Thursday",
+      "src": "manual",
+      "updated": "2026-09-25"
+    },
+    "ryan-poehling": {
+      "note": "Lower body; cleared to return to camp",
+      "src": "manual",
+      "updated": "2026-09-25"
+    },
+    "joonas-korpisalo": {
+      "note": "Competing for backup; likely starting Thursday",
+      "src": "manual",
+      "updated": "2026-09-25"
+    },
+    "sebastian-cossa": {
+      "note": "11/12 saves in preseason",
+      "src": "manual",
+      "updated": "2026-09-25"
+    },
+    "joel-farabee": {
+      "note": "Expected bigger role this season",
+      "src": "manual",
+      "updated": "2026-09-25"
+    },
+    "dennis-hildeby": {
+      "note": "Expected No. 2 goalie; 23/26 saves",
+      "src": "manual",
+      "updated": "2026-09-25"
+    },
+    "damon-severson": {
+      "note": "Shoulder; Opening Night status uncertain",
+      "src": "manual",
+      "updated": "2026-09-25"
+    },
+    "conor-garland": {
+      "note": "Shootout winner in preseason",
       "src": "manual",
       "updated": "2026-09-25"
     }
