@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 /* build-notes.mjs — assemble data/notes.json for the draft board.
 
-   The output is private research and is gitignored: it is imported on the
-   device via Setup -> Player notes, never published with the app.
+   The output is committed with the app; load it in the app via
+   Setup -> Player notes -> Import notes.
 
    Sources:
      - NHL public API, for hard facts (age, height, shoots, last season's line)

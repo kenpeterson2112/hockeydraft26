@@ -2,10 +2,9 @@
   "_comment": [
     "Copy to tools/notes-source.json and fill in. Keys are player ids from",
     "data/players.json; values are the 2-3 sentence summary shown in the app.",
-    "Write these yourself or generate them — but note that paid sources such as",
-    "Dobber are licensed to you, not to everyone who can open the published",
-    "site, which is why the built notes.json is gitignored and imported on",
-    "device rather than shipped with the app."
+    "tools/notes-source.json and data/notes.json are committed with the repo,",
+    "so only use sources you're comfortable shipping publicly — not paid",
+    "research licensed to you alone (e.g. Dobber)."
   ],
   "connor-mcdavid": "Still the engine of everything Edmonton does, and the safest bet on the board for raw point volume. Health is the only real question after a compressed season. Take him first overall without thinking about it.",
   "quinn-hughes": "Drives Vancouver's power play and eats the minutes that come with it, which is where his assist totals come from. The best pure points-from-the-back-end option in this pool."
