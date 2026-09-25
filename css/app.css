@@ -928,14 +928,49 @@ body.is-mock .topbar { border-bottom: 3px solid var(--mock); }
   margin: 0; font-size: 20px; line-height: 1.2;
   overflow: hidden; text-overflow: ellipsis;
 }
-.note-sub {
-  margin: 3px 0 0; font-size: 12px; color: var(--txt-faint);
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+.note-pills {
+  display: flex; flex-wrap: wrap; gap: 6px;
+  margin-top: 8px;
+}
+.note-pill {
+  display: inline-flex; align-items: center;
+  padding: 3px 9px; border-radius: 999px;
+  background: var(--bg-3); border: 1px solid var(--line);
+  font-size: 13px; font-weight: 700; line-height: 1.2; color: var(--txt);
+  white-space: nowrap;
+}
+.note-pill.is-quiet { font-weight: 500; color: var(--txt-dim); }
+.note-pill.note-pos { border-color: transparent; color: #0b1220; font-weight: 900; }
+.note-pill.pos-F { background: #3ee9a4; }
+.note-pill.pos-D { background: #7ab8ff; }
+.note-pill.pos-G { background: #ffd23f; }
+
+.note-stats {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  margin-top: 12px;
+  background: var(--bg-3); border: 1px solid var(--line); border-radius: 10px;
+}
+.ns-cell {
+  display: flex; flex-direction: column; align-items: center;
+  padding: 8px 4px;
+}
+.ns-cell + .ns-cell { border-left: 1px solid var(--line); }
+.ns-num {
+  font-size: 20px; font-weight: 800; line-height: 1.1;
+  font-variant-numeric: tabular-nums; color: var(--txt);
+}
+.ns-label {
+  margin-top: 2px; font-size: 10px; letter-spacing: .07em;
+  text-transform: uppercase; color: var(--txt-dim);
 }
 
+.note-season { margin-top: 12px; }
+.note-label {
+  margin: 0 0 6px; font-size: 10px; letter-spacing: .07em;
+  text-transform: uppercase; color: var(--txt-dim);
+}
 .note-facts {
   display: flex; flex-wrap: wrap; gap: 6px;
-  margin-top: 12px;
 }
 .note-fact {
   display: inline-flex; align-items: baseline; gap: 4px;
@@ -949,9 +984,14 @@ body.is-mock .topbar { border-bottom: 3px solid var(--mock); }
 .nf-value { font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums; }
 
 .note-text {
-  margin: 12px 0 0; font-size: 14px; line-height: 1.5; color: var(--txt);
+  margin: 14px 0 0; padding-left: 10px;
+  border-left: 3px solid var(--accent);
+  font-size: 15px; line-height: 1.5; color: var(--txt);
 }
-.note-text.is-empty { color: var(--txt-faint); font-style: italic; }
+.note-text.is-empty {
+  border-left-color: var(--line);
+  color: var(--txt-faint); font-style: italic;
+}
 
 .note-meta {
   margin: 10px 0 0; font-size: 11px; color: var(--txt-faint);
