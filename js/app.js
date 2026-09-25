@@ -5,7 +5,7 @@
   var $ = UI.$, $$ = UI.$$, el = UI.el, num = UI.num, normalize = UI.normalize;
   var LEAGUE = Draft.LEAGUE;
 
-  var APP_VERSION = '2.17.2';
+  var APP_VERSION = '2.18.1';
 
   var players = [];              // seeded from data/players.json
   var playersById = {};
@@ -231,10 +231,17 @@
     var available = players.filter(function (p) { return owners[p.id] == null; });
     available.sort(canonicalCompare);
 
-    var rankById = {};
-    for (var i = 0; i < available.length; i++) rankById[available[i].id] = i;
+    // rankById: overall board rank (drives "projected gone"). posRankById:
+    // rank among what is left at his own position (shown on the tile).
+    var rankById = {}, posRankById = {}, seen = { F: 0, D: 0, G: 0 };
+    for (var i = 0; i < available.length; i++) {
+      var a = available[i];
+      rankById[a.id] = i;
+      posRankById[a.id] = seen[a.position]++;
+    }
 
-    return { owners: owners, available: available, rankById: rankById };
+    return { owners: owners, available: available, rankById: rankById,
+             posRankById: posRankById };
   }
 
   // A name search is a "jump to this player" action, so it deliberately
@@ -545,7 +552,8 @@
     for (var i = 0; i < shown.length; i++) {
       emit(i);
       var p = shown[i];
-      frag.appendChild(buildPlayerRow(p, board.owners[p.id], board.rankById[p.id], c, horizon, heat));
+      frag.appendChild(buildPlayerRow(p, board.owners[p.id], board.rankById[p.id], c, horizon, heat,
+        board.posRankById[p.id]));
     }
     emit(shown.length);
 
@@ -684,7 +692,7 @@
     return v < 10 ? v.toFixed(1) : String(Math.round(v));
   }
 
-  function buildPlayerRow(p, ownerId, rank, c, horizon, heat) {
+  function buildPlayerRow(p, ownerId, rank, c, horizon, heat, posRank) {
     var available = ownerId == null && state.setupDone && !c.complete;
     // Whether a player is projected gone is a fact about the board, so shading
     // the rows says it exactly — the divider alone can only approximate it once
@@ -706,7 +714,11 @@
     // one continuous strip, so the mix of F, D and G shows at scrolling speed.
     var tile = el('span', 'p-tile');
     tile.appendChild(el('span', 'p-tile-pos', p.position));
-    tile.appendChild(el('span', 'p-rank', ownerId == null ? String(rank + 1) : '–'));
+    var rankEl = el('span', 'p-rank', ownerId == null ? String(posRank + 1) : '–');
+    if (ownerId == null) {
+      rankEl.title = p.position + String(posRank + 1) + ' at his position · #' + (rank + 1) + ' overall';
+    }
+    tile.appendChild(rankEl);
     li.appendChild(tile);
 
     var main = el('div', 'p-main');

@@ -53,7 +53,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 FILE = os.path.join(ROOT, 'data', 'players.json')
 LEAGUE_JS = os.path.join(ROOT, 'js', 'league.js')
 
-BASELINE = {'F': 35.0, 'D': 25.5, 'G': 36.5}
+BASELINE = {'F': 43.0, 'D': 29.0, 'G': 38.0}
 
 # Lower bound of tiers 1..7 per position; anything below the last is tier 8.
 TIERS = {
