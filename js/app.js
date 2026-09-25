@@ -5,7 +5,7 @@
   var $ = UI.$, $$ = UI.$$, el = UI.el, num = UI.num, normalize = UI.normalize;
   var LEAGUE = Draft.LEAGUE;
 
-  var APP_VERSION = '2.15.0';
+  var APP_VERSION = '2.16.0';
 
   var players = [];              // seeded from data/players.json
   var playersById = {};
@@ -78,6 +78,20 @@
   // device can still import its own file on top via Setup -> Player notes;
   // that overlay wins per player id, bundled notes fill in the rest.
   var bundledNotes = null;   // { id: {...} } | null if the fetch failed
+
+  // data/tags.json, built by tools/import-tags.py: { players: { id: [tag] } }.
+  // Short code for the row, full label for the popover.
+  var tagsDoc = null;
+  var TAGS = {
+    pp1:      { code: 'PP1', label: 'PP1' },
+    goalie:   { code: 'G+',  label: 'Solid goalie situation' },
+    breakout: { code: 'BRK', label: 'Breakout candidate' }
+  };
+
+  function tagsFor(playerId) {
+    var t = tagsDoc && tagsDoc.players && tagsDoc.players[playerId];
+    return (t || []).filter(function (k) { return TAGS[k]; });
+  }
 
   // Short code for the row, word for the sheet, and a severity for the colour.
   var INJURY = {
@@ -710,6 +724,18 @@
     // is the one that is always present whenever there is anything to read.
     // Only where there is something to read, so the button doubles as "I have
     // research on this guy" and there are no dead taps.
+    // In their own shrinkable box: on a narrow row the tags clip first, and
+    // the tap-safe icons after them never get pushed into the ADP column.
+    var tagList = tagsFor(p.id);
+    if (tagList.length) {
+      var tagBox = el('span', 'p-tags');
+      tagList.forEach(function (k) {
+        var t = el('span', 'p-tag p-tag-' + k, TAGS[k].code);
+        t.title = TAGS[k].label;
+        tagBox.appendChild(t);
+      });
+      sub.appendChild(tagBox);
+    }
     if (noteFor(p.id)) sub.appendChild(buildNotesButton(p));
     var hurt = injuryFor(p.id);
     if (hurt) sub.appendChild(buildInjuryBadge(hurt, p));
@@ -892,6 +918,9 @@
     pills.appendChild(el('span', 'note-pill', p.team));
     pills.appendChild(el('span', 'note-pill', 'Tier ' + p.tier));
     if (n.age != null) pills.appendChild(el('span', 'note-pill', 'Age ' + n.age));
+    tagsFor(p.id).forEach(function (k) {
+      pills.appendChild(el('span', 'note-pill note-tag p-tag-' + k, TAGS[k].label));
+    });
     if (n.ht) pills.appendChild(el('span', 'note-pill is-quiet', n.ht));
     // A goalie catches rather than shoots.
     if (n.shoots) {
@@ -2719,6 +2748,10 @@
       .catch(function () { return null; });
 
     // Same treatment: bundled notes are a nice-to-have, never a boot blocker.
+    var tagsLoad = fetch('./data/tags.json', { cache: 'no-cache' })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .catch(function () { return null; });
+
     var notesLoad = fetch('./data/notes.json', { cache: 'no-cache' })
       .then(function (r) { return r.ok ? r.json() : null; })
       .catch(function () { return null; });
@@ -2729,9 +2762,10 @@
         return r.json();
       })
       .then(function (data) {
-        return Promise.all([injuriesLoad, notesLoad]).then(function (docs) {
+        return Promise.all([injuriesLoad, notesLoad, tagsLoad]).then(function (docs) {
           injuryDoc = docs[0] && docs[0].players ? docs[0] : null;
           bundledNotes = docs[1] && docs[1].notes ? docs[1].notes : null;
+          tagsDoc = docs[2] && docs[2].players ? docs[2] : null;
           boot(data);
         });
       })

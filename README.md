@@ -733,6 +733,24 @@ The bots still follow the market where it disagrees with the projections. Bo
 Horvat is projected for 41 games, but his ADP is 120, and he goes around 120.
 That is by design: a mock is practice against people who draft by ADP.
 
+## Player tags
+
+Short outlined tags on a row — **PP1** (first power-play unit), **G+** (solid
+goalie situation), **BRK** (breakout candidate) — with full labels in the info
+popover. They come from `data/tags.json`, built from a CSV:
+
+```sh
+python3 tools/import-tags.py            # reads tools/tags-source.csv
+python3 tools/import-tags.py other.csv
+```
+
+The CSV has `id, name, position, team, pp1, goalie_situation, breakout`; any
+non-blank cell turns a tag on. The script refuses to write on an unknown or
+duplicate id. Tags live apart from `players.json` because
+`import-projections.py` rebuilds that file from scratch. On a narrow row the
+tags clip before anything else, so they never push the info icons into the
+numbers.
+
 ## Injuries
 
 ```sh
