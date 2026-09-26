@@ -473,7 +473,12 @@
       return;
     }
 
-    $('#pickLabel').textContent = label(c.currentPick);
+    // Overall number counts the keepers as the first picks, so it lines up
+    // with ADP: with 42 keepers, 1.01 is the 43rd player taken.
+    var pill = $('#pickLabel');
+    pill.textContent = label(c.currentPick);
+    pill.appendChild(el('span', 'pill-overall',
+      '#' + (Draft.keeperCount(state) + c.currentPick)));
     $('#onClockText').innerHTML = '';
     $('#onClockText').appendChild(document.createTextNode(c.onClockTeam.name));
     if (c.onClockIsMe) {
