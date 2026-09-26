@@ -100,7 +100,11 @@ button { cursor: pointer; }
   background: var(--bg-3); border: 1px solid var(--line);
   padding: 3px 8px; border-radius: 999px;
   font-variant-numeric: tabular-nums; font-weight: 700; font-size: 13px;
-  color: var(--txt-dim); flex: none;
+  color: var(--txt-dim); flex: none; white-space: nowrap;
+}
+.pill-overall {
+  margin-left: 6px; padding-left: 6px; border-left: 1px solid var(--line);
+  color: var(--txt);
 }
 .onclock-wrap {
   display: flex; align-items: center; justify-content: center; gap: 8px;
